@@ -5,6 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>رحلاتي RUH ↔ JED</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp }        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot }
+                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged }
+                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBUJMZoN-wZ_1y2OCDTBF6pCXSexNN78t0",
+  authDomain:        "mytrips-9b054.firebaseapp.com",
+  projectId:         "mytrips-9b054",
+  storageBucket:     "mytrips-9b054.firebasestorage.app",
+  messagingSenderId: "736851042749",
+  appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4",
+  measurementId:     "G-02QNJP0CV4"
+};
+
+const app      = initializeApp(firebaseConfig);
+const db       = getFirestore(app);
+const auth     = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// ── expose to global scope so non-module scripts can call them ──
+window._fb = { db, auth, provider, doc, getDoc, setDoc, onSnapshot,
+               signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider };
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap');
 
@@ -881,6 +909,12 @@
   </div>
   <div class="header-actions">
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="وضع ليلي / نهاري">🌙</button>
+    <button class="btn-icon" id="authBtn" onclick="handleAuth()" style="gap:6px">
+      <span id="authAvatar" style="display:none;width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0">
+        <img id="authAvatarImg" style="width:100%;height:100%;object-fit:cover">
+      </span>
+      <span id="authLabel">🔑 تسجيل دخول</span>
+    </button>
     <button class="btn-icon" onclick="showTab('add')">+ إضافة</button>
   </div>
 </div>
@@ -1313,56 +1347,157 @@
 // ─── INITIAL DATA FROM EXCEL ───
 const EXCEL_DATA = [{"id":1,"ticketType":"go","flightDate":"2025-09-25","purchaseDate":"","ticketPrice":298.57,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 1","linkedId":2,"transport":58.39,"rentedCar":false},{"id":2,"ticketType":"return","flightDate":"2025-09-28","purchaseDate":"","ticketPrice":298.57,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 1","linkedId":1,"transport":29.39,"rentedCar":false},{"id":3,"ticketType":"go","flightDate":"2025-10-02","purchaseDate":"","ticketPrice":456.0,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 2","linkedId":4,"transport":8.0,"rentedCar":false},{"id":4,"ticketType":"return","flightDate":"2025-10-05","purchaseDate":"","ticketPrice":396.0,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 2","linkedId":3,"transport":41.46,"rentedCar":false},{"id":5,"ticketType":"go","flightDate":"2025-10-23","purchaseDate":"2025-10-01","ticketPrice":95.6,"airline":"سعودية","pnr":"","notes":"تذكرة رياض جدة اكتوبر فرسان","paid":true,"paidBy":"الاساسي SNB","refundTo":"Fursan Riyadh","category":"رحلة 3","linkedId":6,"transport":0.0,"rentedCar":false},{"id":6,"ticketType":"return","flightDate":"2025-10-26","purchaseDate":"2025-10-01","ticketPrice":304.0,"airline":"ناس","pnr":"","notes":"تذكرة جدة الرياض اكتوبر ناس","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 3","linkedId":5,"transport":0.0,"rentedCar":false},{"id":7,"ticketType":"go","flightDate":"2025-10-30","purchaseDate":"2025-10-06","ticketPrice":95.6,"airline":"سعودية","pnr":"","notes":"تذكرة الرياض جدة اكتوبر فرسان","paid":true,"paidBy":"Meem account","refundTo":"Fursan Riyadh","category":"رحلة 4","linkedId":8,"transport":50.0,"rentedCar":false},{"id":8,"ticketType":"return","flightDate":"2025-11-02","purchaseDate":"2025-10-06","ticketPrice":95.6,"airline":"سعودية","pnr":"","notes":"تذكرة  جدة الرياض نوفمبر","paid":true,"paidBy":"Meem account","refundTo":"Fursan Riyadh","category":"رحلة 4","linkedId":7,"transport":19.7,"rentedCar":false},{"id":9,"ticketType":"go","flightDate":"2025-11-13","purchaseDate":"2025-10-10","ticketPrice":280.0,"airline":"اديل","pnr":"","notes":"تذكرة الرياض جدة اديل نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 5","linkedId":10,"transport":78.0,"rentedCar":false},{"id":11,"ticketType":"go","flightDate":"2025-11-13","purchaseDate":"2025-10-21","ticketPrice":258.48,"airline":"ناس","pnr":"","notes":"تذكرة  الرياض جدة ناس نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 6","linkedId":12,"transport":85.0,"rentedCar":false},{"id":10,"ticketType":"return","flightDate":"2025-11-16","purchaseDate":"2025-10-10","ticketPrice":280.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض السعودية نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 5","linkedId":9,"transport":225.0,"rentedCar":true},{"id":12,"ticketType":"return","flightDate":"2025-11-16","purchaseDate":"2025-10-21","ticketPrice":258.48,"airline":"ناس","pnr":"","notes":"تذكرة جدة الرياض ناس نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 6","linkedId":11,"transport":332.0,"rentedCar":false},{"id":13,"ticketType":"go","flightDate":"2025-11-20","purchaseDate":"2025-10-29","ticketPrice":280.0,"airline":"اديل","pnr":"","notes":"تذكرة الرياض جدة اديل نوفمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"الاساسي SNB","category":"رحلة 7","linkedId":14,"transport":40.0,"rentedCar":false},{"id":14,"ticketType":"return","flightDate":"2025-11-23","purchaseDate":"2025-10-29","ticketPrice":280.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض السعودية نوفمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"الاساسي SNB","category":"رحلة 7","linkedId":13,"transport":0.0,"rentedCar":false},{"id":15,"ticketType":"go","flightDate":"2025-12-04","purchaseDate":"2025-11-08","ticketPrice":327.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة ديسمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 8","linkedId":16,"transport":56.0,"rentedCar":false},{"id":16,"ticketType":"return","flightDate":"2025-12-07","purchaseDate":"2025-11-08","ticketPrice":327.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض ديسمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 8","linkedId":15,"transport":27.0,"rentedCar":false},{"id":17,"ticketType":"go","flightDate":"2025-12-11","purchaseDate":"2025-11-11","ticketPrice":394.0,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Fursan Riyadh","category":"رحلة 9","linkedId":18,"transport":48.0,"rentedCar":false},{"id":18,"ticketType":"return","flightDate":"2025-12-14","purchaseDate":"2025-11-11","ticketPrice":296.93,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 9","linkedId":17,"transport":182.0,"rentedCar":true},{"id":19,"ticketType":"go","flightDate":"2025-12-18","purchaseDate":"2025-11-22","ticketPrice":277.5,"airline":"سعودية","pnr":"","notes":"RUH to JED","paid":true,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 10","linkedId":null,"transport":0.0,"rentedCar":false},{"id":20,"ticketType":"go","flightDate":"2025-12-21","purchaseDate":"2025-11-22","ticketPrice":277.5,"airline":"سعودية","pnr":"HBKLKJ","notes":"JED to RUH HBKLKJ","paid":true,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 11","linkedId":21,"transport":31.0,"rentedCar":false},{"id":21,"ticketType":"return","flightDate":"2025-12-23","purchaseDate":"2025-12-19","ticketPrice":277.5,"airline":"سعودية","pnr":"","notes":"RUH to JED","paid":true,"paidBy":"Visa SNB","refundTo":"الاساسي SNB","category":"رحلة 11","linkedId":20,"transport":53.0,"rentedCar":false},{"id":22,"ticketType":"go","flightDate":"2026-01-15","purchaseDate":"2026-01-10","ticketPrice":378.0,"airline":"سعودية","pnr":"","notes":"RUH to JED MC84RJ","paid":true,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 12","linkedId":23,"transport":0.0,"rentedCar":false},{"id":23,"ticketType":"return","flightDate":"2026-01-18","purchaseDate":"2026-01-10","ticketPrice":378.0,"airline":"سعودية","pnr":"PEDTMD","notes":"JED to RUH PEDTMD","paid":true,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 12","linkedId":22,"transport":240.0,"rentedCar":true},{"id":24,"ticketType":"go","flightDate":"2026-02-12","purchaseDate":"2026-02-05","ticketPrice":248.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة فيراير","paid":true,"paidBy":"Meem account","refundTo":"Saving Account SNB","category":"رحلة 13","linkedId":25,"transport":82.0,"rentedCar":false},{"id":25,"ticketType":"return","flightDate":"2026-02-16","purchaseDate":"2026-02-05","ticketPrice":248.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض فبراير","paid":true,"paidBy":"Meem account","refundTo":"Saving Account SNB","category":"رحلة 13","linkedId":24,"transport":61.0,"rentedCar":false},{"id":26,"ticketType":"go","flightDate":"2026-02-19","purchaseDate":"2026-01-19","ticketPrice":407.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة فيراير","paid":true,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 14","linkedId":27,"transport":0.0,"rentedCar":false},{"id":27,"ticketType":"return","flightDate":"2026-02-23","purchaseDate":"2026-01-19","ticketPrice":407.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض فبراير","paid":true,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 14","linkedId":26,"transport":0.0,"rentedCar":false},{"id":28,"ticketType":"go","flightDate":"2026-03-12","purchaseDate":"2026-03-05","ticketPrice":462.5,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة مارس","paid":false,"paidBy":"Alinma VISA","refundTo":"Alinma account","category":"رحلة 15","linkedId":null,"transport":0.0,"rentedCar":false},{"id":29,"ticketType":"go","flightDate":"2026-04-02","purchaseDate":"2026-02-16","ticketPrice":299.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض ابريل","paid":false,"paidBy":"Stc Signature","refundTo":"Stc Signature","category":"رحلة 17","linkedId":30,"transport":0.0,"rentedCar":false},{"id":30,"ticketType":"return","flightDate":"2026-04-05","purchaseDate":"2026-03-05","ticketPrice":462.5,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض مارس","paid":false,"paidBy":"Alinma VISA","refundTo":"Alinma account","category":"رحلة 17","linkedId":29,"transport":0.0,"rentedCar":false},{"id":31,"ticketType":"go","flightDate":"2026-03-18","purchaseDate":"2026-02-16","ticketPrice":399.75,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة مارس","paid":false,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 15","linkedId":32,"transport":0.0,"rentedCar":false,"missed":true},{"id":32,"ticketType":"return","flightDate":"2026-03-28","purchaseDate":"2026-02-16","ticketPrice":399.75,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض مارس","paid":false,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 15","linkedId":31,"transport":1400.0,"rentedCar":true,"missed":true},{"id":33,"ticketType":"go","flightDate":"2026-04-16","purchaseDate":"2026-02-23","ticketPrice":338.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة ابريل","paid":false,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 18","linkedId":34,"transport":0.0,"rentedCar":false},{"id":34,"ticketType":"return","flightDate":"2026-04-19","purchaseDate":"2026-02-23","ticketPrice":338.0,"airline":"سعودية","pnr":"","notes":"تذكرة  جدة الرياض ابريل","paid":false,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 18","linkedId":33,"transport":0.0,"rentedCar":false},{"id":35,"ticketType":"return","flightDate":"2025-12-23","purchaseDate":"2025-12-19","ticketPrice":277.5,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"Visa SNB","refundTo":"الاساسي SNB","platform":"","salaryMonth":"","transport":150.0,"rentedCar":true,"category":"رحلة 11","linkedId":null}];
 
-// ─── STORAGE ───
-const STORE_KEY = 'ruh_jed_v3';
-const DATA_VERSION = 11; // رحلة 17 isolated Apr 2-5
+// ─── STORAGE — Firebase + localStorage ───
+const STORE_KEY    = 'ruh_jed_v3';
+const DATA_VERSION = 11;
 
-function load() {
-  try {
-    const raw       = localStorage.getItem(STORE_KEY);
-    const storedVer = parseInt(localStorage.getItem(STORE_KEY + '_ver') || '0');
+let _currentUid    = null;   // set when user signs in
+let _unsubscribe   = null;   // Firestore onSnapshot unsubscriber
 
-    if (raw) {
-      const stored = JSON.parse(raw);
-
-      // ── MERGE: keep every stored ticket, add any new IDs from EXCEL_DATA ──
-      // This ensures user edits/additions are NEVER overwritten by version bumps.
-      const storedIds = new Set(stored.map(t => t.id));
-      const newFromExcel = EXCEL_DATA.filter(t => !storedIds.has(t.id));
-
-      // Also patch existing stored tickets with new fields from EXCEL_DATA
-      // (e.g. transport/rentedCar added in v7) WITHOUT overwriting user edits
-      const excelById = Object.fromEntries(EXCEL_DATA.map(t => [t.id, t]));
-      const merged = stored.map(t => {
-        const base = excelById[t.id];
-        if (!base) return t; // user-added ticket — keep as-is
-        // Patch only fields the user is unlikely to have edited manually:
-        // transport & rentedCar (system data). Never overwrite: ticketPrice,
-        // paidBy, refundTo, salaryMonth, notes, paid, linkedId, flightDate, etc.
-        return {
-          ...t,
-          transport:  t.transport  !== undefined ? t.transport  : (base.transport  || 0),
-          rentedCar:  t.rentedCar  !== undefined ? t.rentedCar  : (base.rentedCar  || false),
-        };
-      });
-
-      const result = [...merged, ...newFromExcel];
-      save(result); // persist the merged result with latest version
-      return result;
-    }
-  } catch(e) {}
-
-  // First load — seed from EXCEL_DATA
-  const fresh = JSON.parse(JSON.stringify(EXCEL_DATA));
-  save(fresh);
-  return fresh;
+// ── Firestore document reference for this user ──
+function userDocRef(uid) {
+  const { db, doc } = window._fb;
+  return doc(db, 'users', uid, 'data', 'tickets');
 }
 
+// ── Save: write to localStorage AND Firestore (if signed in) ──
 function save(data) {
+  // Always save to localStorage as cache
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(data));
     localStorage.setItem(STORE_KEY + '_ver', String(DATA_VERSION));
   } catch(e) {}
+
+  // If signed in, also write to Firestore
+  if (_currentUid) {
+    const { setDoc } = window._fb;
+    setDoc(userDocRef(_currentUid), { tickets: data, updatedAt: Date.now() })
+      .catch(e => console.warn('Firestore write failed:', e));
+  }
+}
+
+// ── Load: prefer Firestore if signed in, else localStorage ──
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const stored      = JSON.parse(raw);
+      const storedIds   = new Set(stored.map(t => t.id));
+      const newFromExcel = EXCEL_DATA.filter(t => !storedIds.has(t.id));
+      const excelById   = Object.fromEntries(EXCEL_DATA.map(t => [t.id, t]));
+      const merged      = stored.map(t => {
+        const base = excelById[t.id];
+        if (!base) return t;
+        return {
+          ...t,
+          transport: t.transport  !== undefined ? t.transport  : (base.transport  || 0),
+          rentedCar: t.rentedCar  !== undefined ? t.rentedCar  : (base.rentedCar  || false),
+        };
+      });
+      const result = [...merged, ...newFromExcel];
+      return result;
+    }
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(EXCEL_DATA));
+}
+
+// ── Apply remote data from Firestore ──
+function applyRemoteData(remoteTickets) {
+  if (!Array.isArray(remoteTickets) || !remoteTickets.length) return;
+  tickets = remoteTickets;
+  // Update localStorage cache
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(tickets));
+    localStorage.setItem(STORE_KEY + '_ver', String(DATA_VERSION));
+  } catch(e) {}
+  renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+}
+
+// ── Subscribe to real-time Firestore updates ──
+function subscribeFirestore(uid) {
+  if (_unsubscribe) _unsubscribe(); // unsubscribe old listener
+  const { onSnapshot } = window._fb;
+  _unsubscribe = onSnapshot(userDocRef(uid), snap => {
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.tickets && Array.isArray(data.tickets)) {
+        applyRemoteData(data.tickets);
+      }
+    } else {
+      // First time this user logs in — push local data to Firestore
+      save(tickets);
+    }
+  }, err => console.warn('Firestore listener error:', err));
+}
+
+// ── Auth handler ──
+function handleAuth() {
+  if (_currentUid) {
+    // Sign out
+    const { signOut, auth } = window._fb;
+    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+    signOut(auth).then(() => {
+      _currentUid = null;
+      updateAuthUI(null);
+      toast('👋 تم تسجيل الخروج');
+    });
+  } else {
+    // Sign in with Google
+    const { signInWithPopup, auth, provider } = window._fb;
+    signInWithPopup(auth, provider)
+      .then(result => {
+        // handled by onAuthStateChanged below
+        toast('⏳ جاري الاتصال...');
+      })
+      .catch(err => {
+        console.error('Auth error:', err);
+        toast('❌ فشل تسجيل الدخول: ' + err.message, 4000);
+      });
+  }
+}
+
+// ── Update header auth button ──
+function updateAuthUI(user) {
+  const btn    = document.getElementById('authBtn');
+  const label  = document.getElementById('authLabel');
+  const avatar = document.getElementById('authAvatar');
+  const img    = document.getElementById('authAvatarImg');
+  if (user) {
+    label.textContent = user.displayName?.split(' ')[0] || 'مستخدم';
+    if (user.photoURL) {
+      img.src = user.photoURL;
+      avatar.style.display = 'inline-block';
+    }
+    btn.style.borderColor = 'var(--paid)';
+    btn.title = 'تسجيل خروج';
+  } else {
+    label.textContent     = '🔑 تسجيل دخول';
+    avatar.style.display  = 'none';
+    btn.style.borderColor = '';
+    btn.title             = 'تسجيل دخول بـ Google';
+  }
+}
+
+// ── Bootstrap Firebase auth listener ──
+function initFirebase() {
+  // Wait for Firebase module to be ready
+  const tryInit = () => {
+    if (!window._fb) { setTimeout(tryInit, 100); return; }
+    const { onAuthStateChanged, auth } = window._fb;
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        _currentUid = user.uid;
+        updateAuthUI(user);
+        subscribeFirestore(user.uid);
+        toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}! جاري المزامنة...`);
+      } else {
+        _currentUid = null;
+        updateAuthUI(null);
+        if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+      }
+    });
+  };
+  tryInit();
 }
 
 function nextId(data) {
@@ -3255,6 +3390,7 @@ function resetToExcel() {
 
 // ─── INIT ───
 initTheme();
+initFirebase();       // connect Firebase auth + Firestore
 rebuildSelectLists();
 renderOverview();
 renderUpcoming();
@@ -3268,7 +3404,6 @@ renderUpcoming();
     localStorage.removeItem(testKey);
     if (!ok) throw new Error();
   } catch(e) {
-    // localStorage not available — warn user
     setTimeout(() => toast('⚠️ localStorage غير متاح — البيانات لن تُحفظ بعد الإغلاق', 5000), 800);
   }
 })();
