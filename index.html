@@ -7,33 +7,49 @@
 <title>رحلاتي RUH ↔ JED</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<!-- Firebase SDKs -->
+<!-- Firebase Compat (works on iOS Safari without module support) -->
 
-<script type="module">
-import { initializeApp }        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot }
-                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged }
-                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 
-const firebaseConfig = {
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+const _firebaseConfig = {
   apiKey:            "AIzaSyBUJMZoN-wZ_1y2OCDTBF6pCXSexNN78t0",
   authDomain:        "mytrips-9b054.firebaseapp.com",
   projectId:         "mytrips-9b054",
   storageBucket:     "mytrips-9b054.firebasestorage.app",
   messagingSenderId: "736851042749",
-  appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4",
-  measurementId:     "G-02QNJP0CV4"
+  appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4"
 };
 
-const app      = initializeApp(firebaseConfig);
-const db       = getFirestore(app);
-const auth     = getAuth(app);
-const provider = new GoogleAuthProvider();
+const _fbApp  = firebase.initializeApp(_firebaseConfig);
+const _fbAuth = firebase.auth();
+const _fbDb   = firebase.firestore();
 
-// ── expose to global scope so non-module scripts can call them ──
-window._fb = { db, auth, provider, doc, getDoc, setDoc, onSnapshot,
-               signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider };
+// Expose compat API in same shape our code expects
+window._fb = {
+  auth:              _fbAuth,
+  db:                _fbDb,
+  provider:          new firebase.auth.GoogleAuthProvider(),
+  // compat wrappers
+  signInWithPopup:   (auth, provider) => auth.signInWithPopup(provider),
+  signOut:           (auth)           => auth.signOut(),
+  onAuthStateChanged:(auth, cb)       => auth.onAuthStateChanged(cb),
+  doc:               (db, ...path)    => {
+    // path: ['users', uid, 'data', 'tickets']
+    let ref = db;
+    for (let i = 0; i < path.length; i += 2) {
+      ref = ref.collection(path[i]).doc(path[i+1]);
+    }
+    return ref;
+  },
+  setDoc:  (ref, data)  => ref.set(data),
+  getDoc:  (ref)        => ref.get(),
+  onSnapshot: (ref, cb, err) => ref.onSnapshot(cb, err),
+};
 </script>
 
 <style>
@@ -1164,11 +1180,14 @@ window._fb = { db, auth, provider, doc, getDoc, setDoc, onSnapshot,
     <hr class="form-divider">
     <div class="form-section-label">✈ تفاصيل الرحلة</div>
 
-    <!-- ⑦ تاريخ الرحلة -->
+    <!-- ⑦ تاريخ الرحلة + وقت الرحلة -->
     <div class="form-group">
       <label>تاريخ الرحلة</label>
       <input type="date" id="fFlightDate">
     </div>
+    <div class="form-group">
+      <label>وقت الرحلة</label>
+      <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
 
     <!-- ⑧ سعر التذكرة -->
     <div class="form-group">
@@ -1318,6 +1337,10 @@ window._fb = { db, auth, provider, doc, getDoc, setDoc, onSnapshot,
     <label>تاريخ الرحلة</label>
     <input type="date" id="eFlightDate">
   </div>
+  <div class="form-group">
+    <label>وقت الرحلة</label>
+    <input type="time" id="eFlightTime" placeholder="مثال: 01:00">
+  </div>
 
   <div class="form-group">
     <label>سعر التذكرة (ريال)</label>
@@ -1405,18 +1428,15 @@ let _currentUid  = null;
 let _unsubscribe = null;
 
 function userDocRef(uid) {
-  const { db, doc } = window._fb;
-  return doc(db, 'users', uid, 'data', 'tickets');
+  const { db } = window._fb;
+  return db.collection('users').doc(uid).collection('data').doc('tickets');
 }
 
 // Save to localStorage cache + Firestore
 function save(data) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(data));
-  } catch(e) {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
   if (_currentUid) {
-    const { setDoc } = window._fb;
-    setDoc(userDocRef(_currentUid), { tickets: data, updatedAt: Date.now() })
+    userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now() })
       .catch(e => console.warn('Firestore write failed:', e));
   }
 }
@@ -1441,13 +1461,11 @@ function applyRemoteData(remoteTickets) {
 // Real-time Firestore listener
 function subscribeFirestore(uid) {
   if (_unsubscribe) _unsubscribe();
-  const { onSnapshot } = window._fb;
-  _unsubscribe = onSnapshot(userDocRef(uid), snap => {
-    if (snap.exists()) {
+  _unsubscribe = userDocRef(uid).onSnapshot(snap => {
+    if (snap.exists) {
       const data = snap.data();
       if (Array.isArray(data.tickets)) applyRemoteData(data.tickets);
     } else {
-      // New user — start with empty tickets, save empty doc
       tickets = [];
       save([]);
       renderAll(); renderOverview();
@@ -1455,37 +1473,11 @@ function subscribeFirestore(uid) {
   }, err => console.warn('Firestore error:', err));
 }
 
-// Show/hide login screen
 function showLoginScreen(show) {
   const ls = document.getElementById('loginScreen');
   if (ls) ls.style.display = show ? 'flex' : 'none';
 }
 
-// Auth button handler
-function handleAuth() {
-  const ls = document.getElementById('loginStatus');
-  if (_currentUid) {
-    const { signOut, auth } = window._fb;
-    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
-    signOut(auth).then(() => {
-      _currentUid = null;
-      tickets = [];
-      updateAuthUI(null);
-      showLoginScreen(true);
-      renderAll(); renderOverview();
-      toast('👋 تم تسجيل الخروج');
-    });
-  } else {
-    if (ls) ls.textContent = '⏳ جاري تسجيل الدخول...';
-    const { signInWithPopup, auth, provider } = window._fb;
-    signInWithPopup(auth, provider).catch(err => {
-      if (ls) ls.textContent = '❌ فشل تسجيل الدخول';
-      console.error(err);
-    });
-  }
-}
-
-// Update header auth UI
 function updateAuthUI(user) {
   const btn   = document.getElementById('authBtn');
   const label = document.getElementById('authLabel');
@@ -1504,19 +1496,60 @@ function updateAuthUI(user) {
   }
 }
 
-// Bootstrap Firebase
+function handleAuth() {
+  const ls = document.getElementById('loginStatus');
+  if (_currentUid) {
+    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+    _fbAuth.signOut().then(() => {
+      _currentUid = null;
+      tickets = [];
+      updateAuthUI(null);
+      showLoginScreen(true);
+      renderAll(); renderOverview();
+      toast('👋 تم تسجيل الخروج');
+    });
+  } else {
+    if (ls) ls.textContent = '⏳ جاري تسجيل الدخول...';
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      // iOS Safari: use redirect (popup is blocked)
+      _fbAuth.signInWithRedirect(window._fb.provider).catch(err => {
+        if (ls) ls.textContent = '❌ فشل — ' + err.message;
+        console.error(err);
+      });
+    } else {
+      // Desktop / Android: popup works fine
+      _fbAuth.signInWithPopup(window._fb.provider).catch(err => {
+        if (ls) ls.textContent = '❌ فشل تسجيل الدخول';
+        console.error(err);
+      });
+    }
+  }
+}
+
 function initFirebase() {
   const tryInit = () => {
-    if (!window._fb) { setTimeout(tryInit, 150); return; }
-    const { onAuthStateChanged, auth } = window._fb;
-    onAuthStateChanged(auth, user => {
+    if (!window._fb || !_fbAuth) { setTimeout(tryInit, 150); return; }
+
+    // Handle redirect result first (iOS returns here after Google login)
+    _fbAuth.getRedirectResult().then(result => {
+      if (result && result.user) {
+        // Redirect login succeeded — onAuthStateChanged will handle the rest
+      }
+    }).catch(err => {
+      console.warn('Redirect result error:', err);
+      const ls = document.getElementById('loginStatus');
+      if (ls) ls.textContent = '❌ فشل تسجيل الدخول — حاول مرة ثانية';
+    });
+
+    _fbAuth.onAuthStateChanged(user => {
       if (user) {
         _currentUid = user.uid;
         updateAuthUI(user);
         showLoginScreen(false);
-        tickets = load(); // show cached data instantly
+        tickets = load();
         renderAll(); renderOverview(); renderUpcoming(); renderTrips();
-        subscribeFirestore(user.uid); // then sync live from Firestore
+        subscribeFirestore(user.uid);
         toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
       } else {
         _currentUid = null;
@@ -1572,6 +1605,15 @@ function fmtDate(d) {
   if (!d) return '—';
   const dt = new Date(d);
   return `${dt.getDate()} ${MONTHS_AR[dt.getMonth()]} ${dt.getFullYear()}`;
+}
+
+function fmtTime(t) {
+  if (!t) return '';
+  // t is "HH:MM"
+  const [h, m] = t.split(':').map(Number);
+  const period = h < 12 ? 'ص' : 'م';
+  const h12    = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2,'0')} ${period}`;
 }
 
 function daysBetween(d1, d2) {
@@ -1729,7 +1771,7 @@ function renderOverview() {
         </div>
         <div class="nb-info">
           <div class="nb-title">${dir} ${al}</div>
-          <div class="nb-sub">${fmtDate(next.flightDate)} • ${next.category||''} ${next.pnr?'• '+next.pnr:''}</div>
+          <div class="nb-sub">${fmtDate(next.flightDate)}${next.flightTime ? ' · <strong>'+fmtTime(next.flightTime)+'</strong>' : ''} • ${next.category||''} ${next.pnr?'• '+next.pnr:''}</div>
           <div class="nb-sub" style="margin-top:4px">${next.salaryMonth||''} ${next.paidBy?'• '+next.paidBy:''}</div>
         </div>
         <div class="nb-icon">✈</div>
@@ -1970,7 +2012,11 @@ function renderUpcoming() {
       </div>
       <div class="upcoming-info">
         <div class="upcoming-title">${route} ${airlineBadge(t.airline)}</div>
-        <div class="upcoming-sub">${t.notes||''} ${t.pnr ? '• '+t.pnr : ''}</div>
+        <div class="upcoming-sub">
+          ${t.flightTime ? `<span style="color:var(--accent);font-weight:800;font-size:13px">🕐 ${fmtTime(t.flightTime)}</span>` : ''}
+          ${t.pnr ? `• ${t.pnr}` : ''}
+          ${t.notes ? `• ${t.notes}` : ''}
+        </div>
       </div>
       <div class="countdown">${countdown}</div>
     </div>`;
@@ -2060,7 +2106,7 @@ function renderTrips() {
               <span style="font-size:11px;font-weight:800;color:${clr}">${route}</span>
               ${paidDot}
             </div>
-            <div style="font-size:12px;font-weight:700">${fmtDate(leg.flightDate)||'—'}</div>
+            <div style="font-size:12px;font-weight:700">${fmtDate(leg.flightDate)||'—'}${leg.flightTime ? ' · <span style="color:var(--accent);font-weight:900">'+fmtTime(leg.flightTime)+'</span>' : ''}</div>
             <div style="margin-top:3px">${airlineBadge(leg.airline)}</div>
             ${leg.pnr ? `<div style="font-size:10px;font-family:monospace;color:var(--text-muted);margin-top:2px">${leg.pnr}</div>` : ''}
             <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -2193,7 +2239,7 @@ function renderAll() {
         </div>
       </td>
       <td><span class="badge ${t.ticketType==='go'?'badge-go':'badge-return'}">${t.ticketType==='go'?'ذهاب':'إياب'}</span></td>
-      <td style="white-space:nowrap">${fmtDate(t.flightDate)}</td>
+      <td style="white-space:nowrap">${fmtDate(t.flightDate)}${t.flightTime ? '<br><span style="font-size:10px;color:var(--accent);font-weight:700">'+fmtTime(t.flightTime)+'</span>' : ''}</td>
       <td style="white-space:nowrap;color:var(--text-muted);font-size:11px">${t.purchaseDate ? fmtDate(t.purchaseDate) : '—'}</td>
       <td>${airlineBadge(t.airline)}</td>
       <td style="font-size:11px;color:var(--text-muted)">${platform}</td>
@@ -2249,6 +2295,7 @@ function addTicket() {
     ticketType:   document.getElementById('fType').value,
     airline:      document.getElementById('fAirline').value,
     flightDate:   document.getElementById('fFlightDate').value,
+    flightTime:   document.getElementById('fFlightTime').value || '',
     purchaseDate: document.getElementById('fPurchaseDate').value,
     ticketPrice:  price,
     pnr:          document.getElementById('fPNR').value.toUpperCase().trim(),
@@ -2267,7 +2314,7 @@ function addTicket() {
   save(tickets);
   toast('✅ تمت إضافة التذكرة — رحلة ' + newNum);
   // reset form
-  ['fFlightDate','fPurchaseDate','fPrice','fPNR','fNotes','fTransport'].forEach(id => document.getElementById(id).value = '');
+  ['fFlightDate','fFlightTime','fPurchaseDate','fPrice','fPNR','fNotes','fTransport'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fSalaryMonth').selectedIndex = 0;
   document.getElementById('fRentedCar').checked = false;
   document.getElementById('fPaidStatus').checked = true;
@@ -2449,6 +2496,7 @@ function openEditModal(id) {
   document.getElementById('eType').value        = t.ticketType || 'go';
   document.getElementById('eAirline').value     = t.airline || 'سعودية';
   document.getElementById('eFlightDate').value  = t.flightDate || '';
+  document.getElementById('eFlightTime').value  = t.flightTime || '';
   document.getElementById('ePurchaseDate').value= t.purchaseDate || '';
   document.getElementById('ePrice').value       = t.ticketPrice || '';
   document.getElementById('ePNR').value         = t.pnr || '';
@@ -2492,6 +2540,7 @@ function saveEdit() {
     ticketType:   document.getElementById('eType').value,
     airline:      document.getElementById('eAirline').value,
     flightDate:   document.getElementById('eFlightDate').value,
+    flightTime:   document.getElementById('eFlightTime').value || '',
     purchaseDate: document.getElementById('ePurchaseDate').value,
     ticketPrice:  parseFloat(document.getElementById('ePrice').value) || 0,
     pnr:          document.getElementById('ePNR').value.toUpperCase().trim(),
