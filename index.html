@@ -1586,6 +1586,71 @@ function initTheme() {
     if(btn) btn.textContent = '☀️';
   }
 }
+    // ─── GOOGLE CALENDAR INTEGRATION ───
+const GOOGLE_CLIENT_ID = '736851042749-au8n....@apps.googleusercontent.com'; // Your Client ID
+const GOOGLE_CALENDAR_API_KEY = 'AIzaSyB_....'; // Your API Key
+
+let gapiLoaded = false;
+
+function initGoogleCalendarAPI() {
+  if (gapiLoaded) return;
+  gapi.load('client:auth2', function() {
+    gapi.client.init({
+      apiKey: GOOGLE_CALENDAR_API_KEY,
+      clientId: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar'
+    }).then(() => {
+      gapiLoaded = true;
+    }).catch(err => console.warn('Google Calendar init error:', err));
+  });
+}
+
+function addFlightToGoogleCalendar(ticket) {
+  if (!gapiLoaded) {
+    toast('⚠️ Google Calendar not ready. Try again in a moment.');
+    return;
+  }
+
+  const auth2 = gapi.auth2.getAuthInstance();
+  if (!auth2 || !auth2.isSignedIn.get()) {
+    auth2.signIn().then(() => createCalendarEvent(ticket));
+    return;
+  }
+  createCalendarEvent(ticket);
+}
+
+function createCalendarEvent(ticket) {
+  const startTime = new Date(ticket.flightDate);
+  if (ticket.flightTime) {
+    const [h, m] = ticket.flightTime.split(':');
+    startTime.setHours(h, m);
+  }
+  const endTime = new Date(startTime.getTime() + 120 * 60000); // 2-hour flight
+
+  const route = ticket.ticketType === 'go' ? 'RUH → JED' : 'JED → RUH';
+  const eventTitle = `✈️ ${route} (${ticket.airline || 'Flight'})`;
+
+  const event = {
+    summary: eventTitle,
+    description: `PNR: ${ticket.pnr || 'N/A'}\nAirline: ${ticket.airline || 'N/A'}\nCategory: ${ticket.category || 'N/A'}`,
+    start: { dateTime: startTime.toISOString() },
+    end: { dateTime: endTime.toISOString() },
+    location: ticket.ticketType === 'go' ? 'Riyadh to Jeddah' : 'Jeddah to Riyadh'
+  };
+
+  gapi.client.calendar.events.insert({
+    calendarId: 'primary',
+    resource: event
+  }).then(response => {
+    toast('✅ Added to Google Calendar!');
+  }).catch(err => {
+    toast('❌ Failed to add to calendar: ' + err.message);
+    console.error('Calendar error:', err);
+  });
+}
+
+// Initialize Google Calendar API when page loads
+initGoogleCalendarAPI();
 
 // ─── TABS ───
 function showTab(name) {
