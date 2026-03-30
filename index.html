@@ -83,6 +83,7 @@ window._fb = {
     direction: rtl;
   }
 
+
   /* ── HEADER ── */
   .header {
     background: linear-gradient(135deg, #0f1f3d 0%, #0a0e1a 100%);
@@ -152,7 +153,14 @@ window._fb = {
   .tab:hover:not(.active) { color: var(--text); }
 
   /* ── CONTENT ── */
-  .content { padding: 16px; max-width: 1000px; margin: 0 auto; }
+  .content {
+    padding: 16px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  @media(min-width: 900px) {
+    .content { padding: 20px 32px; }
+  }
   .section { display: none; }
   .section.active { display: block; }
 
@@ -286,6 +294,7 @@ window._fb = {
   }
   .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; min-width: 600px; }
+  @media(min-width: 900px) { table { min-width: unset; } }
   thead { background: var(--surface2); }
   th {
     padding: 12px 14px;
@@ -594,7 +603,29 @@ window._fb = {
   .btn-del:hover   { color: var(--unpaid); border-color: var(--unpaid); background: rgba(244,63,94,0.08); }
   .actions-cell { display:flex; gap:4px; align-items:center; justify-content:flex-start; }
 
-  /* link popup */
+  /* inline edit */
+  td[contenteditable="true"] {
+    outline: none;
+    background: rgba(59,130,246,0.08);
+    border-bottom: 2px solid var(--accent);
+    cursor: text;
+    min-width: 40px;
+  }
+  td.editable-cell {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  td.editable-cell:hover { background: rgba(59,130,246,0.05); }
+  .inline-select {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
   .link-popup {
     position: absolute;
     z-index: 500;
@@ -1397,7 +1428,11 @@ window._fb = {
 
 <script>
 // ─── INITIAL DATA ───
-const EXCEL_DATA = [{"id":1,"ticketType":"go","flightDate":"2025-09-25","purchaseDate":"","ticketPrice":298.57,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 1","linkedId":2,"transport":58.39,"rentedCar":false},{"id":2,"ticketType":"return","flightDate":"2025-09-28","purchaseDate":"","ticketPrice":298.57,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 1","linkedId":1,"transport":29.39,"rentedCar":false},{"id":3,"ticketType":"go","flightDate":"2025-10-02","purchaseDate":"","ticketPrice":456.0,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 2","linkedId":4,"transport":8.0,"rentedCar":false},{"id":4,"ticketType":"return","flightDate":"2025-10-05","purchaseDate":"","ticketPrice":396.0,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 2","linkedId":3,"transport":41.46,"rentedCar":false},{"id":5,"ticketType":"go","flightDate":"2025-10-23","purchaseDate":"2025-10-01","ticketPrice":95.6,"airline":"سعودية","pnr":"","notes":"تذكرة رياض جدة اكتوبر فرسان","paid":true,"paidBy":"الاساسي SNB","refundTo":"Fursan Riyadh","category":"رحلة 3","linkedId":6,"transport":0.0,"rentedCar":false},{"id":6,"ticketType":"return","flightDate":"2025-10-26","purchaseDate":"2025-10-01","ticketPrice":304.0,"airline":"ناس","pnr":"","notes":"تذكرة جدة الرياض اكتوبر ناس","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 3","linkedId":5,"transport":0.0,"rentedCar":false},{"id":7,"ticketType":"go","flightDate":"2025-10-30","purchaseDate":"2025-10-06","ticketPrice":95.6,"airline":"سعودية","pnr":"","notes":"تذكرة الرياض جدة اكتوبر فرسان","paid":true,"paidBy":"Meem account","refundTo":"Fursan Riyadh","category":"رحلة 4","linkedId":8,"transport":50.0,"rentedCar":false},{"id":8,"ticketType":"return","flightDate":"2025-11-02","purchaseDate":"2025-10-06","ticketPrice":95.6,"airline":"سعودية","pnr":"","notes":"تذكرة  جدة الرياض نوفمبر","paid":true,"paidBy":"Meem account","refundTo":"Fursan Riyadh","category":"رحلة 4","linkedId":7,"transport":19.7,"rentedCar":false},{"id":9,"ticketType":"go","flightDate":"2025-11-13","purchaseDate":"2025-10-10","ticketPrice":280.0,"airline":"اديل","pnr":"","notes":"تذكرة الرياض جدة اديل نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 5","linkedId":10,"transport":78.0,"rentedCar":false},{"id":11,"ticketType":"go","flightDate":"2025-11-13","purchaseDate":"2025-10-21","ticketPrice":258.48,"airline":"ناس","pnr":"","notes":"تذكرة  الرياض جدة ناس نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 6","linkedId":12,"transport":85.0,"rentedCar":false},{"id":10,"ticketType":"return","flightDate":"2025-11-16","purchaseDate":"2025-10-10","ticketPrice":280.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض السعودية نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 5","linkedId":9,"transport":225.0,"rentedCar":true},{"id":12,"ticketType":"return","flightDate":"2025-11-16","purchaseDate":"2025-10-21","ticketPrice":258.48,"airline":"ناس","pnr":"","notes":"تذكرة جدة الرياض ناس نوفمبر","paid":false,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 6","linkedId":11,"transport":332.0,"rentedCar":false},{"id":13,"ticketType":"go","flightDate":"2025-11-20","purchaseDate":"2025-10-29","ticketPrice":280.0,"airline":"اديل","pnr":"","notes":"تذكرة الرياض جدة اديل نوفمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"الاساسي SNB","category":"رحلة 7","linkedId":14,"transport":40.0,"rentedCar":false},{"id":14,"ticketType":"return","flightDate":"2025-11-23","purchaseDate":"2025-10-29","ticketPrice":280.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض السعودية نوفمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"الاساسي SNB","category":"رحلة 7","linkedId":13,"transport":0.0,"rentedCar":false},{"id":15,"ticketType":"go","flightDate":"2025-12-04","purchaseDate":"2025-11-08","ticketPrice":327.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة ديسمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 8","linkedId":16,"transport":56.0,"rentedCar":false},{"id":16,"ticketType":"return","flightDate":"2025-12-07","purchaseDate":"2025-11-08","ticketPrice":327.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض ديسمبر","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 8","linkedId":15,"transport":27.0,"rentedCar":false},{"id":17,"ticketType":"go","flightDate":"2025-12-11","purchaseDate":"2025-11-11","ticketPrice":394.0,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Fursan Riyadh","category":"رحلة 9","linkedId":18,"transport":48.0,"rentedCar":false},{"id":18,"ticketType":"return","flightDate":"2025-12-14","purchaseDate":"2025-11-11","ticketPrice":296.93,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 9","linkedId":17,"transport":182.0,"rentedCar":true},{"id":19,"ticketType":"go","flightDate":"2025-12-18","purchaseDate":"2025-11-22","ticketPrice":277.5,"airline":"سعودية","pnr":"","notes":"RUH to JED","paid":true,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 10","linkedId":null,"transport":0.0,"rentedCar":false},{"id":20,"ticketType":"go","flightDate":"2025-12-21","purchaseDate":"2025-11-22","ticketPrice":277.5,"airline":"سعودية","pnr":"HBKLKJ","notes":"JED to RUH HBKLKJ","paid":true,"paidBy":"الاساسي SNB","refundTo":"Saving Account SNB","category":"رحلة 11","linkedId":21,"transport":31.0,"rentedCar":false},{"id":21,"ticketType":"return","flightDate":"2025-12-23","purchaseDate":"2025-12-19","ticketPrice":277.5,"airline":"سعودية","pnr":"","notes":"RUH to JED","paid":true,"paidBy":"Visa SNB","refundTo":"الاساسي SNB","category":"رحلة 11","linkedId":20,"transport":53.0,"rentedCar":false},{"id":22,"ticketType":"go","flightDate":"2026-01-15","purchaseDate":"2026-01-10","ticketPrice":378.0,"airline":"سعودية","pnr":"","notes":"RUH to JED MC84RJ","paid":true,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 12","linkedId":23,"transport":0.0,"rentedCar":false},{"id":23,"ticketType":"return","flightDate":"2026-01-18","purchaseDate":"2026-01-10","ticketPrice":378.0,"airline":"سعودية","pnr":"PEDTMD","notes":"JED to RUH PEDTMD","paid":true,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 12","linkedId":22,"transport":240.0,"rentedCar":true},{"id":24,"ticketType":"go","flightDate":"2026-02-12","purchaseDate":"2026-02-05","ticketPrice":248.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة فيراير","paid":true,"paidBy":"Meem account","refundTo":"Saving Account SNB","category":"رحلة 13","linkedId":25,"transport":82.0,"rentedCar":false},{"id":25,"ticketType":"return","flightDate":"2026-02-16","purchaseDate":"2026-02-05","ticketPrice":248.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض فبراير","paid":true,"paidBy":"Meem account","refundTo":"Saving Account SNB","category":"رحلة 13","linkedId":24,"transport":61.0,"rentedCar":false},{"id":26,"ticketType":"go","flightDate":"2026-02-19","purchaseDate":"2026-01-19","ticketPrice":407.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة فيراير","paid":true,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 14","linkedId":27,"transport":0.0,"rentedCar":false},{"id":27,"ticketType":"return","flightDate":"2026-02-23","purchaseDate":"2026-01-19","ticketPrice":407.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض فبراير","paid":true,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 14","linkedId":26,"transport":0.0,"rentedCar":false},{"id":28,"ticketType":"go","flightDate":"2026-03-12","purchaseDate":"2026-03-05","ticketPrice":462.5,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة مارس","paid":false,"paidBy":"Alinma VISA","refundTo":"Alinma account","category":"رحلة 15","linkedId":null,"transport":0.0,"rentedCar":false},{"id":29,"ticketType":"go","flightDate":"2026-04-02","purchaseDate":"2026-02-16","ticketPrice":299.0,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض ابريل","paid":false,"paidBy":"Stc Signature","refundTo":"Stc Signature","category":"رحلة 17","linkedId":30,"transport":0.0,"rentedCar":false},{"id":30,"ticketType":"return","flightDate":"2026-04-05","purchaseDate":"2026-03-05","ticketPrice":462.5,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض مارس","paid":false,"paidBy":"Alinma VISA","refundTo":"Alinma account","category":"رحلة 17","linkedId":29,"transport":0.0,"rentedCar":false},{"id":31,"ticketType":"go","flightDate":"2026-03-18","purchaseDate":"2026-02-16","ticketPrice":399.75,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة مارس","paid":false,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 15","linkedId":32,"transport":0.0,"rentedCar":false,"missed":true},{"id":32,"ticketType":"return","flightDate":"2026-03-28","purchaseDate":"2026-02-16","ticketPrice":399.75,"airline":"سعودية","pnr":"","notes":"تذكرة جدة الرياض مارس","paid":false,"paidBy":"Visa SNB","refundTo":"Saving Account SNB","category":"رحلة 15","linkedId":31,"transport":1400.0,"rentedCar":true,"missed":true},{"id":33,"ticketType":"go","flightDate":"2026-04-16","purchaseDate":"2026-02-23","ticketPrice":338.0,"airline":"سعودية","pnr":"","notes":"تذكرة  الرياض جدة ابريل","paid":false,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 18","linkedId":34,"transport":0.0,"rentedCar":false},{"id":34,"ticketType":"return","flightDate":"2026-04-19","purchaseDate":"2026-02-23","ticketPrice":338.0,"airline":"سعودية","pnr":"","notes":"تذكرة  جدة الرياض ابريل","paid":false,"paidBy":"Fursan Riyadh","refundTo":"Saving Account SNB","category":"رحلة 18","linkedId":33,"transport":0.0,"rentedCar":false},{"id":35,"ticketType":"return","flightDate":"2025-12-23","purchaseDate":"2025-12-19","ticketPrice":277.5,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"Visa SNB","refundTo":"الاساسي SNB","platform":"","salaryMonth":"","transport":150.0,"rentedCar":true,"category":"رحلة 11","linkedId":null}];
+// ─── INITIAL DATA (2 examples — real data lives in Firebase) ───
+const EXCEL_DATA = [
+  {"id":1,"ticketType":"go","flightDate":"2025-09-25","purchaseDate":"","ticketPrice":298.57,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 1","linkedId":2,"transport":58.39,"rentedCar":false},
+  {"id":2,"ticketType":"return","flightDate":"2025-09-28","purchaseDate":"","ticketPrice":298.57,"airline":"سعودية","pnr":"","notes":"","paid":true,"paidBy":"الاساسي SNB","refundTo":"Visa SNB","category":"رحلة 1","linkedId":1,"transport":29.39,"rentedCar":false}
+];
 
 // ─── STORAGE — Firebase primary, localStorage cache ───
 const STORE_KEY = 'ruh_jed_v3';
@@ -1425,25 +1460,10 @@ function load() {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
       const stored    = JSON.parse(raw);
-      const storedIds = new Set(stored.map(t => t.id));
-      const newFromExcel = EXCEL_DATA.filter(t => !storedIds.has(t.id));
-      const excelById    = Object.fromEntries(EXCEL_DATA.map(t => [t.id, t]));
-      const merged = stored.map(t => {
-        const base = excelById[t.id];
-        if (!base) return t;
-        return {
-          ...t,
-          transport: t.transport !== undefined ? t.transport : (base.transport || 0),
-          rentedCar: t.rentedCar !== undefined ? t.rentedCar : (base.rentedCar || false),
-        };
-      });
-      return [...merged, ...newFromExcel];
+      return stored;
     }
   } catch(e) {}
-  // First load — seed from EXCEL_DATA
-  const fresh = JSON.parse(JSON.stringify(EXCEL_DATA));
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(fresh)); } catch(e) {}
-  return fresh;
+  return [];
 }
 
 // Apply data received from Firestore
@@ -1464,10 +1484,9 @@ function subscribeFirestore(uid) {
         applyRemoteData(data.tickets);
       }
     } else {
-      // New user — seed from EXCEL_DATA and push to Firestore
-      tickets = JSON.parse(JSON.stringify(EXCEL_DATA));
-      save(tickets);
-      renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+      // New user — start empty
+      tickets = [];
+      renderAll(); renderOverview();
     }
   }, err => console.warn('Firestore error:', err));
 }
@@ -1530,11 +1549,9 @@ function initFirebase() {
   const tryInit = () => {
     if (!window._fb || !_fbAuth) { setTimeout(tryInit, 150); return; }
 
-    // Handle redirect result first (iOS returns here after Google login)
+    // Handle redirect result (iOS returns here after Google login)
     _fbAuth.getRedirectResult().then(result => {
-      if (result && result.user) {
-        // Redirect login succeeded — onAuthStateChanged will handle the rest
-      }
+      // onAuthStateChanged handles the rest
     }).catch(err => {
       console.warn('Redirect result error:', err);
       const ls = document.getElementById('loginStatus');
@@ -1599,6 +1616,15 @@ function showTab(name) {
 
 // ─── HELPERS ───
 const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+// ── Number with thousand separator ──
+function fmtNum(n, decimals=0) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
 
 function fmtDate(d) {
   if (!d) return '—';
@@ -1748,7 +1774,7 @@ function renderOverview() {
   const avgPrice      = totalTickets ? totalCost/totalTickets : 0;
   const paidPct       = totalCost ? Math.round(paidCost/totalCost*100) : 0;
 
-  document.getElementById('headerSub').textContent = `${trips} رحلة • ${totalTickets} تذكرة • ${grandTotal.toFixed(0)} ريال`;
+  document.getElementById('headerSub').textContent = `${trips} رحلة • ${totalTickets} تذكرة • ${fmtNum(grandTotal)} ريال`;
 
   // ── Next trip banner ──
   const upcoming = tickets
@@ -1802,9 +1828,9 @@ function renderOverview() {
   const kpiData = [
     { icon:'✈', val: trips,                  label:'رحلة مكتملة',    sub:`${totalTickets} تذكرة`,              color:'#3b82f6' },
     { icon:'🏙', val: totalDaysInJED,         label:'يوم في جدة',     sub:`معدل ${avgDaysPerTrip} يوم/رحلة`,   color:'#a855f7' },
-    { icon:'💰', val: grandTotal.toFixed(0),  label:'إجمالي المصروف', sub:`متوسط ${avgPrice.toFixed(0)} ر/تذكرة`, color:'#f59e0b' },
-    { icon:'✅', val: paidTickets.length,     label:'تذاكر مدفوعة',   sub:`${paidCost.toFixed(0)} ريال`,       color:'#10b981' },
-    { icon:'⏳', val: unpaidTickets.length,   label:'تذاكر معلقة',    sub:`${unpaidCost.toFixed(0)} ريال`,     color:'#f43f5e' },
+    { icon:'💰', val: fmtNum(grandTotal),  label:'إجمالي المصروف', sub:`متوسط ${fmtNum(avgPrice)} ر/تذكرة`, color:'#f59e0b' },
+    { icon:'✅', val: paidTickets.length,     label:'تذاكر مدفوعة',   sub:`${fmtNum(paidCost)} ريال`,       color:'#10b981' },
+    { icon:'⏳', val: unpaidTickets.length,   label:'تذاكر معلقة',    sub:`${fmtNum(unpaidCost)} ريال`,     color:'#f43f5e' },
   ];
   document.getElementById('kpiStrip').innerHTML = kpiData.map(k=>`
     <div class="kpi-card" style="--kpi-color:${k.color}">
@@ -1824,8 +1850,8 @@ function renderOverview() {
       <div class="pay-fill" id="payFill" style="width:0%"></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px">
-      <span style="color:var(--paid)">✓ مدفوع: ${paidCost.toFixed(0)} ريال (${paidTickets.length} تذكرة)</span>
-      <span style="color:var(--unpaid)">⏳ معلق: ${unpaidCost.toFixed(0)} ريال (${unpaidTickets.length} تذكرة)</span>
+      <span style="color:var(--paid)">✓ مدفوع: ${fmtNum(paidCost)} ريال (${paidTickets.length} تذكرة)</span>
+      <span style="color:var(--unpaid)">⏳ معلق: ${fmtNum(unpaidCost)} ريال (${unpaidTickets.length} تذكرة)</span>
     </div>`;
   setTimeout(()=>{ const f=document.getElementById('payFill'); if(f) f.style.width=paidPct+'%'; }, 120);
 
@@ -1848,7 +1874,7 @@ function renderOverview() {
       const w = Math.round(tot/maxM*100);
       const tw = Math.round(monthly[m].ticket/maxM*100);
       return `<div class="hbar">
-        <div class="hbar-meta"><span class="hbar-name">${mlabels[m]||m}</span><span class="hbar-amt">${tot.toFixed(0)}</span></div>
+        <div class="hbar-meta"><span class="hbar-name">${mlabels[m]||m}</span><span class="hbar-amt">${fmtNum(tot)}</span></div>
         <div class="hbar-track">
           <div class="hbar-fill" style="width:${w}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div>
         </div>
@@ -1882,7 +1908,7 @@ function renderOverview() {
         <div class="rl-item"><div class="rl-dot" style="background:var(--return-color)"></div><span class="rl-label">إياب</span><span class="rl-val">${retTickets.length} <small style="color:var(--text-muted)">(${retPct}%)</small></span></div>
         ${missedCount ? `<div class="rl-item"><div class="rl-dot" style="background:var(--missed)"></div><span class="rl-label">مُفوَّت</span><span class="rl-val">${missedCount}</span></div>` : ''}
         <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted)">
-          مواصلات: <strong style="color:var(--text)">${totalTransport.toFixed(0)} ر</strong>
+          مواصلات: <strong style="color:var(--text)">${fmtNum(totalTransport)} ريال</strong>
         </div>
       </div>
     </div>`;
@@ -1904,7 +1930,7 @@ function renderOverview() {
       return `<div class="hbar">
         <div class="hbar-meta">
           <span class="hbar-name">${airlineBadge(name)}</span>
-          <span class="hbar-amt">${info.total.toFixed(0)} ر</span>
+          <span class="hbar-amt">${info.total.toFixed(0)} ريال</span>
         </div>
         <div class="hbar-track">
           <div class="hbar-fill" style="width:${w}%;background:${col}"></div>
@@ -1931,7 +1957,7 @@ function renderOverview() {
             <div class="mini-name" title="${name}">${name.length>14?name.slice(0,13)+'…':name}</div>
             <div class="mini-sub">${info.count} تذكرة</div>
           </div>
-          <div class="mini-amt">${info.total.toFixed(0)}</div>
+          <div class="mini-amt">${fmtNum(info.total)}</div>
         </div>`).join('')}
     </div>`;
 
@@ -1950,7 +1976,7 @@ function renderOverview() {
     const intensity = total/heatMax;
     const bg = `rgba(59,130,246,${0.15+intensity*0.75})`;
     const label = (mlabels[m]||m).slice(0,3);
-    return `<div class="heat-cell" style="background:${bg};color:${intensity>0.5?'white':'var(--text)'}" title="${mlabels[m]||m}: ${total.toFixed(0)} ريال — ${count} تذكرة">
+    return `<div class="heat-cell" style="background:${bg};color:${intensity>0.5?'white':'var(--text)'}" title="${mlabels[m]||m}: ${fmtNum(total)} ريال — ${count} تذكرة">
       <div class="hc-month">${label}</div>
       <div class="hc-amt">${count}✈</div>
     </div>`;
@@ -1975,11 +2001,11 @@ function renderOverview() {
   })();
 
   if(totalDaysInJED>0) insights.push(`🏙 أيام في جدة: ${totalDaysInJED} يوم عبر ${tripsWithDays} رحلة (معدل ${avgDaysPerTrip} يوم/رحلة)`);
-  if(cheapest) insights.push(`🏷️ أرخص تذكرة: ${cheapest.ticketPrice?.toFixed(0)} ريال (${cheapest.category})`);
-  if(expensive) insights.push(`💎 أغلى تذكرة: ${expensive.ticketPrice?.toFixed(0)} ريال (${expensive.category})`);
+  if(cheapest) insights.push(`🏷️ أرخص تذكرة: ${fmtNum(cheapest.ticketPrice)} ريال (${cheapest.category})`);
+  if(expensive) insights.push(`💎 أغلى تذكرة: ${fmtNum(expensive.ticketPrice)} ريال (${expensive.category})`);
   if(topAir) insights.push(`✈ الأكثر استخداماً: ${topAir[0]} (${topAir[1].count} تذكرة)`);
   if(longestGap>0) insights.push(`⏸️ أطول فترة بدون سفر: ${longestGap} يوم`);
-  if(totalTransport>0) insights.push(`🚗 مصروف المواصلات: ${totalTransport.toFixed(0)} ريال`);
+  if(totalTransport>0) insights.push(`🚗 مصروف المواصلات: ${fmtNum(totalTransport)} ريال`);
   const rentedCount = tickets.filter(t=>t.rentedCar).length;
   if(rentedCount) insights.push(`🚗 سيارات مستأجرة: ${rentedCount} مرة`);
 
@@ -2116,7 +2142,7 @@ function renderTrips() {
             <div style="margin-top:3px">${airlineBadge(leg.airline)}</div>
             ${leg.pnr ? `<div style="font-size:10px;font-family:monospace;color:var(--text-muted);margin-top:2px">${leg.pnr}</div>` : ''}
             <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              <span style="font-size:13px;font-weight:900">${total.toFixed(0)} ر</span>
+              <span style="font-size:13px;font-weight:900">${fmtNum(total)} ريال</span>
               ${transLine} ${rentedBadge}
             </div>
           </div>`;
@@ -2161,7 +2187,7 @@ function renderTrips() {
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             ${daysInJED !== null ? `<span class="days-chip">🏙 ${daysInJED} يوم</span>` : ''}
-            <span class="trip-total">${tripTotal.toFixed(0)} ريال</span>
+            <span class="trip-total">${fmtNum(tripTotal)} ريال</span>
             <label class="missed-checkbox" title="تم تفويت الرحلة">
               <input type="checkbox" ${isMissed?'checked':''} onchange="toggleMissed('${cat}', this.checked)">
               فوّت
@@ -2236,7 +2262,7 @@ function renderAll() {
     const total     = (t.ticketPrice||0) + transport;
     const platform  = t.platform || '—';
     return `
-    <tr class="${rowClass}">
+    <tr class="${rowClass}" data-id="${t.id}">
       <td style="white-space:nowrap">
         <div class="actions-cell">
           <button class="btn-edit" onclick="openEditModal(${t.id})" title="تعديل">✏️</button>
@@ -2244,20 +2270,28 @@ function renderAll() {
           <button class="btn-del"  onclick="deleteTicket(${t.id})"  title="حذف">✕</button>
         </div>
       </td>
-      <td><span class="badge ${t.ticketType==='go'?'badge-go':'badge-return'}">${t.ticketType==='go'?'ذهاب':'إياب'}</span></td>
-      <td style="white-space:nowrap">${fmtDate(t.flightDate)}${t.flightTime ? '<br><span style="font-size:10px;color:var(--accent);font-weight:700">'+fmtTime(t.flightTime)+'</span>' : ''}</td>
-      <td style="white-space:nowrap;color:var(--text-muted);font-size:11px">${t.purchaseDate ? fmtDate(t.purchaseDate) : '—'}</td>
-      <td>${airlineBadge(t.airline)}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${platform}</td>
-      <td style="font-family:monospace;font-size:11px">${t.pnr||'—'}</td>
-      <td style="font-weight:700">${t.ticketPrice?.toFixed(0)||'—'}</td>
-      <td style="color:var(--text-muted)">${transport ? transport.toFixed(0)+' ر' : '—'}</td>
-      <td style="text-align:center">${rentedCar ? '🚗' : '—'}</td>
-      <td style="font-weight:800;color:var(--accent)">${total.toFixed(0)} ر</td>
-      <td style="font-size:11px;color:var(--text-muted);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.paidBy||''}">${t.paidBy||'—'}</td>
+      <td onclick="inlineEditSelect(this,${t.id},'ticketType',{'go':'ذهاب','return':'إياب'})">
+        <span class="badge ${t.ticketType==='go'?'badge-go':'badge-return'}">${t.ticketType==='go'?'ذهاب':'إياب'}</span>
+      </td>
+      <td class="editable-cell" onclick="inlineEditDate(this,${t.id},'flightDate')" style="white-space:nowrap">
+        ${fmtDate(t.flightDate)}${t.flightTime ? '<br><span style="font-size:10px;color:var(--accent);font-weight:700">'+fmtTime(t.flightTime)+'</span>' : ''}
+      </td>
+      <td class="editable-cell" onclick="inlineEditDate(this,${t.id},'purchaseDate')" style="white-space:nowrap;color:var(--text-muted);font-size:11px">
+        ${t.purchaseDate ? fmtDate(t.purchaseDate) : '—'}
+      </td>
+      <td onclick="inlineEditSelect(this,${t.id},'airline',{'سعودية':'🟢 سعودية','ناس':'🔵 ناس','اديل':'🟡 اديل','طيران الرياض':'🟣 طيران الرياض'})">${airlineBadge(t.airline)}</td>
+      <td class="editable-cell" style="font-size:11px;color:var(--text-muted)" onclick="inlineEditText(this,${t.id},'platform')">${platform}</td>
+      <td class="editable-cell" style="font-family:monospace;font-size:11px" onclick="inlineEditText(this,${t.id},'pnr')">${t.pnr||'—'}</td>
+      <td class="editable-cell" style="font-weight:700" onclick="inlineEditNumber(this,${t.id},'ticketPrice')">${fmtNum(t.ticketPrice)}</td>
+      <td class="editable-cell" style="color:var(--text-muted)" onclick="inlineEditNumber(this,${t.id},'transport')">${transport ? fmtNum(transport)+' ريال' : '—'}</td>
+      <td style="text-align:center;cursor:pointer" onclick="inlineToggle(${t.id},'rentedCar')">${rentedCar ? '🚗' : '—'}</td>
+      <td style="font-weight:800;color:var(--accent)">${fmtNum(total)} ريال</td>
+      <td class="editable-cell" style="font-size:11px;color:var(--text-muted);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.paidBy||''}" onclick="inlineEditText(this,${t.id},'paidBy')">${t.paidBy||'—'}</td>
       <td style="font-size:11px;color:var(--text-muted);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.refundTo||''}">${t.refundTo||'—'}</td>
       <td style="font-size:11px;color:var(--text-muted);white-space:nowrap">${t.salaryMonth||'—'}</td>
-      <td><span class="paid-dot ${t.paid?'paid-yes':'paid-no'}"></span></td>
+      <td style="text-align:center;cursor:pointer" onclick="inlineToggle(${t.id},'paid')" title="${t.paid?'مدفوع — اضغط لتغيير':'غير مدفوع — اضغط لتغيير'}">
+        <span class="paid-dot ${t.paid?'paid-yes':'paid-no'}"></span>
+      </td>
       <td style="text-align:center">${missedChk}</td>
       <td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted)" title="${t.notes||''}">${t.notes||'—'}</td>
     </tr>`;
@@ -2270,13 +2304,13 @@ function renderAll() {
 function updateFormTotal() {
   const price     = parseFloat(document.getElementById('fPrice').value)||0;
   const transport = parseFloat(document.getElementById('fTransport').value)||0;
-  document.getElementById('fTotalDisplay').textContent = (price + transport).toFixed(0) + ' ريال';
+  document.getElementById('fTotalDisplay').textContent = fmtNum(price + transport) + ' ريال';
 }
 
 function updateEditTotal() {
   const price     = parseFloat(document.getElementById('ePrice').value)||0;
   const transport = parseFloat(document.getElementById('eTransport').value)||0;
-  document.getElementById('eTotalDisplay').textContent = (price + transport).toFixed(0) + ' ريال';
+  document.getElementById('eTotalDisplay').textContent = fmtNum(price + transport) + ' ريال';
 }
 
 function initAddForm() {
@@ -2423,6 +2457,76 @@ function applyLink(fromId, toId) {
   renderAll();
   toast(newId ? `🔗 تم الربط بالتذكرة ${newId}` : '✓ تم إلغاء الربط');
 }
+// ─── INLINE EDIT HELPERS ───
+
+function _saveField(id, field, value) {
+  const t = tickets.find(t => t.id === id);
+  if (!t) return;
+  t[field] = value;
+  save(tickets);
+  renderAll();
+  renderOverview();
+}
+
+function inlineEditText(td, id, field) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  td.setAttribute('contenteditable', 'true');
+  td.textContent = (t[field] && t[field] !== '—') ? t[field] : '';
+  td.focus();
+  const sel = window.getSelection(), range = document.createRange();
+  range.selectNodeContents(td); sel.removeAllRanges(); sel.addRange(range);
+  td.onblur    = () => { td.removeAttribute('contenteditable'); _saveField(id, field, td.textContent.trim()); };
+  td.onkeydown = e => { if (e.key==='Enter') { e.preventDefault(); td.blur(); } if (e.key==='Escape') { td.removeAttribute('contenteditable'); renderAll(); } };
+}
+
+function inlineEditNumber(td, id, field) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  td.setAttribute('contenteditable', 'true');
+  td.textContent = (t[field] || 0).toString().replace(/ ر/g,'');
+  td.focus();
+  const sel = window.getSelection(), range = document.createRange();
+  range.selectNodeContents(td); sel.removeAllRanges(); sel.addRange(range);
+  td.onblur    = () => { td.removeAttribute('contenteditable'); _saveField(id, field, parseFloat(td.textContent.trim()) || 0); };
+  td.onkeydown = e => { if (e.key==='Enter') { e.preventDefault(); td.blur(); } if (e.key==='Escape') { td.removeAttribute('contenteditable'); renderAll(); } };
+}
+
+function inlineEditDate(td, id, field) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  const input = document.createElement('input');
+  input.type = 'date'; input.value = t[field] || '';
+  input.style.cssText = 'background:var(--surface2);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-family:Cairo,sans-serif;font-size:12px;padding:2px 6px;';
+  td.innerHTML = ''; td.appendChild(input); input.focus();
+  input.showPicker?.();
+  const done = () => _saveField(id, field, input.value);
+  input.onchange = done; input.onblur = done;
+}
+
+function inlineEditSelect(td, id, field, options) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  const sel = document.createElement('select');
+  sel.className = 'inline-select';
+  Object.entries(options).forEach(([val, label]) => {
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = label;
+    if (t[field] === val) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  td.innerHTML = ''; td.appendChild(sel); sel.focus();
+  sel.onchange = () => _saveField(id, field, sel.value);
+  sel.onblur   = () => _saveField(id, field, sel.value);
+}
+
+function inlineToggle(id, field) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  t[field] = !t[field];
+  save(tickets); renderAll();
+}
+
 function deleteTicket(id) {
   if (!confirm('حذف هذه التذكرة؟')) return;
   tickets = tickets.filter(t => t.id !== id);
@@ -2858,18 +2962,18 @@ function sendMonthlyReport() {
         const paid   = t.paid ? '✓' : '⏳';
         const trans  = t.transport ? ` + ${t.transport} مواصلات` : '';
         const total  = (t.ticketPrice||0) + (t.transport||0);
-        return `  ${paid} ${t.flightDate} | ${dir} | ${t.category} | ${t.airline||''} | ${total.toFixed(0)} ريال${trans}`;
+        return `  ${paid} ${t.flightDate} | ${dir} | ${t.category} | ${t.airline||''} | ${fmtNum(total)} ريال${trans}`;
       }).join('\n');
 
     return `📅 ${label}
 ${'─'.repeat(40)}
 الرحلات: ${trips.join('، ')}
 التذاكر: ${list.length} تذكرة (${paidCount} مدفوعة، ${unpaidCount} معلقة)
-${daysInJED > 0 ? `الأيام في جدة: ${daysInJED} يوم\n` : ''}سعر التذاكر: ${totalPrice.toFixed(0)} ريال
-المواصلات:   ${totalTrans.toFixed(0)} ريال
-الإجمالي:    ${grandTotal.toFixed(0)} ريال
-مدفوع:       ${paidAmt.toFixed(0)} ريال
-معلق:        ${unpaidAmt.toFixed(0)} ريال
+${daysInJED > 0 ? `الأيام في جدة: ${daysInJED} يوم\n` : ''}سعر التذاكر: ${fmtNum(totalPrice)} ريال
+المواصلات:   ${fmtNum(totalTrans)} ريال
+الإجمالي:    ${fmtNum(grandTotal)} ريال
+مدفوع:       ${fmtNum(paidAmt)} ريال
+معلق:        ${fmtNum(unpaidAmt)} ريال
 ${rented > 0 ? `سيارات مستأجرة: ${rented} مرة\n` : ''}
 التفاصيل:
 ${lines}
@@ -2897,8 +3001,8 @@ ${'═'.repeat(45)}
 ${'─'.repeat(40)}
 إجمالي الرحلات:  ${allTrips} رحلة
 إجمالي التذاكر:  ${tickets.length} تذكرة
-إجمالي المصروف: ${allTotal.toFixed(0)} ريال
-إجمالي المدفوع:  ${allPaid.toFixed(0)} ريال
+إجمالي المصروف: ${fmtNum(allTotal)} ريال
+إجمالي المدفوع:  ${fmtNum(allPaid)} ريال
 
 تم إنشاء هذا التقرير تلقائياً من تطبيق رحلاتي RUH↔JED
 التاريخ: ${now.toLocaleDateString('ar-SA')}`;
@@ -2931,7 +3035,7 @@ function showReportPanel(prevLabel, currLabel, prevTickets, currTickets, mailto)
     <div style="background:var(--surface);border-radius:10px;padding:12px 14px;flex:1;min-width:130px">
       <div style="font-size:10px;font-weight:800;color:var(--text-muted);margin-bottom:6px">${label}</div>
       ${list.length
-        ? `<div style="font-size:20px;font-weight:900;color:var(--accent)">${total.toFixed(0)} <span style="font-size:11px">ريال</span></div>
+        ? `<div style="font-size:20px;font-weight:900;color:var(--accent)">${total.toFixed(0)} ريال</div>
            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${list.length} تذكرة • ${paid} مدفوعة</div>`
         : `<div style="font-size:12px;color:var(--text-muted)">لا توجد رحلات</div>`
       }
@@ -3016,9 +3120,9 @@ function exportPDF() {
       <td style="padding:7px 10px;white-space:nowrap">${t.flightDate||'—'}</td>
       <td style="padding:7px 10px">${airBadge}</td>
       <td style="padding:7px 10px;font-family:monospace;font-size:10px">${t.pnr||'—'}</td>
-      <td style="padding:7px 10px;font-weight:700;text-align:right">${(t.ticketPrice||0).toFixed(0)}</td>
-      <td style="padding:7px 10px;text-align:right;color:#64748b">${transport?transport.toFixed(0):'—'}</td>
-      <td style="padding:7px 10px;font-weight:800;text-align:right;color:#1d4ed8">${total.toFixed(0)}</td>
+      <td style="padding:7px 10px;font-weight:700;text-align:right">${fmtNum(t.ticketPrice||0)}</td>
+      <td style="padding:7px 10px;text-align:right;color:#64748b">${transport?fmtNum(transport):'—'}</td>
+      <td style="padding:7px 10px;font-weight:800;text-align:right;color:#1d4ed8">${fmtNum(total)}</td>
       <td style="padding:7px 10px;font-size:10px;color:#64748b">${t.paidBy||'—'}</td>
       <td style="padding:7px 10px;font-size:10px;color:#64748b">${t.salaryMonth||'—'}</td>
       <td style="padding:7px 10px;text-align:center">${paidBadge} ${linkedInfo}</td>
@@ -3067,9 +3171,9 @@ function exportPDF() {
 
 <div class="kpis">
   <div class="kpi" style="--c:#3b82f6"><div class="kpi-val">${trips}</div><div class="kpi-label">رحلة</div></div>
-  <div class="kpi" style="--c:#f59e0b"><div class="kpi-val">${totalCost.toFixed(0)} ر</div><div class="kpi-label">إجمالي التذاكر</div></div>
-  <div class="kpi" style="--c:#10b981"><div class="kpi-val">${paidCost.toFixed(0)} ر</div><div class="kpi-label">مدفوع (${paidCount} تذكرة)</div></div>
-  <div class="kpi" style="--c:#6366f1"><div class="kpi-val">${totalAll.toFixed(0)} ر</div><div class="kpi-label">الإجمالي مع المواصلات</div></div>
+  <div class="kpi" style="--c:#f59e0b"><div class="kpi-val">${fmtNum(totalCost)} ر</div><div class="kpi-label">إجمالي التذاكر</div></div>
+  <div class="kpi" style="--c:#10b981"><div class="kpi-val">${fmtNum(paidCost)} ر</div><div class="kpi-label">مدفوع (${paidCount} تذكرة)</div></div>
+  <div class="kpi" style="--c:#6366f1"><div class="kpi-val">${fmtNum(totalAll)} ر</div><div class="kpi-label">الإجمالي مع المواصلات</div></div>
 </div>
 
 <table>
@@ -3123,8 +3227,8 @@ function exportPDF() {
 التاريخ: ${now}
 الرحلات: ${trips}
 التذاكر: ${sorted.length} (${paidCount} مدفوعة)
-إجمالي التذاكر: ${totalCost.toFixed(0)} ريال
-الإجمالي مع المواصلات: ${totalAll.toFixed(0)} ريال
+إجمالي التذاكر: ${fmtNum(totalCost)} ريال
+الإجمالي مع المواصلات: ${fmtNum(totalAll)} ريال
 
 ---
 للاطلاع على التفاصيل الكاملة، راجع ملف PDF المرفق.
