@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -7,20 +6,9 @@
 <title>رحلاتي RUH ↔ JED</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<!-- Firebase SDKs -->
-<!-- Firebase Compat (works on iOS Safari without module support) -->
-
-<script type="module">
-import { initializeApp }        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot }
-                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged }
-                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+<!-- Firebase Compat SDKs (iOS Safari compatible) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-
-const firebaseConfig = {
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
@@ -32,22 +20,14 @@ const _firebaseConfig = {
   messagingSenderId: "736851042749",
   appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4",
   measurementId:     "G-02QNJP0CV4"
-  appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4"
 };
 
-const app      = initializeApp(firebaseConfig);
-const db       = getFirestore(app);
-const auth     = getAuth(app);
-const provider = new GoogleAuthProvider();
-
-// ── expose to global scope so non-module scripts can call them ──
-window._fb = { db, auth, provider, doc, getDoc, setDoc, onSnapshot,
-               signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider };
+// Initialize Firebase with Compat API
 const _fbApp  = firebase.initializeApp(_firebaseConfig);
 const _fbAuth = firebase.auth();
 const _fbDb   = firebase.firestore();
 
-// Expose compat API in same shape our code expects
+// Expose global API for non-module scripts
 window._fb = {
   auth:              _fbAuth,
   db:                _fbDb,
