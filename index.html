@@ -7,14 +7,21 @@
 <title>رحلاتي RUH ↔ JED</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+<!-- Firebase SDKs -->
 <!-- Firebase Compat (works on iOS Safari without module support) -->
 
+<script type="module">
+import { initializeApp }        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot }
+                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged }
+                                 from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 
+const firebaseConfig = {
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
 
 <script>
 const _firebaseConfig = {
@@ -23,9 +30,19 @@ const _firebaseConfig = {
   projectId:         "mytrips-9b054",
   storageBucket:     "mytrips-9b054.firebasestorage.app",
   messagingSenderId: "736851042749",
+  appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4",
+  measurementId:     "G-02QNJP0CV4"
   appId:             "1:736851042749:web:ec285ea4d6634cd4acb2d4"
 };
 
+const app      = initializeApp(firebaseConfig);
+const db       = getFirestore(app);
+const auth     = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// ── expose to global scope so non-module scripts can call them ──
+window._fb = { db, auth, provider, doc, getDoc, setDoc, onSnapshot,
+               signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider };
 const _fbApp  = firebase.initializeApp(_firebaseConfig);
 const _fbAuth = firebase.auth();
 const _fbDb   = firebase.firestore();
@@ -1181,6 +1198,7 @@ window._fb = {
     <hr class="form-divider">
     <div class="form-section-label">✈ تفاصيل الرحلة</div>
 
+    <!-- ⑦ تاريخ الرحلة -->
     <!-- ⑦ تاريخ الرحلة + وقت الرحلة -->
     <div class="form-group">
       <label>تاريخ الرحلة</label>
@@ -1429,14 +1447,21 @@ let _currentUid  = null;
 let _unsubscribe = null;
 
 function userDocRef(uid) {
+  const { db, doc } = window._fb;
+  return doc(db, 'users', uid, 'data', 'tickets');
   const { db } = window._fb;
   return db.collection('users').doc(uid).collection('data').doc('tickets');
 }
 
 // Save to localStorage cache + Firestore
 function save(data) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  } catch(e) {}
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
   if (_currentUid) {
+    const { setDoc } = window._fb;
+    setDoc(userDocRef(_currentUid), { tickets: data, updatedAt: Date.now() })
     userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now() })
       .catch(e => console.warn('Firestore write failed:', e));
   }
@@ -1462,11 +1487,15 @@ function applyRemoteData(remoteTickets) {
 // Real-time Firestore listener
 function subscribeFirestore(uid) {
   if (_unsubscribe) _unsubscribe();
+  const { onSnapshot } = window._fb;
+  _unsubscribe = onSnapshot(userDocRef(uid), snap => {
+    if (snap.exists()) {
   _unsubscribe = userDocRef(uid).onSnapshot(snap => {
     if (snap.exists) {
       const data = snap.data();
       if (Array.isArray(data.tickets)) applyRemoteData(data.tickets);
     } else {
+      // New user — start with empty tickets, save empty doc
       tickets = [];
       save([]);
       renderAll(); renderOverview();
@@ -1474,11 +1503,37 @@ function subscribeFirestore(uid) {
   }, err => console.warn('Firestore error:', err));
 }
 
+// Show/hide login screen
 function showLoginScreen(show) {
   const ls = document.getElementById('loginScreen');
   if (ls) ls.style.display = show ? 'flex' : 'none';
 }
 
+// Auth button handler
+function handleAuth() {
+  const ls = document.getElementById('loginStatus');
+  if (_currentUid) {
+    const { signOut, auth } = window._fb;
+    if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+    signOut(auth).then(() => {
+      _currentUid = null;
+      tickets = [];
+      updateAuthUI(null);
+      showLoginScreen(true);
+      renderAll(); renderOverview();
+      toast('👋 تم تسجيل الخروج');
+    });
+  } else {
+    if (ls) ls.textContent = '⏳ جاري تسجيل الدخول...';
+    const { signInWithPopup, auth, provider } = window._fb;
+    signInWithPopup(auth, provider).catch(err => {
+      if (ls) ls.textContent = '❌ فشل تسجيل الدخول';
+      console.error(err);
+    });
+  }
+}
+
+// Update header auth UI
 function updateAuthUI(user) {
   const btn   = document.getElementById('authBtn');
   const label = document.getElementById('authLabel');
@@ -1497,6 +1552,7 @@ function updateAuthUI(user) {
   }
 }
 
+// Bootstrap Firebase
 function handleAuth() {
   const ls = document.getElementById('loginStatus');
   if (_currentUid) {
@@ -1530,6 +1586,9 @@ function handleAuth() {
 
 function initFirebase() {
   const tryInit = () => {
+    if (!window._fb) { setTimeout(tryInit, 150); return; }
+    const { onAuthStateChanged, auth } = window._fb;
+    onAuthStateChanged(auth, user => {
     if (!window._fb || !_fbAuth) { setTimeout(tryInit, 150); return; }
 
     // Handle redirect result first (iOS returns here after Google login)
@@ -1548,8 +1607,10 @@ function initFirebase() {
         _currentUid = user.uid;
         updateAuthUI(user);
         showLoginScreen(false);
+        tickets = load(); // show cached data instantly
         tickets = load();
         renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+        subscribeFirestore(user.uid); // then sync live from Firestore
         subscribeFirestore(user.uid);
         toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
       } else {
@@ -1584,51 +1645,6 @@ function initTheme() {
     if(btn) btn.textContent = '☀️';
   }
 }
-    // ─── GOOGLE CALENDAR INTEGRATION (SIMPLIFIED) ───
-function addFlightToGoogleCalendar(ticket) {
-  if (!ticket.flightDate) {
-    toast('⚠️ Missing flight date');
-    return;
-  }
-
-  // Format date for Google Calendar (YYYYMMDD format)
-  const dateStr = ticket.flightDate.replace(/-/g, '');
-  
-  // Calculate end time (2 hours after start)
-  let startTime = ticket.flightDate + 'T';
-  if (ticket.flightTime) {
-    startTime += ticket.flightTime + ':00';
-  } else {
-    startTime += '06:00:00'; // Default to 6 AM
-  }
-  
-  const startDateTime = startTime.replace(/[:-]/g, '').replace('T', 'T');
-  const endDate = new Date(ticket.flightDate);
-  endDate.setHours(endDate.getHours() + 2);
-  const endDateTime = endDate.toISOString().slice(0, 19).replace(/[:-]/g, '').replace('T', 'T');
-
-  // Build Google Calendar event URL
-  const route = ticket.ticketType === 'go' ? 'RUH → JED' : 'JED → RUH';
-  const eventTitle = `✈️ ${route} (${ticket.airline || 'Flight'})`;
-  const eventDescription = `PNR: ${ticket.pnr || 'N/A'}\nAirline: ${ticket.airline || 'N/A'}\nCategory: ${ticket.category || 'N/A'}`;
-  const eventLocation = ticket.ticketType === 'go' ? 'Riyadh (RUH) to Jeddah (JED)' : 'Jeddah (JED) to Riyadh (RUH)';
-
-  // Create Google Calendar link
-  const googleCalendarUrl = 'https://calendar.google.com/calendar/u/0/r/eventedit?' +
-    'text=' + encodeURIComponent(eventTitle) +
-    '&dates=' + dateStr + '/' + dateStr +
-    '&details=' + encodeURIComponent(eventDescription) +
-    '&location=' + encodeURIComponent(eventLocation) +
-    '&trp=false';
-
-  // Open in new tab
-  window.open(googleCalendarUrl, '_blank');
-  toast('✅ Opening Google Calendar... Sign in if needed');
-
-}
-
-// Initialize Google Calendar API when page loads
-initGoogleCalendarAPI();
 
 // ─── TABS ───
 function showTab(name) {
@@ -1810,22 +1826,19 @@ function renderOverview() {
     const dir = next.ticketType==='go' ? 'RUH → JED 🛫' : 'JED → RUH 🛬';
     const al = airlineBadge(next.airline);
     document.getElementById('nextTripBanner').innerHTML = `
-  <div class="next-banner">
-    <div>
-      <div class="nb-days">${daysNum||'!'}</div>
-      <div class="nb-unit">${dayLabel}</div>
-    </div>
-    <div class="nb-info">
-      <div class="nb-title">${dir} ${al}</div>
-      <div class="nb-sub">${fmtDate(next.flightDate)}${next.flightTime ? ' · <strong>'+fmtTime(next.flightTime)+'</strong>' : ''} • ${next.category||''} ${next.pnr?'• '+next.pnr:''}</div>
-      <div class="nb-sub" style="margin-top:4px">${next.salaryMonth||''} ${next.paidBy?'• '+next.paidBy:''}</div>
-      <button onclick="addFlightToGoogleCalendar({flightDate:'${next.flightDate}',flightTime:'${next.flightTime||''}',airline:'${next.airline||''}',pnr:'${next.pnr||''}',category:'${next.category||''}',ticketType:'${next.ticketType}'})" 
-        style="margin-top:8px;padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif">
-        📅 Add to Google Calendar
-      </button>
-    </div>
-    <div class="nb-icon">✈</div>
-  </div>`;
+      <div class="next-banner">
+        <div>
+          <div class="nb-days">${daysNum||'!'}</div>
+          <div class="nb-unit">${dayLabel}</div>
+        </div>
+        <div class="nb-info">
+          <div class="nb-title">${dir} ${al}</div>
+          <div class="nb-sub">${fmtDate(next.flightDate)} • ${next.category||''} ${next.pnr?'• '+next.pnr:''}</div>
+          <div class="nb-sub">${fmtDate(next.flightDate)}${next.flightTime ? ' · <strong>'+fmtTime(next.flightTime)+'</strong>' : ''} • ${next.category||''} ${next.pnr?'• '+next.pnr:''}</div>
+          <div class="nb-sub" style="margin-top:4px">${next.salaryMonth||''} ${next.paidBy?'• '+next.paidBy:''}</div>
+        </div>
+        <div class="nb-icon">✈</div>
+      </div>`;
   } else {
     document.getElementById('nextTripBanner').innerHTML = '';
   }
@@ -2062,6 +2075,7 @@ function renderUpcoming() {
       </div>
       <div class="upcoming-info">
         <div class="upcoming-title">${route} ${airlineBadge(t.airline)}</div>
+        <div class="upcoming-sub">${t.notes||''} ${t.pnr ? '• '+t.pnr : ''}</div>
         <div class="upcoming-sub">
           ${t.flightTime ? `<span style="color:var(--accent);font-weight:800;font-size:13px">🕐 ${fmtTime(t.flightTime)}</span>` : ''}
           ${t.pnr ? `• ${t.pnr}` : ''}
@@ -2156,6 +2170,7 @@ function renderTrips() {
               <span style="font-size:11px;font-weight:800;color:${clr}">${route}</span>
               ${paidDot}
             </div>
+            <div style="font-size:12px;font-weight:700">${fmtDate(leg.flightDate)||'—'}</div>
             <div style="font-size:12px;font-weight:700">${fmtDate(leg.flightDate)||'—'}${leg.flightTime ? ' · <span style="color:var(--accent);font-weight:900">'+fmtTime(leg.flightTime)+'</span>' : ''}</div>
             <div style="margin-top:3px">${airlineBadge(leg.airline)}</div>
             ${leg.pnr ? `<div style="font-size:10px;font-family:monospace;color:var(--text-muted);margin-top:2px">${leg.pnr}</div>` : ''}
@@ -2289,6 +2304,7 @@ function renderAll() {
         </div>
       </td>
       <td><span class="badge ${t.ticketType==='go'?'badge-go':'badge-return'}">${t.ticketType==='go'?'ذهاب':'إياب'}</span></td>
+      <td style="white-space:nowrap">${fmtDate(t.flightDate)}</td>
       <td style="white-space:nowrap">${fmtDate(t.flightDate)}${t.flightTime ? '<br><span style="font-size:10px;color:var(--accent);font-weight:700">'+fmtTime(t.flightTime)+'</span>' : ''}</td>
       <td style="white-space:nowrap;color:var(--text-muted);font-size:11px">${t.purchaseDate ? fmtDate(t.purchaseDate) : '—'}</td>
       <td>${airlineBadge(t.airline)}</td>
@@ -2364,6 +2380,7 @@ function addTicket() {
   save(tickets);
   toast('✅ تمت إضافة التذكرة — رحلة ' + newNum);
   // reset form
+  ['fFlightDate','fPurchaseDate','fPrice','fPNR','fNotes','fTransport'].forEach(id => document.getElementById(id).value = '');
   ['fFlightDate','fFlightTime','fPurchaseDate','fPrice','fPNR','fNotes','fTransport'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fSalaryMonth').selectedIndex = 0;
   document.getElementById('fRentedCar').checked = false;
@@ -3528,64 +3545,7 @@ renderUpcoming();
   } catch(e) {
     setTimeout(() => toast('⚠️ localStorage غير متاح — البيانات لن تُحفظ بعد الإغلاق', 5000), 800);
   }
-  {
-  if (gapiLoaded) return;
-  gapi.load('client:auth2', function() {
-    gapi.client.init({
-      apiKey: GOOGLE_CALENDAR_API_KEY,
-      clientId: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/calendar'
-    }).then(() => {
-      gapiLoaded = true;
-    }).catch(err => console.warn('Google Calendar init error:', err));
-  });
-}
-
-function addFlightToGoogleCalendar(ticket) {
-  if (!gapiLoaded) {
-    toast('⚠️ Google Calendar not ready. Try again in a moment.');
-    return;
-  }
-
-  const auth2 = gapi.auth2.getAuthInstance();
-  if (!auth2 || !auth2.isSignedIn.get()) {
-    auth2.signIn().then(() => createCalendarEvent(ticket));
-    return;
-  }
-  createCalendarEvent(ticket);
-}
-
-function createCalendarEvent(ticket) {
-  const startTime = new Date(ticket.flightDate);
-  if (ticket.flightTime) {
-    const [h, m] = ticket.flightTime.split(':');
-    startTime.setHours(h, m);
-  }
-  const endTime = new Date(startTime.getTime() + 120 * 60000); // 2-hour flight
-
-  const route = ticket.ticketType === 'go' ? 'RUH → JED' : 'JED → RUH';
-  const eventTitle = `✈️ ${route} (${ticket.airline || 'Flight'})`;
-
-  const event = {
-    summary: eventTitle,
-    description: `PNR: ${ticket.pnr || 'N/A'}\nAirline: ${ticket.airline || 'N/A'}\nCategory: ${ticket.category || 'N/A'}`,
-    start: { dateTime: startTime.toISOString() },
-    end: { dateTime: endTime.toISOString() },
-    location: ticket.ticketType === 'go' ? 'Riyadh to Jeddah' : 'Jeddah to Riyadh'
-  };
-
-  gapi.client.calendar.events.insert({
-    calendarId: 'primary',
-    resource: event
-  }).then(response => {
-    toast('✅ Added to Google Calendar!');
-  }).catch(err => {
-    toast('❌ Failed to add to calendar: ' + err.message);
-    console.error('Calendar error:', err);
-  });
-}
 })();
 </script>
 
 </body>
-</html>
