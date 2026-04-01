@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -8,13 +7,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <!-- Firebase Compat (works on iOS Safari without module support) -->
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
 <script>
 const _firebaseConfig = {
   apiKey:            "AIzaSyBUJMZoN-wZ_1y2OCDTBF6pCXSexNN78t0",
@@ -54,7 +49,6 @@ window._fb = {
   onSnapshot: (ref, cb, err) => ref.onSnapshot(cb, err),
 };
 </script>
-
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap');
 
@@ -952,12 +946,10 @@ window._fb = {
     color:var(--accent); font-weight:600; display:inline-flex; align-items:center; gap:5px;
   }
 </style>
-
 </head>
 <body>
 
 <!-- ── LOGIN SCREEN ── -->
-
 <div id="loginScreen" style="
   position:fixed;inset:0;z-index:9999;
   background:var(--bg);
@@ -988,7 +980,6 @@ window._fb = {
   <div id="loginStatus" style="margin-top:20px;font-size:12px;color:var(--text-muted)"></div>
 
   <!-- Contact -->
-
   <div style="
     position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
     text-align:center;white-space:nowrap;
@@ -1009,8 +1000,7 @@ window._fb = {
     </a>
   </div>
 
-<button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
-
+  <button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
 </div>
 
 <div class="header">
@@ -1041,68 +1031,61 @@ window._fb = {
 <div class="content">
 
   <!-- OVERVIEW -->
-
   <div class="section active" id="sec-overview">
     <!-- Next trip banner -->
     <div id="nextTripBanner"></div>
 
-```
-<!-- KPI strip -->
-<div class="kpi-strip" id="kpiStrip"></div>
+    <!-- KPI strip -->
+    <div class="kpi-strip" id="kpiStrip"></div>
 
-<!-- Payment progress -->
-<div class="chart-card" style="margin-bottom:14px" id="payCard"></div>
+    <!-- Payment progress -->
+    <div class="chart-card" style="margin-bottom:14px" id="payCard"></div>
 
-<!-- Monthly spend + Type split -->
-<div class="dash-row col2">
-  <div class="chart-card" id="monthlyChart"></div>
-  <div class="chart-card" id="typeSplit"></div>
-</div>
+    <!-- Monthly spend + Type split -->
+    <div class="dash-row col2">
+      <div class="chart-card" id="monthlyChart"></div>
+      <div class="chart-card" id="typeSplit"></div>
+    </div>
 
-<!-- Airline breakdown + Account usage -->
-<div class="dash-row col2">
-  <div class="chart-card" id="airlineChart"></div>
-  <div class="chart-card" id="accountChart"></div>
-</div>
+    <!-- Airline breakdown + Account usage -->
+    <div class="dash-row col2">
+      <div class="chart-card" id="airlineChart"></div>
+      <div class="chart-card" id="accountChart"></div>
+    </div>
 
-<!-- Month heat map + Insights row -->
-<div class="chart-card" style="margin-bottom:14px" id="heatMap"></div>
+    <!-- Month heat map + Insights row -->
+    <div class="chart-card" style="margin-bottom:14px" id="heatMap"></div>
 
-<!-- Insights pills -->
-<div id="insightsRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+    <!-- Insights pills -->
+    <div id="insightsRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
 
-<!-- Monthly report button -->
-<div style="text-align:center;margin-bottom:20px">
-  <button onclick="sendMonthlyReport()" style="
-    background:linear-gradient(135deg,#3b82f6,#6366f1);
-    border:none;border-radius:12px;color:white;
-    font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
-    padding:14px 28px;cursor:pointer;
-    box-shadow:0 4px 16px rgba(59,130,246,0.35);
-    transition:transform 0.15s,box-shadow 0.15s;
-  " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(59,130,246,0.45)'"
-     onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(59,130,246,0.35)'">
-    ✉️ إرسال تقرير شهري
-  </button>
-</div>
-```
-
+    <!-- Monthly report button -->
+    <div style="text-align:center;margin-bottom:20px">
+      <button onclick="sendMonthlyReport()" style="
+        background:linear-gradient(135deg,#3b82f6,#6366f1);
+        border:none;border-radius:12px;color:white;
+        font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+        padding:14px 28px;cursor:pointer;
+        box-shadow:0 4px 16px rgba(59,130,246,0.35);
+        transition:transform 0.15s,box-shadow 0.15s;
+      " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(59,130,246,0.45)'"
+         onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(59,130,246,0.35)'">
+        ✉️ إرسال تقرير شهري
+      </button>
+    </div>
   </div>
 
   <!-- UPCOMING -->
-
   <div class="section" id="sec-upcoming">
     <div id="upcomingList"></div>
   </div>
 
   <!-- TRIPS (paired) -->
-
   <div class="section" id="sec-trips">
     <div id="tripsList"></div>
   </div>
 
   <!-- ALL TICKETS -->
-
   <div class="section" id="sec-all">
     <div class="io-bar">
       <span style="font-size:11px;color:var(--text-muted);font-weight:700;align-self:center">تصدير:</span>
@@ -1163,157 +1146,231 @@ window._fb = {
   </div>
 
   <!-- ADD FORM -->
-
   <div class="section" id="sec-add">
+
+    <!-- AI IMPORT MODAL -->
+    <div id="aiImportModal" style="
+      display:none;position:fixed;inset:0;z-index:8000;
+      background:rgba(0,0,0,0.75);
+      align-items:center;justify-content:center;padding:20px;
+    " onclick="if(event.target===this)closeAIImport()">
+      <div style="
+        background:var(--surface);border:1px solid var(--border);
+        border-radius:16px;padding:24px;max-width:420px;width:100%;
+        font-family:'Cairo',sans-serif;direction:rtl;
+      ">
+        <div style="font-size:17px;font-weight:900;margin-bottom:6px">🤖 استيراد حجز بالذكاء الاصطناعي</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+          ارفع صورة أو screenshot لتأكيد الحجز وسيستخرج Claude البيانات تلقائياً
+        </div>
+
+        <!-- Upload zone -->
+        <label for="aiImageInput" id="aiDropZone" style="
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          gap:10px;border:2px dashed var(--border);border-radius:12px;
+          padding:28px 16px;cursor:pointer;transition:border-color 0.2s;
+          background:var(--surface2);margin-bottom:16px;
+        " onmouseover="this.style.borderColor='var(--accent)'"
+           onmouseout="this.style.borderColor='var(--border)'">
+          <div id="aiDropIcon" style="font-size:36px">📎</div>
+          <div id="aiDropLabel" style="font-size:13px;font-weight:700;color:var(--text)">اضغط لرفع صورة الحجز</div>
+          <div style="font-size:11px;color:var(--text-muted)">PNG، JPG، JPEG، WEBP</div>
+        </label>
+        <input type="file" id="aiImageInput" accept="image/*" style="display:none" onchange="onAIImageSelected(event)">
+
+        <!-- Preview -->
+        <div id="aiPreviewWrap" style="display:none;margin-bottom:16px;text-align:center">
+          <img id="aiPreviewImg" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--border)">
+        </div>
+
+        <!-- Status -->
+        <div id="aiStatus" style="font-size:12px;color:var(--text-muted);text-align:center;min-height:18px;margin-bottom:16px"></div>
+
+        <!-- Extracted data preview -->
+        <div id="aiExtracted" style="display:none;background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;line-height:1.9"></div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:10px">
+          <button id="aiAnalyzeBtn" onclick="analyzeBookingImage()" style="
+            flex:1;background:linear-gradient(135deg,#3b82f6,#6366f1);
+            border:none;border-radius:10px;color:white;
+            font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+            padding:12px;cursor:pointer;opacity:0.4;
+          " disabled>✨ استخراج البيانات</button>
+          <button onclick="closeAIImport()" style="
+            background:var(--surface2);border:1px solid var(--border);
+            border-radius:10px;color:var(--text-muted);
+            font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+            padding:12px 16px;cursor:pointer;
+          ">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
     <div class="form-card">
+      <!-- AI Import trigger -->
+      <div style="margin-bottom:20px;text-align:center">
+        <button onclick="openAIImport()" style="
+          display:inline-flex;align-items:center;gap:8px;
+          background:linear-gradient(135deg,#6366f1,#8b5cf6);
+          border:none;border-radius:12px;color:white;
+          font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+          padding:13px 28px;cursor:pointer;
+          box-shadow:0 4px 16px rgba(99,102,241,0.35);
+          transition:transform 0.15s,box-shadow 0.15s;
+        " onmouseover="this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.transform=''">
+          🤖 استيراد من صورة الحجز
+        </button>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
+          أو أدخل البيانات يدوياً أدناه
+        </div>
+      </div>
       <div class="form-title">➕ إضافة تذكرة جديدة</div>
       <div class="form-grid">
 
-```
-    <!-- ① رقم الرحلة + راتب شهر -->
-    <div class="trip-num-display">
-      <span class="tn-label">رقم الرحلة (تلقائي)</span>
-      <span class="tn-val" id="fTripNumDisplay">—</span>
+        <!-- ① رقم الرحلة + راتب شهر -->
+        <div class="trip-num-display">
+          <span class="tn-label">رقم الرحلة (تلقائي)</span>
+          <span class="tn-val" id="fTripNumDisplay">—</span>
+        </div>
+        <div class="form-group full">
+          <label>راتب شهر</label>
+          <select id="fSalaryMonth">
+            <option value="">— اختر الشهر —</option>
+            <option value="راتب يناير">يناير — January</option>
+            <option value="راتب فبراير">فبراير — February</option>
+            <option value="راتب مارس">مارس — March</option>
+            <option value="راتب أبريل">أبريل — April</option>
+            <option value="راتب مايو">مايو — May</option>
+            <option value="راتب يونيو">يونيو — June</option>
+            <option value="راتب يوليو">يوليو — July</option>
+            <option value="راتب أغسطس">أغسطس — August</option>
+            <option value="راتب سبتمبر">سبتمبر — September</option>
+            <option value="راتب أكتوبر">أكتوبر — October</option>
+            <option value="راتب نوفمبر">نوفمبر — November</option>
+            <option value="راتب ديسمبر">ديسمبر — December</option>
+          </select>
+        </div>
+
+        <hr class="form-divider">
+        <div class="form-section-label">🎫 معلومات التذكرة</div>
+
+        <!-- ② نوع التذكرة -->
+        <div class="form-group">
+          <label>نوع التذكرة</label>
+          <select id="fType">
+            <option value="go">🛫 ذهاب (RUH → JED)</option>
+            <option value="return">🛬 إياب (JED → RUH)</option>
+          </select>
+        </div>
+
+        <!-- ③ الخط الجوي -->
+        <div class="form-group">
+          <label>الخط الجوي</label>
+          <select id="fAirline">
+            <option value="طيران الرياض" style="color:#786793">🟣 طيران الرياض</option>
+            <option value="ناس"          style="color:#00b7ac">🔵 فلاي ناس</option>
+            <option value="اديل"         style="color:#cdde00">🟡 اديل</option>
+            <option value="سعودية"       style="color:#026634">🟢 السعودية</option>
+          </select>
+        </div>
+
+        <!-- ④ منصة الحجز -->
+        <div class="form-group">
+          <label>منصة الحجز</label>
+          <select id="fPlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
+        </div>
+
+        <!-- ⑤ PNR -->
+        <div class="form-group">
+          <label>PNR #</label>
+          <input type="text" id="fPNR" placeholder="ABCDEF" maxlength="10" style="text-transform:uppercase">
+        </div>
+
+        <!-- ⑥ تاريخ الشراء -->
+        <div class="form-group">
+          <label>تاريخ الشراء</label>
+          <input type="date" id="fPurchaseDate">
+        </div>
+
+        <hr class="form-divider">
+        <div class="form-section-label">✈ تفاصيل الرحلة</div>
+
+        <!-- ⑦ تاريخ الرحلة + وقت الرحلة -->
+        <div class="form-group">
+          <label>تاريخ الرحلة</label>
+          <input type="date" id="fFlightDate">
+        </div>
+        <div class="form-group">
+          <label>وقت الرحلة</label>
+          <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
+
+        <!-- ⑧ سعر التذكرة -->
+        <div class="form-group">
+          <label>سعر التذكرة (ريال)</label>
+          <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
+        </div>
+
+        <hr class="form-divider">
+        <div class="form-section-label">🚗 المواصلات</div>
+
+        <!-- ⑨ Rented Car -->
+        <div class="form-group full">
+          <label class="form-toggle">
+            <input type="checkbox" id="fRentedCar" onchange="updateFormTotal()">
+            <span>🚗 Rented Car?</span>
+          </label>
+        </div>
+
+        <!-- ⑩ المواصلات -->
+        <div class="form-group full">
+          <label>تكلفة المواصلات (ريال)</label>
+          <input type="number" id="fTransport" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
+        </div>
+
+        <hr class="form-divider">
+        <div class="form-section-label">💳 الحساب والسداد</div>
+
+        <!-- ⑪ السداد من حساب -->
+        <div class="form-group">
+          <label>السداد من حساب</label>
+          <select id="fPaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+        </div>
+
+        <!-- ⑫ يسترد إلى حساب -->
+        <div class="form-group">
+          <label>يسترد إلى حساب</label>
+          <select id="fRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+        </div>
+
+        <!-- ⑬ ملاحظات -->
+        <div class="form-group full">
+          <label>ملاحظات</label>
+          <textarea id="fNotes" placeholder="أي ملاحظات إضافية..."></textarea>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- ⑭ Paid? -->
+        <div class="form-group full">
+          <label class="form-toggle">
+            <input type="checkbox" id="fPaidStatus" checked>
+            <span>✅ Paid?</span>
+          </label>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- ⑮ Total -->
+        <div class="total-display">
+          <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
+          <span class="tot-val" id="fTotalDisplay">0 ريال</span>
+        </div>
+
+      </div>
+      <button class="btn-submit" onclick="addTicket()" style="margin-top:16px">حفظ التذكرة</button>
     </div>
-    <div class="form-group full">
-      <label>راتب شهر</label>
-      <select id="fSalaryMonth">
-        <option value="">— اختر الشهر —</option>
-        <option value="راتب يناير">يناير — January</option>
-        <option value="راتب فبراير">فبراير — February</option>
-        <option value="راتب مارس">مارس — March</option>
-        <option value="راتب أبريل">أبريل — April</option>
-        <option value="راتب مايو">مايو — May</option>
-        <option value="راتب يونيو">يونيو — June</option>
-        <option value="راتب يوليو">يوليو — July</option>
-        <option value="راتب أغسطس">أغسطس — August</option>
-        <option value="راتب سبتمبر">سبتمبر — September</option>
-        <option value="راتب أكتوبر">أكتوبر — October</option>
-        <option value="راتب نوفمبر">نوفمبر — November</option>
-        <option value="راتب ديسمبر">ديسمبر — December</option>
-      </select>
-    </div>
-
-    <hr class="form-divider">
-    <div class="form-section-label">🎫 معلومات التذكرة</div>
-
-    <!-- ② نوع التذكرة -->
-    <div class="form-group">
-      <label>نوع التذكرة</label>
-      <select id="fType">
-        <option value="go">🛫 ذهاب (RUH → JED)</option>
-        <option value="return">🛬 إياب (JED → RUH)</option>
-      </select>
-    </div>
-
-    <!-- ③ الخط الجوي -->
-    <div class="form-group">
-      <label>الخط الجوي</label>
-      <select id="fAirline">
-        <option value="طيران الرياض" style="color:#786793">🟣 طيران الرياض</option>
-        <option value="ناس"          style="color:#00b7ac">🔵 فلاي ناس</option>
-        <option value="اديل"         style="color:#cdde00">🟡 اديل</option>
-        <option value="سعودية"       style="color:#026634">🟢 السعودية</option>
-      </select>
-    </div>
-
-    <!-- ④ منصة الحجز -->
-    <div class="form-group">
-      <label>منصة الحجز</label>
-      <select id="fPlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
-    </div>
-
-    <!-- ⑤ PNR -->
-    <div class="form-group">
-      <label>PNR #</label>
-      <input type="text" id="fPNR" placeholder="ABCDEF" maxlength="10" style="text-transform:uppercase">
-    </div>
-
-    <!-- ⑥ تاريخ الشراء -->
-    <div class="form-group">
-      <label>تاريخ الشراء</label>
-      <input type="date" id="fPurchaseDate">
-    </div>
-
-    <hr class="form-divider">
-    <div class="form-section-label">✈ تفاصيل الرحلة</div>
-
-    <!-- ⑦ تاريخ الرحلة + وقت الرحلة -->
-    <div class="form-group">
-      <label>تاريخ الرحلة</label>
-      <input type="date" id="fFlightDate">
-    </div>
-    <div class="form-group">
-      <label>وقت الرحلة</label>
-      <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
-
-    <!-- ⑧ سعر التذكرة -->
-    <div class="form-group">
-      <label>سعر التذكرة (ريال)</label>
-      <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
-    </div>
-
-    <hr class="form-divider">
-    <div class="form-section-label">🚗 المواصلات</div>
-
-    <!-- ⑨ Rented Car -->
-    <div class="form-group full">
-      <label class="form-toggle">
-        <input type="checkbox" id="fRentedCar" onchange="updateFormTotal()">
-        <span>🚗 Rented Car?</span>
-      </label>
-    </div>
-
-    <!-- ⑩ المواصلات -->
-    <div class="form-group full">
-      <label>تكلفة المواصلات (ريال)</label>
-      <input type="number" id="fTransport" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
-    </div>
-
-    <hr class="form-divider">
-    <div class="form-section-label">💳 الحساب والسداد</div>
-
-    <!-- ⑪ السداد من حساب -->
-    <div class="form-group">
-      <label>السداد من حساب</label>
-      <select id="fPaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-    </div>
-
-    <!-- ⑫ يسترد إلى حساب -->
-    <div class="form-group">
-      <label>يسترد إلى حساب</label>
-      <select id="fRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-    </div>
-
-    <!-- ⑬ ملاحظات -->
-    <div class="form-group full">
-      <label>ملاحظات</label>
-      <textarea id="fNotes" placeholder="أي ملاحظات إضافية..."></textarea>
-    </div>
-
-    <hr class="form-divider">
-
-    <!-- ⑭ Paid? -->
-    <div class="form-group full">
-      <label class="form-toggle">
-        <input type="checkbox" id="fPaidStatus" checked>
-        <span>✅ Paid?</span>
-      </label>
-    </div>
-
-    <hr class="form-divider">
-
-    <!-- ⑮ Total -->
-    <div class="total-display">
-      <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
-      <span class="tot-val" id="fTotalDisplay">0 ريال</span>
-    </div>
-
-  </div>
-  <button class="btn-submit" onclick="addTicket()" style="margin-top:16px">حفظ التذكرة</button>
-</div>
-```
-
   </div>
 
 </div>
@@ -1327,149 +1384,146 @@ window._fb = {
     <input type="hidden" id="eId">
     <div class="form-grid">
 
-```
-  <!-- رقم الرحلة (عرض فقط) + راتب شهر -->
-  <div class="trip-num-display">
-    <span class="tn-label">رقم الرحلة</span>
-    <span class="tn-val" id="eTripNumDisplay">—</span>
-  </div>
-  <div class="form-group full">
-    <label>راتب شهر</label>
-    <select id="eSalaryMonth">
-      <option value="">— اختر الشهر —</option>
-      <option value="راتب يناير">يناير — January</option>
-      <option value="راتب فبراير">فبراير — February</option>
-      <option value="راتب مارس">مارس — March</option>
-      <option value="راتب أبريل">أبريل — April</option>
-      <option value="راتب مايو">مايو — May</option>
-      <option value="راتب يونيو">يونيو — June</option>
-      <option value="راتب يوليو">يوليو — July</option>
-      <option value="راتب أغسطس">أغسطس — August</option>
-      <option value="راتب سبتمبر">سبتمبر — September</option>
-      <option value="راتب أكتوبر">أكتوبر — October</option>
-      <option value="راتب نوفمبر">نوفمبر — November</option>
-      <option value="راتب ديسمبر">ديسمبر — December</option>
-    </select>
-  </div>
+      <!-- رقم الرحلة (عرض فقط) + راتب شهر -->
+      <div class="trip-num-display">
+        <span class="tn-label">رقم الرحلة</span>
+        <span class="tn-val" id="eTripNumDisplay">—</span>
+      </div>
+      <div class="form-group full">
+        <label>راتب شهر</label>
+        <select id="eSalaryMonth">
+          <option value="">— اختر الشهر —</option>
+          <option value="راتب يناير">يناير — January</option>
+          <option value="راتب فبراير">فبراير — February</option>
+          <option value="راتب مارس">مارس — March</option>
+          <option value="راتب أبريل">أبريل — April</option>
+          <option value="راتب مايو">مايو — May</option>
+          <option value="راتب يونيو">يونيو — June</option>
+          <option value="راتب يوليو">يوليو — July</option>
+          <option value="راتب أغسطس">أغسطس — August</option>
+          <option value="راتب سبتمبر">سبتمبر — September</option>
+          <option value="راتب أكتوبر">أكتوبر — October</option>
+          <option value="راتب نوفمبر">نوفمبر — November</option>
+          <option value="راتب ديسمبر">ديسمبر — December</option>
+        </select>
+      </div>
 
-  <hr class="form-divider">
-  <div class="form-section-label">🎫 معلومات التذكرة</div>
+      <hr class="form-divider">
+      <div class="form-section-label">🎫 معلومات التذكرة</div>
 
-  <div class="form-group">
-    <label>نوع التذكرة</label>
-    <select id="eType">
-      <option value="go">🛫 ذهاب (RUH → JED)</option>
-      <option value="return">🛬 إياب (JED → RUH)</option>
-    </select>
-  </div>
+      <div class="form-group">
+        <label>نوع التذكرة</label>
+        <select id="eType">
+          <option value="go">🛫 ذهاب (RUH → JED)</option>
+          <option value="return">🛬 إياب (JED → RUH)</option>
+        </select>
+      </div>
 
-  <div class="form-group">
-    <label>الخط الجوي</label>
-    <select id="eAirline">
-      <option value="طيران الرياض">🟣 طيران الرياض</option>
-      <option value="ناس">🔵 فلاي ناس</option>
-      <option value="اديل">🟡 اديل</option>
-      <option value="سعودية">🟢 السعودية</option>
-    </select>
-  </div>
+      <div class="form-group">
+        <label>الخط الجوي</label>
+        <select id="eAirline">
+          <option value="طيران الرياض">🟣 طيران الرياض</option>
+          <option value="ناس">🔵 فلاي ناس</option>
+          <option value="اديل">🟡 اديل</option>
+          <option value="سعودية">🟢 السعودية</option>
+        </select>
+      </div>
 
-  <div class="form-group">
-    <label>منصة الحجز</label>
-    <select id="ePlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
-  </div>
+      <div class="form-group">
+        <label>منصة الحجز</label>
+        <select id="ePlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
+      </div>
 
-  <div class="form-group">
-    <label>PNR #</label>
-    <input type="text" id="ePNR" maxlength="10" style="text-transform:uppercase" placeholder="ABCDEF">
-  </div>
+      <div class="form-group">
+        <label>PNR #</label>
+        <input type="text" id="ePNR" maxlength="10" style="text-transform:uppercase" placeholder="ABCDEF">
+      </div>
 
-  <div class="form-group">
-    <label>تاريخ الشراء</label>
-    <input type="date" id="ePurchaseDate">
-  </div>
+      <div class="form-group">
+        <label>تاريخ الشراء</label>
+        <input type="date" id="ePurchaseDate">
+      </div>
 
-  <hr class="form-divider">
-  <div class="form-section-label">✈ تفاصيل الرحلة</div>
+      <hr class="form-divider">
+      <div class="form-section-label">✈ تفاصيل الرحلة</div>
 
-  <div class="form-group">
-    <label>تاريخ الرحلة</label>
-    <input type="date" id="eFlightDate">
-  </div>
-  <div class="form-group">
-    <label>وقت الرحلة</label>
-    <input type="time" id="eFlightTime" placeholder="مثال: 01:00">
-  </div>
+      <div class="form-group">
+        <label>تاريخ الرحلة</label>
+        <input type="date" id="eFlightDate">
+      </div>
+      <div class="form-group">
+        <label>وقت الرحلة</label>
+        <input type="time" id="eFlightTime" placeholder="مثال: 01:00">
+      </div>
 
-  <div class="form-group">
-    <label>سعر التذكرة (ريال)</label>
-    <input type="number" id="ePrice" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
-  </div>
+      <div class="form-group">
+        <label>سعر التذكرة (ريال)</label>
+        <input type="number" id="ePrice" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
+      </div>
 
-  <hr class="form-divider">
-  <div class="form-section-label">🚗 المواصلات</div>
+      <hr class="form-divider">
+      <div class="form-section-label">🚗 المواصلات</div>
 
-  <div class="form-group full">
-    <label class="form-toggle">
-      <input type="checkbox" id="eRentedCar" onchange="updateEditTotal()">
-      <span>🚗 Rented Car?</span>
-    </label>
-  </div>
+      <div class="form-group full">
+        <label class="form-toggle">
+          <input type="checkbox" id="eRentedCar" onchange="updateEditTotal()">
+          <span>🚗 Rented Car?</span>
+        </label>
+      </div>
 
-  <div class="form-group full">
-    <label>تكلفة المواصلات (ريال)</label>
-    <input type="number" id="eTransport" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
-  </div>
+      <div class="form-group full">
+        <label>تكلفة المواصلات (ريال)</label>
+        <input type="number" id="eTransport" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
+      </div>
 
-  <hr class="form-divider">
-  <div class="form-section-label">💳 الحساب والسداد</div>
+      <hr class="form-divider">
+      <div class="form-section-label">💳 الحساب والسداد</div>
 
-  <div class="form-group">
-    <label>السداد من حساب</label>
-    <select id="ePaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-  </div>
+      <div class="form-group">
+        <label>السداد من حساب</label>
+        <select id="ePaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+      </div>
 
-  <div class="form-group">
-    <label>يسترد إلى حساب</label>
-    <select id="eRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-  </div>
+      <div class="form-group">
+        <label>يسترد إلى حساب</label>
+        <select id="eRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+      </div>
 
-  <div class="form-group full">
-    <label>ملاحظات</label>
-    <textarea id="eNotes" placeholder="أي ملاحظات إضافية..."></textarea>
-  </div>
+      <div class="form-group full">
+        <label>ملاحظات</label>
+        <textarea id="eNotes" placeholder="أي ملاحظات إضافية..."></textarea>
+      </div>
 
-  <hr class="form-divider">
+      <hr class="form-divider">
 
-  <div class="form-group full">
-    <label class="form-toggle">
-      <input type="checkbox" id="ePaid">
-      <span>✅ Paid?</span>
-    </label>
-  </div>
+      <div class="form-group full">
+        <label class="form-toggle">
+          <input type="checkbox" id="ePaid">
+          <span>✅ Paid?</span>
+        </label>
+      </div>
 
-  <hr class="form-divider">
+      <hr class="form-divider">
 
-  <!-- ربط بتذكرة أخرى -->
-  <div class="form-group full">
-    <label>🔗 ربط بتذكرة أخرى <span style="color:var(--text-muted);font-weight:400;font-size:11px">(ذهاب ↔ إياب)</span></label>
-    <select id="eLinkedId">
-      <option value="">— بدون ربط —</option>
-    </select>
-  </div>
+      <!-- ربط بتذكرة أخرى -->
+      <div class="form-group full">
+        <label>🔗 ربط بتذكرة أخرى <span style="color:var(--text-muted);font-weight:400;font-size:11px">(ذهاب ↔ إياب)</span></label>
+        <select id="eLinkedId">
+          <option value="">— بدون ربط —</option>
+        </select>
+      </div>
 
-  <!-- Total -->
-  <div class="total-display">
-    <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
-    <span class="tot-val" id="eTotalDisplay">0 ريال</span>
-  </div>
+      <!-- Total -->
+      <div class="total-display">
+        <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
+        <span class="tot-val" id="eTotalDisplay">0 ريال</span>
+      </div>
 
-</div>
-<div class="modal-footer">
-  <button class="btn-save" onclick="saveEdit()">💾 حفظ التعديلات</button>
-  <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
-</div>
-```
-
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" onclick="saveEdit()">💾 حفظ التعديلات</button>
+      <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -1497,7 +1551,9 @@ function userDocRef(uid) {
 // Save to localStorage cache + Firestore
 function save(data) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
-  if (_currentUid) {
+  // Only sync to Firestore if the currently signed-in user matches the stored uid
+  const storedUid = localStorage.getItem('ruh_jed_uid');
+  if (_currentUid && _currentUid === storedUid) {
     userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now() })
       .catch(e => console.warn('Firestore write failed:', e));
   }
@@ -1589,13 +1645,31 @@ function handleAuth() {
 function initFirebase() {
   const tryInit = () => {
     if (!window._fb || !_fbAuth) { setTimeout(tryInit, 150); return; }
+
+    let lastUid = localStorage.getItem('ruh_jed_uid');
+
     _fbAuth.onAuthStateChanged(user => {
       if (user) {
+        // If a different user signed in, clear previous user's localStorage cache
+        if (lastUid && lastUid !== user.uid) {
+          localStorage.removeItem(STORE_KEY);
+          localStorage.removeItem('ruh_jed_uid');
+          tickets = [];
+        }
+
+        // Save current uid
+        localStorage.setItem('ruh_jed_uid', user.uid);
+        lastUid = user.uid;
+
         _currentUid = user.uid;
         updateAuthUI(user);
         showLoginScreen(false);
+
+        // Show cached data only if it belongs to this user
         tickets = load();
         renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+
+        // Sync from Firestore (overwrites with real data)
         subscribeFirestore(user.uid);
         toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
       } else {
@@ -2351,6 +2425,176 @@ function initAddForm() {
   document.getElementById('fTripNumDisplay').textContent = maxNum + 1;
   updateFormTotal();
   rebuildSelectLists();
+}
+
+// ─── AI BOOKING IMPORT ───
+let _aiImageBase64 = null;
+let _aiImageType   = null;
+
+function openAIImport() {
+  document.getElementById('aiImportModal').style.display = 'flex';
+  _aiImageBase64 = null;
+  _aiImageType   = null;
+  document.getElementById('aiDropIcon').textContent   = '📎';
+  document.getElementById('aiDropLabel').textContent  = 'اضغط لرفع صورة الحجز';
+  document.getElementById('aiStatus').textContent     = '';
+  document.getElementById('aiPreviewWrap').style.display  = 'none';
+  document.getElementById('aiExtracted').style.display   = 'none';
+  document.getElementById('aiAnalyzeBtn').disabled        = true;
+  document.getElementById('aiAnalyzeBtn').style.opacity   = '0.4';
+  document.getElementById('aiImageInput').value = '';
+}
+
+function closeAIImport() {
+  document.getElementById('aiImportModal').style.display = 'none';
+}
+
+function onAIImageSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const status = document.getElementById('aiStatus');
+  status.textContent = '⏳ جاري تحميل الصورة...';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    _aiImageType   = file.type || 'image/jpeg';
+    _aiImageBase64 = dataUrl.split(',')[1];
+
+    // Show preview
+    document.getElementById('aiPreviewImg').src = dataUrl;
+    document.getElementById('aiPreviewWrap').style.display = 'block';
+    document.getElementById('aiDropIcon').textContent  = '✅';
+    document.getElementById('aiDropLabel').textContent = file.name;
+    document.getElementById('aiExtracted').style.display = 'none';
+
+    // Enable analyze button
+    const btn = document.getElementById('aiAnalyzeBtn');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    status.textContent = 'الصورة جاهزة — اضغط "استخراج البيانات"';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeBookingImage() {
+  if (!_aiImageBase64) return;
+
+  const status  = document.getElementById('aiStatus');
+  const btn     = document.getElementById('aiAnalyzeBtn');
+  const extracted = document.getElementById('aiExtracted');
+
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  btn.textContent   = '⏳ جاري التحليل...';
+  status.textContent = '';
+  extracted.style.display = 'none';
+
+  const prompt = `أنت مساعد متخصص في استخراج بيانات تذاكر الطيران من صور تأكيدات الحجز.
+
+حلل الصورة المرفقة واستخرج المعلومات التالية بدقة. أجب فقط بـ JSON صالح بدون أي نص إضافي:
+
+{
+  "ticketType": "go أو return — go = رحلة من الرياض لجدة، return = رحلة من جدة للرياض",
+  "flightDate": "YYYY-MM-DD",
+  "flightTime": "HH:MM بصيغة 24 ساعة",
+  "airline": "اسم الخط الجوي بالعربية: سعودية أو ناس أو اديل أو طيران الرياض",
+  "pnr": "رقم الحجز PNR إذا وجد",
+  "ticketPrice": رقم السعر بدون عملة,
+  "purchaseDate": "YYYY-MM-DD إذا وجد",
+  "notes": "أي ملاحظات مفيدة مثل رقم المقعد أو الرحلة",
+  "confidence": "high أو medium أو low — مدى ثقتك في البيانات"
+}
+
+إذا لم تتمكن من قراءة قيمة معينة، ضع null. لا تخترع بيانات غير موجودة في الصورة.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: _aiImageType, data: _aiImageBase64 }
+            },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const raw  = data.content?.[0]?.text || '';
+
+    // Parse JSON from response
+    let parsed;
+    try {
+      const clean = raw.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      status.textContent = '❌ تعذّر تحليل الصورة — تأكد أنها صورة تذكرة واضحة';
+      btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '✨ استخراج البيانات';
+      return;
+    }
+
+    // Show extracted data
+    const confidence = parsed.confidence === 'high' ? '🟢 عالية' : parsed.confidence === 'medium' ? '🟡 متوسطة' : '🔴 منخفضة';
+    const typeLabel  = parsed.ticketType === 'go' ? '🛫 ذهاب (RUH → JED)' : '🛬 إياب (JED → RUH)';
+
+    extracted.style.display = 'block';
+    extracted.innerHTML = `
+      <div style="font-weight:900;font-size:13px;margin-bottom:10px;color:var(--accent)">📋 البيانات المستخرجة</div>
+      ${parsed.ticketType   ? `<div>النوع: <strong>${typeLabel}</strong></div>` : ''}
+      ${parsed.flightDate   ? `<div>تاريخ الرحلة: <strong>${parsed.flightDate}</strong></div>` : ''}
+      ${parsed.flightTime   ? `<div>وقت الرحلة: <strong>${parsed.flightTime}</strong></div>` : ''}
+      ${parsed.airline      ? `<div>الخط الجوي: <strong>${parsed.airline}</strong></div>` : ''}
+      ${parsed.pnr          ? `<div>PNR: <strong style="font-family:monospace">${parsed.pnr}</strong></div>` : ''}
+      ${parsed.ticketPrice  ? `<div>السعر: <strong>${fmtNum(parsed.ticketPrice)} ريال</strong></div>` : ''}
+      ${parsed.purchaseDate ? `<div>تاريخ الشراء: <strong>${parsed.purchaseDate}</strong></div>` : ''}
+      ${parsed.notes        ? `<div>ملاحظات: <strong>${parsed.notes}</strong></div>` : ''}
+      <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">دقة الاستخراج: ${confidence}</div>
+      <button onclick="applyAIBooking(${JSON.stringify(parsed).replace(/"/g,'&quot;')})" style="
+        width:100%;margin-top:12px;background:var(--paid);border:none;border-radius:8px;
+        color:white;font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;
+        padding:10px;cursor:pointer;
+      ">✅ تطبيق البيانات على النموذج</button>
+    `;
+
+    status.textContent = '✅ تم استخراج البيانات — راجعها وطبّقها';
+
+  } catch(err) {
+    console.error(err);
+    status.textContent = '❌ خطأ في الاتصال — تحقق من الإنترنت وحاول مجدداً';
+  }
+
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.textContent = '✨ استخراج البيانات';
+}
+
+function applyAIBooking(data) {
+  // Fill the add form with extracted data
+  if (data.ticketType)   document.getElementById('fType').value        = data.ticketType;
+  if (data.flightDate)   document.getElementById('fFlightDate').value  = data.flightDate;
+  if (data.flightTime)   document.getElementById('fFlightTime').value  = data.flightTime;
+  if (data.purchaseDate) document.getElementById('fPurchaseDate').value= data.purchaseDate;
+  if (data.ticketPrice)  { document.getElementById('fPrice').value = data.ticketPrice; updateFormTotal(); }
+  if (data.pnr)          document.getElementById('fPNR').value         = data.pnr.toUpperCase();
+  if (data.notes)        document.getElementById('fNotes').value       = data.notes;
+  if (data.airline) {
+    const airlineMap = { 'سعودية':'سعودية','ناس':'ناس','اديل':'اديل','طيران الرياض':'طيران الرياض' };
+    const mapped = Object.keys(airlineMap).find(k => data.airline.includes(k));
+    if (mapped) document.getElementById('fAirline').value = mapped;
+  }
+
+  closeAIImport();
+  toast('✅ تم تطبيق بيانات الحجز — راجع وأضف التذكرة');
 }
 
 // ─── ADD TICKET ───
@@ -3190,7 +3434,6 @@ function exportPDF() {
     @page { margin:15mm; size:A4 landscape; }
   }
 </style>
-
 </head>
 <body>
 <div class="header">
@@ -3664,6 +3907,5 @@ renderUpcoming();
   }
 })();
 </script>
-
 </body>
 </html>
