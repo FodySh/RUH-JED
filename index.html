@@ -1842,36 +1842,34 @@ function getPlatforms() {
   try { return JSON.parse(localStorage.getItem(LS_PLATFORMS)) || DEFAULT_PLATFORMS.slice(); } catch(e){ return DEFAULT_PLATFORMS.slice(); }
 }
 
-// Save accounts locally + push to Firebase
+// Save accounts locally + push to Firebase under users/{uid}/data/accounts
 function saveAccounts(list) {
   localStorage.setItem(LS_ACCOUNTS, JSON.stringify(list));
   if (_currentUid) {
-    userDocRef(_currentUid).collection
-      ? _fbDb.collection('users').doc(_currentUid).collection('settings').doc('accounts')
-             .set({ list, updatedAt: Date.now() }).catch(()=>{})
-      : null;
-    // Simpler: store in same user doc under a separate key
     _fbDb.collection('users').doc(_currentUid)
-         .set({ accounts: list }, { merge: true }).catch(()=>{});
+         .collection('data').doc('accounts')
+         .set({ list, updatedAt: Date.now() })
+         .catch(e => console.warn('Firestore accounts write failed:', e));
   }
 }
 function savePlatforms(p) { localStorage.setItem(LS_PLATFORMS, JSON.stringify(p)); }
 
 // Load accounts from Firestore into localStorage
 function loadAccountsFromFirestore(uid) {
-  _fbDb.collection('users').doc(uid).get().then(snap => {
+  _fbDb.collection('users').doc(uid)
+       .collection('data').doc('accounts')
+       .get().then(snap => {
     if (snap.exists) {
       const data = snap.data();
-      if (Array.isArray(data.accounts)) {
-        localStorage.setItem(LS_ACCOUNTS, JSON.stringify(data.accounts));
+      if (Array.isArray(data.list)) {
+        localStorage.setItem(LS_ACCOUNTS, JSON.stringify(data.list));
         rebuildSelectLists();
-        // Re-render accounts panel if open
         if (document.getElementById('sec-accounts')?.classList.contains('active')) {
           renderAccounts();
         }
       }
     }
-  }).catch(()=>{});
+  }).catch(e => console.warn('Firestore accounts read failed:', e));
 }
 
 // Build <select> options for account lists
