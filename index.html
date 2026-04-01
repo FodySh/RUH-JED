@@ -6,7 +6,7 @@
 <title>رحلاتي RUH ↔ JED</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<!-- Firebase Compat (works on iOS Safari without module support) -->
+<!-- Firebase Compat SDK — Auth + Firestore -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -24,35 +24,8 @@ const _fbApp  = firebase.initializeApp(_firebaseConfig);
 const _fbAuth = firebase.auth();
 const _fbDb   = firebase.firestore();
 
-// Use SESSION persistence instead of LOCAL to avoid iOS sessionStorage errors
-_fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {
-  // Fallback silently if persistence setting fails
-});
-
 const _googleProvider = new firebase.auth.GoogleAuthProvider();
 _googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-// Expose compat API in same shape our code expects
-window._fb = {
-  auth:              _fbAuth,
-  db:                _fbDb,
-  provider:          _googleProvider,
-  // compat wrappers
-  signInWithPopup:   (auth, provider) => auth.signInWithPopup(provider),
-  signOut:           (auth)           => auth.signOut(),
-  onAuthStateChanged:(auth, cb)       => auth.onAuthStateChanged(cb),
-  doc:               (db, ...path)    => {
-    // path: ['users', uid, 'data', 'tickets']
-    let ref = db;
-    for (let i = 0; i < path.length; i += 2) {
-      ref = ref.collection(path[i]).doc(path[i+1]);
-    }
-    return ref;
-  },
-  setDoc:  (ref, data)  => ref.set(data),
-  getDoc:  (ref)        => ref.get(),
-  onSnapshot: (ref, cb, err) => ref.onSnapshot(cb, err),
-};
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap');
@@ -1576,15 +1549,14 @@ const STORE_KEY = 'ruh_jed_v3';
 let _currentUid  = null;
 let _unsubscribe = null;
 
+// ─── AUTH — Firebase Auth (popup) ───
+
 function userDocRef(uid) {
-  const { db } = window._fb;
-  return db.collection('users').doc(uid).collection('data').doc('tickets');
+  return _fbDb.collection('users').doc(uid).collection('data').doc('tickets');
 }
 
-// Save to localStorage cache + Firestore
 function save(data) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
-  // Only sync to Firestore if the currently signed-in user matches the stored uid
   const storedUid = localStorage.getItem('ruh_jed_uid');
   if (_currentUid && _currentUid === storedUid) {
     userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now() })
@@ -1592,19 +1564,14 @@ function save(data) {
   }
 }
 
-// Load from localStorage cache (used while waiting for Firestore)
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      const stored    = JSON.parse(raw);
-      return stored;
-    }
+    if (raw) return JSON.parse(raw);
   } catch(e) {}
-  return [];
+  return JSON.parse(JSON.stringify(EXCEL_DATA));
 }
 
-// Apply data received from Firestore
 function applyRemoteData(remoteTickets) {
   if (!Array.isArray(remoteTickets)) return;
   tickets = remoteTickets;
@@ -1612,19 +1579,16 @@ function applyRemoteData(remoteTickets) {
   renderAll(); renderOverview(); renderUpcoming(); renderTrips();
 }
 
-// Real-time Firestore listener
 function subscribeFirestore(uid) {
   if (_unsubscribe) _unsubscribe();
   _unsubscribe = userDocRef(uid).onSnapshot(snap => {
     if (snap.exists) {
-      const data = snap.data();
-      if (Array.isArray(data.tickets) && data.tickets.length) {
-        applyRemoteData(data.tickets);
-      }
+      const d = snap.data();
+      if (Array.isArray(d.tickets) && d.tickets.length) applyRemoteData(d.tickets);
     } else {
-      // New user — start empty
-      tickets = [];
-      renderAll(); renderOverview();
+      tickets = JSON.parse(JSON.stringify(EXCEL_DATA));
+      save(tickets);
+      renderAll(); renderOverview(); renderUpcoming(); renderTrips();
     }
   }, err => console.warn('Firestore error:', err));
 }
@@ -1635,17 +1599,16 @@ function showLoginScreen(show) {
 }
 
 function updateAuthUI(user) {
-  const btn   = document.getElementById('authBtn');
-  const label = document.getElementById('authLabel');
-  const avatar= document.getElementById('authAvatar');
-  const img   = document.getElementById('authAvatarImg');
+  const btn    = document.getElementById('authBtn');
+  const label  = document.getElementById('authLabel');
+  const avatar = document.getElementById('authAvatar');
+  const img    = document.getElementById('authAvatarImg');
   if (!btn) return;
   if (user) {
     btn.style.display = 'flex';
     label.textContent = '🚪 خروج';
     if (user.photoURL) { img.src = user.photoURL; avatar.style.display = 'inline-block'; }
     btn.style.borderColor = 'var(--unpaid)';
-    btn.title = 'تسجيل خروج';
   } else {
     btn.style.display    = 'none';
     avatar.style.display = 'none';
@@ -1658,63 +1621,47 @@ function handleAuth() {
     if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
     _fbAuth.signOut().then(() => {
       _currentUid = null;
+      localStorage.removeItem('ruh_jed_uid');
       tickets = [];
       updateAuthUI(null);
       showLoginScreen(true);
-      renderAll(); renderOverview();
       toast('👋 تم تسجيل الخروج');
     });
   } else {
     if (ls) ls.textContent = '⏳ جاري تسجيل الدخول...';
-    _fbAuth.signInWithPopup(window._fb.provider)
+    _fbAuth.signInWithPopup(_googleProvider)
       .then(() => { if (ls) ls.textContent = ''; })
       .catch(err => {
-        console.error('Auth error:', err);
-        if (ls) ls.textContent = '❌ فشل — حاول مرة ثانية';
+        console.error(err);
+        if (ls) ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية');
       });
   }
 }
 
 function initFirebase() {
-  const tryInit = () => {
-    if (!window._fb || !_fbAuth) { setTimeout(tryInit, 150); return; }
-
-    let lastUid = localStorage.getItem('ruh_jed_uid');
-
-    _fbAuth.onAuthStateChanged(user => {
-      if (user) {
-        // If a different user signed in, clear previous user's localStorage cache
-        if (lastUid && lastUid !== user.uid) {
-          localStorage.removeItem(STORE_KEY);
-          localStorage.removeItem('ruh_jed_uid');
-          tickets = [];
-        }
-
-        // Save current uid
-        localStorage.setItem('ruh_jed_uid', user.uid);
-        lastUid = user.uid;
-
-        _currentUid = user.uid;
-        updateAuthUI(user);
-        showLoginScreen(false);
-
-        // Clear cache if different user
-        tickets = load();
-        renderAll(); renderOverview(); renderUpcoming(); renderTrips();
-
-        // Sync tickets + accounts from Firestore
-        subscribeFirestore(user.uid);
-        loadAccountsFromFirestore(user.uid);
-        toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
-      } else {
-        _currentUid = null;
+  _fbAuth.onAuthStateChanged(user => {
+    if (user) {
+      const lastUid = localStorage.getItem('ruh_jed_uid');
+      if (lastUid && lastUid !== user.uid) {
+        localStorage.removeItem(STORE_KEY);
+        localStorage.removeItem(LS_ACCOUNTS);
         tickets = [];
-        updateAuthUI(null);
-        showLoginScreen(true);
       }
-    });
-  };
-  tryInit();
+      localStorage.setItem('ruh_jed_uid', user.uid);
+      _currentUid = user.uid;
+      updateAuthUI(user);
+      showLoginScreen(false);
+      tickets = load();
+      renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+      subscribeFirestore(user.uid);
+      loadAccountsFromFirestore(user.uid);
+      toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
+    } else {
+      _currentUid = null;
+      updateAuthUI(null);
+      showLoginScreen(true);
+    }
+  });
 }
 
 function nextId(data) {
