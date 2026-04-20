@@ -1270,6 +1270,12 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
           <input type="text" id="fPNR" placeholder="ABCDEF" maxlength="10" style="text-transform:uppercase">
         </div>
 
+        <!-- ⑤b رقم الرحلة -->
+        <div class="form-group">
+          <label>رقم الرحلة ✈ <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
+          <input type="text" id="fFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
+        </div>
+
         <!-- ⑥ تاريخ الشراء -->
         <div class="form-group">
           <label>تاريخ الشراء</label>
@@ -1447,6 +1453,11 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
       <div class="form-group">
         <label>PNR #</label>
         <input type="text" id="ePNR" maxlength="10" style="text-transform:uppercase" placeholder="ABCDEF">
+      </div>
+
+      <div class="form-group">
+        <label>رقم الرحلة ✈ <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
+        <input type="text" id="eFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
       </div>
 
       <div class="form-group">
@@ -2750,7 +2761,7 @@ function addTicket() {
   save(tickets);
   toast('✅ تمت إضافة التذكرة — رحلة ' + newNum);
   // reset form
-  ['fFlightDate','fFlightTime','fPurchaseDate','fPrice','fPNR','fNotes','fTransport'].forEach(id => document.getElementById(id).value = '');
+  ['fFlightDate','fFlightTime','fPurchaseDate','fPrice','fPNR','fFlightNumber','fNotes','fTransport'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('fSalaryMonth').selectedIndex = 0;
   document.getElementById('fRentedCar').checked = false;
   document.getElementById('fPaidStatus').checked = true;
@@ -3005,7 +3016,8 @@ function openEditModal(id) {
   document.getElementById('eFlightTime').value  = t.flightTime || '';
   document.getElementById('ePurchaseDate').value= t.purchaseDate || '';
   document.getElementById('ePrice').value       = t.ticketPrice || '';
-  document.getElementById('ePNR').value         = t.pnr || '';
+  document.getElementById('ePNR').value          = t.pnr || '';
+  document.getElementById('eFlightNumber').value = t.flightNumber || '';
   document.getElementById('ePaid').checked      = !!t.paid;
   document.getElementById('ePaidBy').value      = t.paidBy || getAccounts()[0] || '';
   document.getElementById('eRefundTo').value    = t.refundTo || getAccounts()[0] || '';
@@ -3050,6 +3062,7 @@ function saveEdit() {
     purchaseDate: document.getElementById('ePurchaseDate').value,
     ticketPrice:  parseFloat(document.getElementById('ePrice').value) || 0,
     pnr:          document.getElementById('ePNR').value.toUpperCase().trim(),
+    flightNumber: (document.getElementById('eFlightNumber')?.value || '').toUpperCase().trim(),
     paid:         document.getElementById('ePaid').checked,
     paidBy:       document.getElementById('ePaidBy').value,
     refundTo:     document.getElementById('eRefundTo').value,
