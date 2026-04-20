@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>رحلاتي RUH ↔ JED</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+      var PROXY_URL = 'https://aviation-proxy.shaheenhouse1.workers.dev'; // Cloudflare Worker — Claude API key is safe here
+
 
 <!-- Firebase Compat SDK — Auth + Firestore -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -2368,6 +2370,28 @@ function renderTrips() {
         const transLine = leg.transport ? `<span style="color:var(--text-muted);font-size:10px">+ ${leg.transport} مواصلات</span>` : '';
         const rentedBadge = leg.rentedCar ? `<span style="font-size:10px">🚗</span>` : '';
         const missedStyle = leg.missed ? 'text-decoration:line-through;opacity:0.5;' : '';
+
+        // Track button
+        const today = new Date(); today.setHours(0,0,0,0);
+        const isUpcoming = leg.flightDate && new Date(leg.flightDate) >= today;
+        const trackSection = isUpcoming ? (leg.flightNumber
+          ? `<button onclick="event.stopPropagation();trackFlight('${leg.flightNumber}','${leg.flightDate}',${leg.id})" style="
+              margin-top:6px;background:rgba(16,185,129,0.1);
+              border:1px solid rgba(16,185,129,0.3);border-radius:6px;
+              color:var(--paid);font-family:'Cairo',sans-serif;
+              font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;">
+              ✈ ${leg.flightNumber} · تتبع
+            </button>
+            <div id="flight-status-${leg.id}"></div>`
+          : `<button onclick="event.stopPropagation();askFlightNumber(${leg.id})" style="
+              margin-top:6px;background:transparent;
+              border:1px dashed rgba(16,185,129,0.3);border-radius:6px;
+              color:var(--paid);font-family:'Cairo',sans-serif;
+              font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;opacity:0.6;">
+              ✈ أضف رقم الرحلة
+            </button>`)
+          : (leg.flightNumber ? `<div style="font-size:10px;font-family:monospace;color:var(--text-muted);margin-top:4px">✈ ${leg.flightNumber}</div>` : '');
+
         return `
           <div class="pair-leg pair-${side}" style="${missedStyle}" onclick="openEditModal(${leg.id})" title="تعديل">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -2382,6 +2406,7 @@ function renderTrips() {
               <span style="font-size:13px;font-weight:900">${fmtNum(total)} ريال</span>
               ${transLine} ${rentedBadge}
             </div>
+            ${trackSection}
           </div>`;
       };
 
