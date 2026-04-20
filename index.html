@@ -955,6 +955,9 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
     <img src="https://www.google.com/favicon.ico" style="width:20px;height:20px">
     تسجيل الدخول بـ Google
   </button>
+  <div style="font-size:11px;color:var(--text-muted);margin-top:12px;text-align:center;max-width:240px;line-height:1.6">
+    على iPhone: سيتم توجيهك لـ Google ثم العودة تلقائياً ✅
+  </div>
   <div id="loginStatus" style="margin-top:20px;font-size:12px;color:var(--text-muted)"></div>
 
   <!-- Contact -->
@@ -1285,9 +1288,10 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
           <label>وقت الرحلة</label>
           <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
 
-        <!-- ⑧ سعر التذكرة -->
         <div class="form-group">
-          <label>سعر التذكرة (ريال)</label>
+          <label>رقم الرحلة <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
+          <input type="text" id="fFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
+        </div>
           <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
         </div>
 
@@ -1629,16 +1633,37 @@ function handleAuth() {
     });
   } else {
     if (ls) ls.textContent = '⏳ جاري تسجيل الدخول...';
-    _fbAuth.signInWithPopup(_googleProvider)
-      .then(() => { if (ls) ls.textContent = ''; })
-      .catch(err => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOS || isSafari) {
+      // iOS/Safari: use redirect — popup breaks due to sessionStorage partitioning
+      _fbAuth.signInWithRedirect(_googleProvider).catch(err => {
         console.error(err);
         if (ls) ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية');
       });
+    } else {
+      _fbAuth.signInWithPopup(_googleProvider)
+        .then(() => { if (ls) ls.textContent = ''; })
+        .catch(err => {
+          console.error(err);
+          if (ls) ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية');
+        });
+    }
   }
 }
 
 function initFirebase() {
+  // Handle redirect result first (iOS returns here after Google login)
+  _fbAuth.getRedirectResult()
+    .then(result => {
+      // onAuthStateChanged will handle the user session
+    })
+    .catch(err => {
+      if (err.code !== 'auth/no-current-user') {
+        console.warn('Redirect result error:', err.code);
+      }
+    });
+
   _fbAuth.onAuthStateChanged(user => {
     if (user) {
       const lastUid = localStorage.getItem('ruh_jed_uid');
@@ -2207,6 +2232,24 @@ function renderUpcoming() {
     const diff = Math.round((d - today) / 86400000);
     const countdown = diff === 0 ? 'اليوم! 🛫' : diff === 1 ? 'غداً' : `بعد ${diff} يوم`;
     const route = t.ticketType === 'go' ? 'RUH → JED' : 'JED → RUH';
+    // Extract flight number from PNR or notes
+    const flightNum = t.flightNumber || '';
+    const trackBtn = flightNum ? `
+      <button onclick="trackFlight('${flightNum}','${t.flightDate}',${t.id})" style="
+        margin-top:6px;margin-right:6px;background:rgba(16,185,129,0.1);
+        border:1px solid rgba(16,185,129,0.3);border-radius:8px;
+        color:var(--paid);font-family:'Cairo',sans-serif;
+        font-size:10px;font-weight:700;padding:5px 10px;
+        cursor:pointer;display:inline-flex;align-items:center;gap:4px;
+      ">✈ تتبع الرحلة</button>` : `
+      <button onclick="askFlightNumber(${t.id})" style="
+        margin-top:6px;margin-right:6px;background:rgba(16,185,129,0.08);
+        border:1px dashed rgba(16,185,129,0.3);border-radius:8px;
+        color:var(--paid);font-family:'Cairo',sans-serif;
+        font-size:10px;font-weight:700;padding:5px 10px;
+        cursor:pointer;display:inline-flex;align-items:center;gap:4px;opacity:0.7;
+      ">✈ أضف رقم الرحلة للتتبع</button>`;
+
     return `<div class="upcoming-card">
       <div class="upcoming-date-block" style="background:${t.ticketType==='go'?'var(--go-color)':'var(--return-color)'}">
         <div class="upcoming-day">${d.getDate()}</div>
@@ -2219,13 +2262,18 @@ function renderUpcoming() {
           ${t.pnr ? `• ${t.pnr}` : ''}
           ${t.notes ? `• ${t.notes}` : ''}
         </div>
-        <button onclick="addToGoogleCalendar(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="
-          margin-top:8px;background:rgba(59,130,246,0.1);
-          border:1px solid rgba(59,130,246,0.3);border-radius:8px;
-          color:var(--accent);font-family:'Cairo',sans-serif;
-          font-size:10px;font-weight:700;padding:5px 10px;
-          cursor:pointer;display:inline-flex;align-items:center;gap:4px;
-        ">📅 أضف لـ Google Calendar</button>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+          <button onclick="addToGoogleCalendar(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="
+            background:rgba(59,130,246,0.1);
+            border:1px solid rgba(59,130,246,0.3);border-radius:8px;
+            color:var(--accent);font-family:'Cairo',sans-serif;
+            font-size:10px;font-weight:700;padding:5px 10px;
+            cursor:pointer;display:inline-flex;align-items:center;gap:4px;
+          ">📅 Google Calendar</button>
+          ${trackBtn}
+        </div>
+        <!-- Flight status result -->
+        <div id="flight-status-${t.id}" style="margin-top:8px"></div>
       </div>
       <div class="countdown">${countdown}</div>
     </div>`;
@@ -2683,6 +2731,7 @@ function addTicket() {
     airline:      document.getElementById('fAirline').value,
     flightDate:   document.getElementById('fFlightDate').value,
     flightTime:   document.getElementById('fFlightTime').value || '',
+    flightNumber: (document.getElementById('fFlightNumber')?.value || '').toUpperCase().trim(),
     purchaseDate: document.getElementById('fPurchaseDate').value,
     ticketPrice:  price,
     pnr:          document.getElementById('fPNR').value.toUpperCase().trim(),
@@ -3105,6 +3154,92 @@ function showMobileExportPanel(dataUri, filename) {
 }
 
 // ─── ADD TO GOOGLE CALENDAR ───
+// ─── FLIGHT TRACKING — AviationStack ───
+const AVIATION_PROXY = 'https://aviation-proxy.shaheenhouse1.workers.dev';
+
+async function trackFlight(flightNum, date, ticketId) {
+  const statusEl = document.getElementById(`flight-status-${ticketId}`);
+  if (!statusEl) return;
+
+  statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
+
+  try {
+    const res  = await fetch(`${AVIATION_PROXY}?flight=${encodeURIComponent(flightNum)}&date=${date}`);
+    const data = await res.json();
+
+    if (!data.data || !data.data.length) {
+      statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:6px 0">⚠️ لا توجد بيانات لهذه الرحلة</div>`;
+      return;
+    }
+
+    const f = data.data[0];
+    const statusMap = {
+      'scheduled':  { label: 'في الموعد',      color: '#10b981', icon: '✅' },
+      'active':     { label: 'في الجو الآن',   color: '#3b82f6', icon: '🛫' },
+      'landed':     { label: 'هبطت',            color: '#6366f1', icon: '🛬' },
+      'cancelled':  { label: 'ملغاة',           color: '#f43f5e', icon: '❌' },
+      'incident':   { label: 'حادثة',           color: '#f59e0b', icon: '⚠️' },
+      'diverted':   { label: 'حُوِّلت',         color: '#f59e0b', icon: '🔄' },
+    };
+    const st    = statusMap[f.flight_status] || { label: f.flight_status, color: '#64748b', icon: '✈' };
+    const dep   = f.departure;
+    const arr   = f.arrival;
+    const depTime = dep?.estimated || dep?.scheduled || '';
+    const arrTime = arr?.estimated || arr?.scheduled || '';
+    const gate  = dep?.gate ? `• بوابة ${dep.gate}` : '';
+    const delay = dep?.delay ? `<span style="color:#f59e0b">⏱ تأخير ${dep.delay} دقيقة</span>` : '';
+    const aircraft = f.aircraft?.registration ? `<div style="color:var(--text-muted)">🛩 ${f.aircraft.iata||''} ${f.aircraft.registration}</div>` : '';
+
+    const fmt = (iso) => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    };
+
+    statusEl.innerHTML = `
+      <div style="
+        background:var(--surface2);border:1px solid var(--border);
+        border-radius:10px;padding:10px 12px;margin-top:6px;font-size:11px;
+        border-right:3px solid ${st.color};
+      ">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-weight:900;font-size:12px">${f.flight?.iata || flightNum}</span>
+          <span style="background:${st.color}22;color:${st.color};padding:2px 8px;border-radius:10px;font-weight:700">
+            ${st.icon} ${st.label}
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:var(--text-muted)">
+          <div>🛫 إقلاع: <strong style="color:var(--text)">${fmt(depTime)}</strong> ${gate}</div>
+          <div>🛬 وصول: <strong style="color:var(--text)">${fmt(arrTime)}</strong></div>
+        </div>
+        ${delay ? `<div style="margin-top:4px">${delay}</div>` : ''}
+        ${aircraft}
+        <div style="margin-top:4px;color:var(--text-muted);font-size:10px">
+          آخر تحديث: ${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}
+          <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
+            background:none;border:none;color:var(--accent);cursor:pointer;
+            font-size:10px;font-family:'Cairo',sans-serif;margin-right:8px;
+          ">🔄 تحديث</button>
+        </div>
+      </div>`;
+
+  } catch(err) {
+    console.error(err);
+    statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ خطأ في الاتصال — حاول مرة ثانية</div>`;
+  }
+}
+
+function askFlightNumber(ticketId) {
+  const num = prompt('أدخل رقم الرحلة (مثال: SV535 أو XY123):');
+  if (!num || !num.trim()) return;
+  const t = tickets.find(x => x.id === ticketId);
+  if (!t) return;
+  t.flightNumber = num.trim().toUpperCase();
+  save(tickets);
+  renderUpcoming();
+  toast(`✅ تم حفظ رقم الرحلة ${t.flightNumber}`);
+}
+
 function addToGoogleCalendar(ticket) {
   const route    = ticket.ticketType === 'go' ? 'RUH → JED' : 'JED → RUH';
   const title    = `✈ ${route} — ${ticket.category||'رحلة'} — ${ticket.airline||''}`;
