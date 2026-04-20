@@ -2269,9 +2269,10 @@ function renderUpcoming() {
       <div class="upcoming-info">
         <div class="upcoming-title">${route} ${airlineBadge(t.airline)}</div>
         <div class="upcoming-sub">
-          ${t.flightTime ? `<span style="color:var(--accent);font-weight:800;font-size:13px">🕐 ${fmtTime(t.flightTime)}</span>` : ''}
-          ${t.pnr ? `• ${t.pnr}` : ''}
-          ${t.notes ? `• ${t.notes}` : ''}
+          ${t.flightNumber ? `<span style="font-family:monospace;font-weight:900;font-size:13px;color:var(--text)">✈ ${t.flightNumber}</span>` : ''}
+          ${t.flightTime ? `<span style="color:var(--accent);font-weight:800;font-size:13px">${t.flightNumber ? ' · ' : ''}🕐 ${fmtTime(t.flightTime)}</span>` : ''}
+          ${t.pnr ? `<span style="color:var(--text-muted)"> · ${t.pnr}</span>` : ''}
+          ${t.notes ? `<span style="color:var(--text-muted)"> · ${t.notes}</span>` : ''}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
           <button onclick="addToGoogleCalendar(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="
