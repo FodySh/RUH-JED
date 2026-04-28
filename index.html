@@ -1006,6 +1006,7 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
   <div class="tab" onclick="showTab('upcoming')">🕐 القادمة</div>
   <div class="tab" onclick="showTab('trips')">🗂 الرحلات</div>
   <div class="tab" onclick="showTab('all')">📋 كل التذاكر</div>
+  <div class="tab" onclick="showTab('finance')">💰 المالية</div>
   <div class="tab" onclick="showTab('add')">➕ إضافة</div>
   <div class="tab" onclick="showTab('accounts')">💳 حساباتي</div>
 </div>
@@ -1359,6 +1360,62 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
 
       </div>
       <button class="btn-submit" onclick="addTicket()" style="margin-top:16px">حفظ التذكرة</button>
+    </div>
+  </div>
+
+  <!-- FINANCE SECTION -->
+  <div class="section" id="sec-finance">
+    <div class="form-card" style="margin-bottom:16px">
+
+      <!-- Header KPIs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="financeKPIs"></div>
+
+      <!-- Unpaid tickets table -->
+      <div style="font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span>⏳ التذاكر غير المدفوعة</span>
+        <span id="unpaidCount" style="background:var(--unpaid);color:white;border-radius:20px;padding:2px 10px;font-size:11px"></span>
+      </div>
+      <div class="table-wrap" style="margin-bottom:24px">
+        <table id="unpaidTable">
+          <thead>
+            <tr>
+              <th>تاريخ الرحلة</th>
+              <th>النوع</th>
+              <th>الخط</th>
+              <th>سعر التذكرة</th>
+              <th>مواصلات</th>
+              <th>الإجمالي</th>
+              <th>يُسترد من</th>
+              <th>الرحلة</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="unpaidBody"></tbody>
+          <tfoot id="unpaidFoot"></tfoot>
+        </table>
+      </div>
+
+      <!-- Accounts summary table -->
+      <div style="font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span>💳 ملخص الحسابات</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400">المبالغ المستحقة لكل حساب</span>
+      </div>
+      <div class="table-wrap">
+        <table id="accountsSummaryTable">
+          <thead>
+            <tr>
+              <th>الحساب</th>
+              <th>عدد التذاكر</th>
+              <th>إجمالي التذاكر</th>
+              <th>المواصلات</th>
+              <th>الإجمالي المستحق</th>
+            </tr>
+          </thead>
+          <tbody id="accountsSummaryBody"></tbody>
+          <tfoot id="accountsSummaryFoot"></tfoot>
+        </table>
+      </div>
+
     </div>
   </div>
 
@@ -1727,12 +1784,13 @@ function showTab(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('sec-' + name).classList.add('active');
-  const tabIndex = {'overview':0,'upcoming':1,'trips':2,'all':3,'add':4,'accounts':5};
+  const tabIndex = {'overview':0,'upcoming':1,'trips':2,'all':3,'finance':4,'add':5,'accounts':6};
   document.querySelectorAll('.tab')[tabIndex[name]].classList.add('active');
   if (name === 'overview')  renderOverview();
   if (name === 'upcoming')  renderUpcoming();
   if (name === 'trips')     renderTrips();
   if (name === 'all')       renderAll();
+  if (name === 'finance')   renderFinance();
   if (name === 'add')       initAddForm();
   if (name === 'accounts')  renderAccounts();
 }
@@ -1747,6 +1805,133 @@ function fmtNum(n, decimals=0) {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   });
+}
+
+// ─── FINANCE ───
+function renderFinance() {
+  const unpaid = tickets.filter(t => !t.paid);
+
+  // ── KPI cards ──
+  const totalUnpaid    = unpaid.reduce((s,t) => s + (t.ticketPrice||0) + (t.transport||0), 0);
+  const totalTickets   = unpaid.reduce((s,t) => s + (t.ticketPrice||0), 0);
+  const totalTransport = unpaid.reduce((s,t) => s + (t.transport||0), 0);
+
+  document.getElementById('financeKPIs').innerHTML = `
+    <div style="background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.25);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">إجمالي غير مدفوع</div>
+      <div style="font-size:20px;font-weight:900;color:var(--unpaid)">${fmtNum(totalUnpaid)} ريال</div>
+    </div>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">عدد التذاكر</div>
+      <div style="font-size:20px;font-weight:900;color:var(--accent)">${unpaid.length} تذكرة</div>
+    </div>
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">قيمة التذاكر</div>
+      <div style="font-size:18px;font-weight:900;color:#f59e0b">${fmtNum(totalTickets)} ريال</div>
+    </div>
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">مواصلات</div>
+      <div style="font-size:18px;font-weight:900;color:#6366f1">${fmtNum(totalTransport)} ريال</div>
+    </div>`;
+
+  document.getElementById('unpaidCount').textContent = unpaid.length;
+
+  // ── Unpaid tickets table ──
+  if (!unpaid.length) {
+    document.getElementById('unpaidBody').innerHTML = `
+      <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted)">
+        🎉 لا توجد تذاكر غير مدفوعة
+      </td></tr>`;
+    document.getElementById('unpaidFoot').innerHTML = '';
+  } else {
+    const sorted = [...unpaid].sort((a,b) => new Date(a.flightDate) - new Date(b.flightDate));
+    document.getElementById('unpaidBody').innerHTML = sorted.map(t => {
+      const total  = (t.ticketPrice||0) + (t.transport||0);
+      const type   = t.ticketType === 'go'
+        ? '<span class="badge badge-go">ذهاب</span>'
+        : '<span class="badge badge-return">إياب</span>';
+      return `<tr>
+        <td style="white-space:nowrap">${fmtDate(t.flightDate)}</td>
+        <td>${type}</td>
+        <td>${airlineBadge(t.airline)}</td>
+        <td style="font-weight:700">${fmtNum(t.ticketPrice)} ريال</td>
+        <td style="color:var(--text-muted)">${t.transport ? fmtNum(t.transport)+' ريال' : '—'}</td>
+        <td style="font-weight:900;color:var(--unpaid)">${fmtNum(total)} ريال</td>
+        <td style="font-size:12px;color:var(--accent);font-weight:700">${t.refundTo || '—'}</td>
+        <td style="font-size:11px;color:var(--text-muted)">${t.category || '—'}</td>
+        <td>
+          <button onclick="markPaid(${t.id})" style="
+            background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);
+            border-radius:6px;color:var(--paid);font-family:'Cairo',sans-serif;
+            font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;white-space:nowrap;">
+            ✓ سدّد
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('unpaidFoot').innerHTML = `
+      <tr style="background:rgba(244,63,94,0.06);font-weight:900">
+        <td colspan="3" style="padding:10px 12px">الإجمالي</td>
+        <td>${fmtNum(totalTickets)} ريال</td>
+        <td>${fmtNum(totalTransport)} ريال</td>
+        <td style="color:var(--unpaid)">${fmtNum(totalUnpaid)} ريال</td>
+        <td colspan="3"></td>
+      </tr>`;
+  }
+
+  // ── Accounts summary ──
+  const byAccount = {};
+  unpaid.forEach(t => {
+    const acc = t.refundTo || 'غير محدد';
+    if (!byAccount[acc]) byAccount[acc] = { tickets: 0, ticketAmt: 0, transport: 0 };
+    byAccount[acc].tickets++;
+    byAccount[acc].ticketAmt  += t.ticketPrice  || 0;
+    byAccount[acc].transport  += t.transport    || 0;
+  });
+
+  const accEntries = Object.entries(byAccount).sort((a,b) => {
+    return (b[1].ticketAmt + b[1].transport) - (a[1].ticketAmt + a[1].transport);
+  });
+
+  if (!accEntries.length) {
+    document.getElementById('accountsSummaryBody').innerHTML = `
+      <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">
+        لا توجد بيانات
+      </td></tr>`;
+    document.getElementById('accountsSummaryFoot').innerHTML = '';
+  } else {
+    document.getElementById('accountsSummaryBody').innerHTML = accEntries.map(([acc, d]) => {
+      const total = d.ticketAmt + d.transport;
+      return `<tr>
+        <td style="font-weight:800;color:var(--accent)">${acc}</td>
+        <td style="text-align:center">${d.tickets}</td>
+        <td>${fmtNum(d.ticketAmt)} ريال</td>
+        <td style="color:var(--text-muted)">${d.transport ? fmtNum(d.transport)+' ريال' : '—'}</td>
+        <td style="font-weight:900;color:var(--unpaid)">${fmtNum(total)} ريال</td>
+      </tr>`;
+    }).join('');
+
+    const grandTotal = accEntries.reduce((s,[,d]) => s + d.ticketAmt + d.transport, 0);
+    document.getElementById('accountsSummaryFoot').innerHTML = `
+      <tr style="background:rgba(244,63,94,0.06);font-weight:900">
+        <td>الإجمالي</td>
+        <td style="text-align:center">${unpaid.length}</td>
+        <td>${fmtNum(unpaid.reduce((s,t)=>s+(t.ticketPrice||0),0))} ريال</td>
+        <td>${fmtNum(unpaid.reduce((s,t)=>s+(t.transport||0),0))} ريال</td>
+        <td style="color:var(--unpaid)">${fmtNum(grandTotal)} ريال</td>
+      </tr>`;
+  }
+}
+
+function markPaid(id) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  t.paid = true;
+  save(tickets);
+  renderFinance();
+  renderOverview();
+  toast(`✅ تم تسديد التذكرة — ${t.category||''}`);
 }
 
 // ─── ACCOUNTS MANAGEMENT ───
