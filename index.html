@@ -1404,10 +1404,9 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
         <table id="accountsSummaryTable">
           <thead>
             <tr>
-              <th>الحساب</th>
+              <th>الحساب (يُسترد من)</th>
               <th>عدد التذاكر</th>
-              <th>إجمالي التذاكر</th>
-              <th>المواصلات</th>
+              <th>قيمة التذاكر</th>
               <th>الإجمالي المستحق</th>
             </tr>
           </thead>
@@ -1880,45 +1879,38 @@ function renderFinance() {
       </tr>`;
   }
 
-  // ── Accounts summary ──
   const byAccount = {};
   unpaid.forEach(t => {
     const acc = t.refundTo || 'غير محدد';
-    if (!byAccount[acc]) byAccount[acc] = { tickets: 0, ticketAmt: 0, transport: 0 };
+    if (!byAccount[acc]) byAccount[acc] = { tickets: 0, ticketAmt: 0 };
     byAccount[acc].tickets++;
-    byAccount[acc].ticketAmt  += t.ticketPrice  || 0;
-    byAccount[acc].transport  += t.transport    || 0;
+    byAccount[acc].ticketAmt += t.ticketPrice || 0;
   });
 
-  const accEntries = Object.entries(byAccount).sort((a,b) => {
-    return (b[1].ticketAmt + b[1].transport) - (a[1].ticketAmt + a[1].transport);
-  });
+  const accEntries = Object.entries(byAccount).sort((a,b) => b[1].ticketAmt - a[1].ticketAmt);
 
   if (!accEntries.length) {
     document.getElementById('accountsSummaryBody').innerHTML = `
-      <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">
+      <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">
         لا توجد بيانات
       </td></tr>`;
     document.getElementById('accountsSummaryFoot').innerHTML = '';
   } else {
     document.getElementById('accountsSummaryBody').innerHTML = accEntries.map(([acc, d]) => {
-      const total = d.ticketAmt + d.transport;
       return `<tr>
         <td style="font-weight:800;color:var(--accent)">${acc}</td>
         <td style="text-align:center">${d.tickets}</td>
         <td>${fmtNum(d.ticketAmt)} ريال</td>
-        <td style="color:var(--text-muted)">${d.transport ? fmtNum(d.transport)+' ريال' : '—'}</td>
-        <td style="font-weight:900;color:var(--unpaid)">${fmtNum(total)} ريال</td>
+        <td style="font-weight:900;color:var(--unpaid)">${fmtNum(d.ticketAmt)} ريال</td>
       </tr>`;
     }).join('');
 
-    const grandTotal = accEntries.reduce((s,[,d]) => s + d.ticketAmt + d.transport, 0);
+    const grandTotal = accEntries.reduce((s,[,d]) => s + d.ticketAmt, 0);
     document.getElementById('accountsSummaryFoot').innerHTML = `
       <tr style="background:rgba(244,63,94,0.06);font-weight:900">
         <td>الإجمالي</td>
         <td style="text-align:center">${unpaid.length}</td>
-        <td>${fmtNum(unpaid.reduce((s,t)=>s+(t.ticketPrice||0),0))} ريال</td>
-        <td>${fmtNum(unpaid.reduce((s,t)=>s+(t.transport||0),0))} ريال</td>
+        <td>${fmtNum(grandTotal)} ريال</td>
         <td style="color:var(--unpaid)">${fmtNum(grandTotal)} ريال</td>
       </tr>`;
   }
