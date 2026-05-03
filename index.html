@@ -2139,7 +2139,7 @@ function renderOverview() {
   }
 
   const today = new Date(); today.setHours(0,0,0,0);
-  const MONTHS_AR_SHORT = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const MONTHS_AR_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // ── Core metrics ──
   const totalTickets  = tickets.length;
@@ -2188,16 +2188,33 @@ function renderOverview() {
     document.getElementById('nextTripBanner').innerHTML = '';
   }
 
-  // ── Days in Jeddah ──
-  // For each go↔return pair: days = returnDate - goDate (time spent in JED)
+  // ── Days in Jeddah — use linkedId pairs for accuracy ──
   let totalDaysInJED = 0;
   let tripsWithDays  = 0;
-  const byCategory   = {};
+  const usedPairs    = new Set();
+
   tickets.forEach(t => {
+    if (t.ticketType !== 'go' || !t.flightDate || !t.linkedId) return;
+    if (usedPairs.has(t.id)) return;
+    const ret = tickets.find(r => r.id === t.linkedId && r.ticketType === 'return' && r.flightDate);
+    if (!ret) return;
+    const d = Math.round((new Date(ret.flightDate) - new Date(t.flightDate)) / 86400000);
+    if (d > 0) {
+      totalDaysInJED += d;
+      tripsWithDays++;
+      usedPairs.add(t.id);
+      usedPairs.add(ret.id);
+    }
+  });
+
+  // Fallback: category-based pairing for unlinked tickets
+  const byCategory = {};
+  tickets.forEach(t => {
+    if (usedPairs.has(t.id)) return;
     const c = t.category || 'other';
     if (!byCategory[c]) byCategory[c] = {};
-    if (t.ticketType === 'go')     byCategory[c].go  = t.flightDate;
-    if (t.ticketType === 'return') byCategory[c].ret = t.flightDate;
+    if (t.ticketType === 'go'     && !byCategory[c].go)  byCategory[c].go  = t.flightDate;
+    if (t.ticketType === 'return' && !byCategory[c].ret) byCategory[c].ret = t.flightDate;
   });
   Object.values(byCategory).forEach(pair => {
     if (pair.go && pair.ret) {
@@ -2205,6 +2222,7 @@ function renderOverview() {
       if (d > 0) { totalDaysInJED += d; tripsWithDays++; }
     }
   });
+
   const avgDaysPerTrip = tripsWithDays ? (totalDaysInJED / tripsWithDays).toFixed(1) : 0;
 
   // ── KPI cards ──
@@ -2249,7 +2267,12 @@ function renderOverview() {
   });
   const sortedM = Object.keys(monthly).sort();
   const maxM = Math.max(...sortedM.map(m=>monthly[m].ticket+monthly[m].transport));
-  const mlabels = {'2025-09':'سبت','2025-10':'أكت','2025-11':'نوف','2025-12':'ديس','2026-01':'يناير','2026-02':'فبر','2026-03':'مارس','2026-04':'أبريل'};
+  const mlabels = {
+    '2025-09':'Sep','2025-10':'Oct','2025-11':'Nov','2025-12':'Dec',
+    '2026-01':'Jan','2026-02':'Feb','2026-03':'Mar','2026-04':'Apr',
+    '2026-05':'May','2026-06':'Jun','2026-07':'Jul','2026-08':'Aug',
+    '2026-09':'Sep','2026-10':'Oct','2026-11':'Nov','2026-12':'Dec',
+  };
   document.getElementById('monthlyChart').innerHTML = `
     <div class="cc-title"><span>📅 المصروف الشهري</span><span style="color:var(--text-muted);font-size:10px">ريال</span></div>
     ${sortedM.map(m=>{
