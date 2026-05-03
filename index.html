@@ -1383,9 +1383,7 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
               <th>النوع</th>
               <th>الخط</th>
               <th>سعر التذكرة</th>
-              <th>مواصلات</th>
-              <th>الإجمالي</th>
-              <th>يُسترد من</th>
+              <th>تُحوَّل إلى</th>
               <th>الرحلة</th>
               <th></th>
             </tr>
@@ -1845,8 +1843,7 @@ function renderFinance() {
   } else {
     const sorted = [...unpaid].sort((a,b) => new Date(a.flightDate) - new Date(b.flightDate));
     document.getElementById('unpaidBody').innerHTML = sorted.map(t => {
-      const total  = (t.ticketPrice||0) + (t.transport||0);
-      const type   = t.ticketType === 'go'
+      const type = t.ticketType === 'go'
         ? '<span class="badge badge-go">ذهاب</span>'
         : '<span class="badge badge-return">إياب</span>';
       return `<tr>
@@ -1854,8 +1851,6 @@ function renderFinance() {
         <td>${type}</td>
         <td>${airlineBadge(t.airline)}</td>
         <td style="font-weight:700">${fmtNum(t.ticketPrice)} ريال</td>
-        <td style="color:var(--text-muted)">${t.transport ? fmtNum(t.transport)+' ريال' : '—'}</td>
-        <td style="font-weight:900;color:var(--unpaid)">${fmtNum(total)} ريال</td>
         <td style="font-size:12px;color:var(--accent);font-weight:700">${t.refundTo || '—'}</td>
         <td style="font-size:11px;color:var(--text-muted)">${t.category || '—'}</td>
         <td>
@@ -1872,9 +1867,7 @@ function renderFinance() {
     document.getElementById('unpaidFoot').innerHTML = `
       <tr style="background:rgba(244,63,94,0.06);font-weight:900">
         <td colspan="3" style="padding:10px 12px">الإجمالي</td>
-        <td>${fmtNum(totalTickets)} ريال</td>
-        <td>${fmtNum(totalTransport)} ريال</td>
-        <td style="color:var(--unpaid)">${fmtNum(totalUnpaid)} ريال</td>
+        <td style="color:var(--unpaid)">${fmtNum(totalTickets)} ريال</td>
         <td colspan="3"></td>
       </tr>`;
   }
