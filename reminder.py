@@ -11,15 +11,16 @@ cred    = credentials.Certificate(sa_dict)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-# Date setup — Riyadh UTC+3
+# Date setup
 tz_riyadh  = timezone(timedelta(hours=3))
 today      = datetime.now(tz_riyadh).date()
 target     = today + timedelta(days=2)
 target_str = target.strftime('%Y-%m-%d')
-print(f"Checking flights for: {target_str}")
+print(f"Today: {today} | Target date: {target_str}")
 
 GMAIL_USER = os.environ['GMAIL_USER']
 GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD'].replace(' ', '')
+print(f"Gmail user: {GMAIL_USER}")
 
 MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
              'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
@@ -43,31 +44,49 @@ def fmt_time(t):
 
 sent = 0
 
-for user_doc in db.collection('users').stream():
-    uid = user_doc.id
+# Loop users
+users = list(db.collection('users').stream())
+print(f"Total users found: {len(users)}")
 
+for user_doc in users:
+    uid = user_doc.id
+    print(f"\n--- User: {uid[:12]}... ---")
+
+    # Settings
     settings = db.collection('users').doc(uid).collection('data').document('settings').get()
     if not settings.exists:
+        print(f"  No settings doc")
         continue
-    notif_email = settings.to_dict().get('notifEmail', '')
+    settings_data = settings.to_dict()
+    print(f"  Settings keys: {list(settings_data.keys())}")
+    notif_email = settings_data.get('notifEmail', '')
+    print(f"  notifEmail: '{notif_email}'")
     if not notif_email or '@' not in notif_email:
+        print(f"  Skipping — no valid email")
         continue
 
+    # Tickets
     tickets_doc = db.collection('users').doc(uid).collection('data').document('tickets').get()
     if not tickets_doc.exists:
+        print(f"  No tickets doc")
         continue
     tickets = tickets_doc.to_dict().get('tickets', [])
+    print(f"  Total tickets: {len(tickets)}")
+
+    # Show all dates for debugging
+    dates = sorted(set(t.get('flightDate','') for t in tickets if t.get('flightDate')))
+    print(f"  Flight dates: {dates}")
+    print(f"  Looking for: {target_str}")
 
     upcoming = [t for t in tickets
                 if t.get('flightDate') == target_str
                 and not t.get('missed', False)]
+    print(f"  Matching flights: {len(upcoming)}")
 
     if not upcoming:
-        print(f"No flights for {notif_email}")
         continue
 
-    print(f"Found {len(upcoming)} flight(s) for {notif_email}")
-
+    # Build email
     rows = ''
     for t in upcoming:
         route    = 'RUH → JED' if t.get('ticketType') == 'go' else 'JED → RUH'
@@ -75,13 +94,13 @@ for user_doc in db.collection('users').stream():
         fn       = t.get('flightNumber') or t.get('pnr') or '—'
         rows += (
             '<tr>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-weight:700">{route}</td>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{fmt_date(t.get("flightDate",""))}</td>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{fmt_time(t.get("flightTime",""))}</td>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{t.get("airline","—")}</td>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{t.get("category","—")}</td>'
-            f'<td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{paid_str}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-weight:700">{route}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_date(t.get("flightDate",""))}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_time(t.get("flightTime",""))}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("airline","—")}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("category","—")}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{paid_str}</td>'
             '</tr>'
         )
 
@@ -90,7 +109,7 @@ for user_doc in db.collection('users').stream():
         '<div style="background:linear-gradient(135deg,#0f1f3d,#1a3a6b);padding:28px;border-radius:12px;text-align:center;margin-bottom:20px">'
         '<div style="font-size:40px">&#9992;</div>'
         '<div style="color:white;font-size:22px;font-weight:900;margin-top:8px">تذكير رحلة قادمة</div>'
-        '<div style="color:#93c5fd;font-size:14px;margin-top:6px">رحلاتي RUH &#8596; JED</div>'
+        '<div style="color:#93c5fd;font-size:14px;margin-top:6px">رحلاتي RUH JED</div>'
         '</div>'
         '<div style="background:white;border-radius:12px;padding:20px;margin-bottom:16px">'
         f'<div style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:16px">لديك {len(upcoming)} رحلة بعد يومين — {fmt_date(target_str)}</div>'
@@ -115,17 +134,18 @@ for user_doc in db.collection('users').stream():
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = f"تذكير — رحلتك بعد يومين {fmt_date(target_str)}"
-    msg['From']    = GMAIL_USER
+    msg['From']    = shaheenhouse1@gmail.com
     msg['To']      = notif_email
     msg.attach(MIMEText(html, 'html', 'utf-8'))
 
     try:
+        print(f"  Sending email to {notif_email}...")
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(GMAIL_USER, GMAIL_PASS)
             smtp.sendmail(GMAIL_USER, notif_email, msg.as_bytes())
-        print(f"Sent to {notif_email}")
+        print(f"  ✅ Sent!")
         sent += 1
     except Exception as e:
-        print(f"Failed to send to {notif_email}: {e}")
+        print(f"  ❌ Email failed: {e}")
 
-print(f"Done — {sent} email(s) sent")
+print(f"\nDone — {sent} email(s) sent")
