@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 # ── Config ──
 PROJECT_ID   = 'mytrips-9b054'
-REMINDER_DAYS = [1, 2, 3, 7]  # أيام التذكير — غيّرها حسب رغبتك
+REMINDER_DAYS = [5, 2, 7]  # أيام التذكير — غيّرها حسب رغبتك
 
 sa_dict    = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
 GMAIL_USER = os.environ['GMAIL_USER']
@@ -125,7 +125,7 @@ for user in users_list:
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("airline","—")}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("category","—")}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{paid_str}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{PNR}</td>'
             '</tr>'
         )
 
@@ -147,8 +147,7 @@ for user in users_list:
         '<th style="padding:12px;text-align:right">الوقت</th>'
         '<th style="padding:12px;text-align:right">الخط</th>'
         '<th style="padding:12px;text-align:right">رقم الرحلة</th>'
-        '<th style="padding:12px;text-align:right">التصنيف</th>'
-        '<th style="padding:12px;text-align:right">الدفع</th>'
+        '<th style="padding:12px;text-align:right">PNR</th>'
         '</tr></thead>'
         f'<tbody>{rows}</tbody></table></div></div>'
         '<div style="background:#dbeafe;border-radius:10px;padding:14px;font-size:13px;color:#1e40af;margin-bottom:16px">'
