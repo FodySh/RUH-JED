@@ -5,37 +5,37 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 
-# Init Firebase Admin
 print("Loading service account...")
-sa_json = os.environ['FIREBASE_SERVICE_ACCOUNT']
-sa_dict = json.loads(sa_json)
+sa_dict = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
 print(f"Project ID: {sa_dict.get('project_id')}")
-print(f"Client email: {sa_dict.get('client_email')}")
 
 cred = credentials.Certificate(sa_dict)
 firebase_admin.initialize_app(cred)
-db = firestore.client()
-print("Firebase initialized ✅")
 
-# Test Firestore connection
-print("\nTesting Firestore connection...")
-try:
-    # Try to list collections
-    collections = list(db.collections())
-    print(f"Collections found: {[c.id for c in collections]}")
-except Exception as e:
-    print(f"Error listing collections: {e}")
+# Try different database names
+databases_to_try = ['(default)', 'me-central2', 'mytrips-9b054']
 
-# Try direct users collection
-print("\nTrying users collection directly...")
-try:
-    users_ref = db.collection('users')
-    users     = list(users_ref.limit(10).stream())
-    print(f"Users found: {len(users)}")
-    for u in users:
-        print(f"  - {u.id}")
-except Exception as e:
-    print(f"Error reading users: {type(e).__name__}: {e}")
+db = None
+for db_name in databases_to_try:
+    try:
+        if db_name == '(default)':
+            test_db = firestore.client()
+        else:
+            test_db = firestore.client(database_id=db_name)
+        
+        users = list(test_db.collection('users').limit(5).stream())
+        print(f"Database '{db_name}': {len(users)} users found")
+        
+        if len(users) > 0:
+            db = test_db
+            print(f"✅ Using database: {db_name}")
+            break
+    except Exception as e:
+        print(f"Database '{db_name}': Error — {e}")
+
+if not db:
+    print("❌ No database with users found")
+    exit(1)
 
 # Date setup
 tz_riyadh  = timezone(timedelta(hours=3))
@@ -46,7 +46,6 @@ print(f"\nToday: {today} | Target: {target_str}")
 
 GMAIL_USER = os.environ['GMAIL_USER']
 GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD'].replace(' ', '')
-print(f"Gmail: {GMAIL_USER}")
 
 MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
              'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
@@ -70,7 +69,7 @@ def fmt_time(t):
 
 sent = 0
 users = list(db.collection('users').stream())
-print(f"\nTotal users: {len(users)}")
+print(f"Total users: {len(users)}")
 
 for user_doc in users:
     uid = user_doc.id
@@ -78,7 +77,7 @@ for user_doc in users:
 
     settings = db.collection('users').doc(uid).collection('data').document('settings').get()
     if not settings.exists:
-        print("  No settings")
+        print("  No settings doc")
         continue
 
     notif_email = settings.to_dict().get('notifEmail', '')
@@ -89,19 +88,16 @@ for user_doc in users:
 
     tickets_doc = db.collection('users').doc(uid).collection('data').document('tickets').get()
     if not tickets_doc.exists:
-        print("  No tickets")
+        print("  No tickets doc")
         continue
 
     tickets = tickets_doc.to_dict().get('tickets', [])
     print(f"  Tickets: {len(tickets)}")
 
-    dates = sorted(set(t.get('flightDate','') for t in tickets if t.get('flightDate')))
-    print(f"  Dates: {dates[-5:] if len(dates)>5 else dates}")
-
     upcoming = [t for t in tickets
                 if t.get('flightDate') == target_str
                 and not t.get('missed', False)]
-    print(f"  Upcoming ({target_str}): {len(upcoming)}")
+    print(f"  Upcoming on {target_str}: {len(upcoming)}")
 
     if not upcoming:
         continue
