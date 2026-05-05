@@ -139,7 +139,7 @@ for user in users_list:
         '<div style="color:#93c5fd;font-size:14px;margin-top:6px">رحلاتي RUH JED</div>'
         '</div>'
         '<div style="background:white;border-radius:12px;padding:20px;margin-bottom:16px">'
-        f'<div style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:16px">لديك {len(upcoming)} رحلة بعد يومين — {fmt_date(target_str)}</div>'
+        f'<div style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:16px">لديك {len(upcoming)} رحلة قادمة خلال الأيام القادمة</div>'
         '<table style="width:100%;border-collapse:collapse;font-size:13px">'
         '<thead><tr style="background:#1e3a5f;color:white">'
         '<th style="padding:12px;text-align:right">الرحلة</th>'
