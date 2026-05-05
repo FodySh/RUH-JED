@@ -2,181 +2,171 @@ name: Flight Reminder Email
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # كل يوم الساعة 6 صباحاً (توقيت الرياض = UTC+3)
-  workflow_dispatch:       # تشغيل يدوي للاختبار
+    - cron: '0 3 * * *'  # كل يوم 6 صباحاً توقيت الرياض
+  workflow_dispatch:
 
 jobs:
   send-reminders:
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: pip install firebase-admin
+
       - name: Send flight reminders
         env:
-          FIREBASE_PROJECT_ID: mytrips-9b054
-          FIREBASE_API_KEY: AIzaSyBUJMZoN-wZ_1y2OCDTBF6pCXSexNN78t0
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: |
           cat << 'PYEOF' > reminder.py
-          import urllib.request, urllib.parse, json, smtplib, os
-          from email.mime.multipart import MIMEMultipart
-          from email.mime.text import MIMEText
-          from datetime import datetime, timedelta, timezone
+import firebase_admin
+from firebase_admin import credentials, firestore
+import smtplib, os, json
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from datetime import datetime, timedelta, timezone
 
-          PROJECT_ID = os.environ['FIREBASE_PROJECT_ID']
-          API_KEY    = os.environ['FIREBASE_API_KEY']
-          GMAIL_USER = os.environ['GMAIL_USER']
-          GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD']
+# ── Init Firebase Admin ──
+sa_json = os.environ['FIREBASE_SERVICE_ACCOUNT']
+sa_dict = json.loads(sa_json)
+cred    = credentials.Certificate(sa_dict)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-          # Riyadh timezone (UTC+3)
-          tz_riyadh = timezone(timedelta(hours=3))
-          today     = datetime.now(tz_riyadh).date()
-          target    = today + timedelta(days=2)
-          target_str = target.strftime('%Y-%m-%d')
+# ── Date setup ──
+tz_riyadh  = timezone(timedelta(hours=3))
+today      = datetime.now(tz_riyadh).date()
+target     = today + timedelta(days=2)
+target_str = target.strftime('%Y-%m-%d')
+print(f"Checking flights for: {target_str}")
 
-          print(f"Checking flights for: {target_str}")
+GMAIL_USER = os.environ['GMAIL_USER']
+GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD'].replace(' ','')
 
-          MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
-                       'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
+MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+             'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
 
-          def fmt_date(d):
-              if not d: return d
-              try:
-                  dt = datetime.strptime(d, '%Y-%m-%d')
-                  return f"{dt.day} {MONTHS_AR[dt.month-1]} {dt.year}"
-              except:
-                  return d
+def fmt_date(d):
+    try:
+        dt = datetime.strptime(d, '%Y-%m-%d')
+        return f"{dt.day} {MONTHS_AR[dt.month-1]} {dt.year}"
+    except:
+        return d or '—'
 
-          def firestore_get(path):
-              url = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents/{path}?key={API_KEY}"
-              try:
-                  with urllib.request.urlopen(url, timeout=10) as r:
-                      return json.loads(r.read())
-              except Exception as e:
-                  print(f"Firestore error {path}: {e}")
-                  return None
+def fmt_time(t):
+    if not t: return '—'
+    try:
+        h, m = map(int, t.split(':'))
+        period = 'ص' if h < 12 else 'م'
+        h12    = 12 if h == 0 else (h if h <= 12 else h - 12)
+        return f"{h12}:{str(m).zfill(2)} {period}"
+    except:
+        return t
 
-          def get_field(fields, key, ftype='stringValue'):
-              f = fields.get(key, {})
-              return f.get(ftype) or f.get('doubleValue') or f.get('integerValue') or f.get('booleanValue') or ''
+sent = 0
 
-          # Get all users
-          users_doc = firestore_get("users")
-          if not users_doc or 'documents' not in users_doc:
-              print("No users found")
-              exit(0)
+# ── Loop users ──
+users_ref = db.collection('users').stream()
+for user_doc in users_ref:
+    uid = user_doc.id
 
-          sent = 0
-          for user_doc in users_doc.get('documents', []):
-              uid = user_doc['name'].split('/')[-1]
+    # Get settings (notif email)
+    settings_ref = db.collection('users').doc(uid).collection('data').document('settings').get()
+    if not settings_ref.exists:
+        continue
+    notif_email = settings_ref.to_dict().get('notifEmail', '')
+    if not notif_email or '@' not in notif_email:
+        continue
 
-              # Get user settings (email)
-              settings = firestore_get(f"users/{uid}/data/settings")
-              if not settings or 'fields' not in settings:
-                  continue
-              notif_email = get_field(settings['fields'], 'notifEmail')
-              if not notif_email or '@' not in notif_email:
-                  continue
+    # Get tickets
+    tickets_ref = db.collection('users').doc(uid).collection('data').document('tickets').get()
+    if not tickets_ref.exists:
+        continue
+    tickets = tickets_ref.to_dict().get('tickets', [])
 
-              # Get user tickets
-              tickets_doc = firestore_get(f"users/{uid}/data/tickets")
-              if not tickets_doc or 'fields' not in tickets_doc:
-                  continue
+    # Filter upcoming flights
+    upcoming = [t for t in tickets
+                if t.get('flightDate') == target_str
+                and not t.get('missed', False)]
 
-              tickets_field = tickets_doc['fields'].get('tickets', {})
-              tickets_arr   = tickets_field.get('arrayValue', {}).get('values', [])
+    if not upcoming:
+        print(f"No flights for {uid[:8]}... ({notif_email})")
+        continue
 
-              # Find tickets in 2 days
-              upcoming = []
-              for item in tickets_arr:
-                  fields = item.get('mapValue', {}).get('fields', {})
-                  flight_date = get_field(fields, 'flightDate')
-                  if flight_date != target_str:
-                      continue
-                  missed = get_field(fields, 'missed', 'booleanValue')
-                  if missed:
-                      continue
-                  upcoming.append({
-                      'type':      get_field(fields, 'ticketType'),
-                      'date':      flight_date,
-                      'time':      get_field(fields, 'flightTime'),
-                      'airline':   get_field(fields, 'airline'),
-                      'pnr':       get_field(fields, 'pnr'),
-                      'flight_no': get_field(fields, 'flightNumber'),
-                      'price':     get_field(fields, 'ticketPrice', 'doubleValue') or get_field(fields, 'ticketPrice', 'integerValue'),
-                      'category':  get_field(fields, 'category'),
-                      'paid':      get_field(fields, 'paid', 'booleanValue'),
-                  })
+    print(f"Found {len(upcoming)} flight(s) for {notif_email}")
 
-              if not upcoming:
-                  print(f"No upcoming flights for {uid[:8]}...")
-                  continue
+    # ── Build email HTML ──
+    rows = ''
+    for t in upcoming:
+        route    = 'RUH → JED ✈' if t.get('ticketType') == 'go' else 'JED → RUH ✈'
+        paid_str = '✅ مدفوع' if t.get('paid') else '⏳ غير مدفوع'
+        fn       = t.get('flightNumber') or t.get('pnr') or '—'
+        rows += f"""
+        <tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-weight:700">{route}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{fmt_date(t.get('flightDate',''))}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{fmt_time(t.get('flightTime',''))}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{t.get('airline','—')}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{t.get('category','—')}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{paid_str}</td>
+        </tr>"""
 
-              # Build email
-              rows = ''
-              for t in upcoming:
-                  route    = 'RUH → JED ✈' if t['type'] == 'go' else 'JED → RUH ✈'
-                  paid_str = '✅ مدفوع' if t['paid'] else '⏳ غير مدفوع'
-                  time_str = t['time'] if t['time'] else '—'
-                  rows += f"""
-                  <tr>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{route}</td>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{fmt_date(t['date'])}</td>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{time_str}</td>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{t['airline']}</td>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-family:monospace">{t['flight_no'] or t['pnr'] or '—'}</td>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{t['category']}</td>
-                    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb">{paid_str}</td>
-                  </tr>"""
+    html = f"""
+    <div style="font-family:Arial,sans-serif;direction:rtl;max-width:620px;margin:0 auto;background:#f1f5f9;padding:24px;border-radius:16px">
+      <div style="background:linear-gradient(135deg,#0f1f3d,#1a3a6b);padding:28px;border-radius:12px;text-align:center;margin-bottom:20px">
+        <div style="font-size:40px">✈</div>
+        <div style="color:white;font-size:22px;font-weight:900;margin-top:8px">تذكير رحلة قادمة</div>
+        <div style="color:#93c5fd;font-size:14px;margin-top:6px">رحلاتي RUH ↔ JED</div>
+      </div>
 
-              html = f"""
-              <div style="font-family:Arial,sans-serif;direction:rtl;max-width:600px;margin:0 auto">
-                <div style="background:linear-gradient(135deg,#0f1f3d,#1a3a6b);padding:28px;border-radius:12px 12px 0 0;text-align:center">
-                  <div style="font-size:32px">✈</div>
-                  <div style="color:white;font-size:20px;font-weight:900;margin-top:8px">تذكير رحلة قادمة</div>
-                  <div style="color:#93c5fd;font-size:13px;margin-top:4px">رحلاتي RUH ↔ JED</div>
-                </div>
-                <div style="background:#f8fafc;padding:24px;border:1px solid #e5e7eb;border-top:none">
-                  <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#1e3a5f">
-                    🗓 لديك {len(upcoming)} رحلة بعد يومين — {fmt_date(target_str)}
-                  </div>
-                  <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)">
-                    <thead>
-                      <tr style="background:#1e3a5f;color:white">
-                        <th style="padding:12px 16px;text-align:right">الرحلة</th>
-                        <th style="padding:12px 16px;text-align:right">التاريخ</th>
-                        <th style="padding:12px 16px;text-align:right">الوقت</th>
-                        <th style="padding:12px 16px;text-align:right">الخط</th>
-                        <th style="padding:12px 16px;text-align:right">رقم الرحلة</th>
-                        <th style="padding:12px 16px;text-align:right">التصنيف</th>
-                        <th style="padding:12px 16px;text-align:right">الدفع</th>
-                      </tr>
-                    </thead>
-                    <tbody>{rows}</tbody>
-                  </table>
-                  <div style="margin-top:20px;padding:14px;background:#dbeafe;border-radius:8px;font-size:13px;color:#1e40af">
-                    💡 تأكد من حجزك وتجهيز حقائبك قبل السفر
-                  </div>
-                </div>
-                <div style="background:#e5e7eb;padding:14px;border-radius:0 0 12px 12px;text-align:center;font-size:11px;color:#6b7280">
-                  رحلاتي RUH ↔ JED — تذكير تلقائي
-                </div>
-              </div>"""
+      <div style="background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.08)">
+        <div style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:16px">
+          🗓 لديك {len(upcoming)} رحلة بعد يومين — {fmt_date(target_str)}
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#1e3a5f;color:white">
+                <th style="padding:12px 16px;text-align:right;border-radius:8px 0 0 0">الرحلة</th>
+                <th style="padding:12px 16px;text-align:right">التاريخ</th>
+                <th style="padding:12px 16px;text-align:right">الوقت</th>
+                <th style="padding:12px 16px;text-align:right">الخط</th>
+                <th style="padding:12px 16px;text-align:right">رقم الرحلة</th>
+                <th style="padding:12px 16px;text-align:right">التصنيف</th>
+                <th style="padding:12px 16px;text-align:right;border-radius:0 8px 0 0">الدفع</th>
+              </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+          </table>
+        </div>
+      </div>
 
-              msg = MIMEMultipart('alternative')
-              msg['Subject'] = f"✈ تذكير رحلة — بعد يومين {fmt_date(target_str)}"
-              msg['From']    = GMAIL_USER
-              msg['To']      = notif_email
-              msg.attach(MIMEText(html, 'html', 'utf-8'))
+      <div style="background:#dbeafe;border-radius:10px;padding:14px;font-size:13px;color:#1e40af;margin-bottom:16px">
+        💡 تأكد من حجزك وتجهيز حقائبك — رحلة موفقة!
+      </div>
 
-              try:
-                  with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-                      smtp.login(GMAIL_USER, GMAIL_PASS)
-                      smtp.sendmail(GMAIL_USER, notif_email, msg.as_bytes())
-                  print(f"✅ Email sent to {notif_email}")
-                  sent += 1
-              except Exception as e:
-                  print(f"❌ Failed to send to {notif_email}: {e}")
+      <div style="text-align:center;font-size:11px;color:#94a3b8">
+        رحلاتي RUH ↔ JED — تذكير تلقائي
+      </div>
+    </div>"""
 
-          print(f"Done. Sent {sent} reminder(s).")
-          PYEOF
+    # ── Send email ──
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f"✈ تذكير — رحلتك بعد يومين {fmt_date(target_str)}"
+    msg['From']    = GMAIL_USER
+    msg['To']      = notif_email
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(GMAIL_USER, GMAIL_PASS)
+            smtp.sendmail(GMAIL_USER, notif_email, msg.as_bytes())
+        print(f"✅ Sent to {notif_email}")
+        sent += 1
+    except Exception as e:
+        print(f"❌ Failed: {e}")
+
+print(f"\n✅ Done — {sent} email(s) sent")
+PYEOF
           python3 reminder.py
