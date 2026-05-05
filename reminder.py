@@ -134,7 +134,7 @@ for user_doc in users:
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = f"تذكير — رحلتك بعد يومين {fmt_date(target_str)}"
-    msg['From']    = shaheenhouse1@gmail.com
+    msg['From']    = GMAIL_USER
     msg['To']      = notif_email
     msg.attach(MIMEText(html, 'html', 'utf-8'))
 
