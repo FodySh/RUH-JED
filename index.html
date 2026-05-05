@@ -1402,7 +1402,7 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
         <table id="accountsSummaryTable">
           <thead>
             <tr>
-              <th>الحساب (يُحول الى)</th>
+              <th>الحساب (يُسترد من)</th>
               <th>عدد التذاكر</th>
               <th>قيمة التذاكر</th>
               <th>الإجمالي المستحق</th>
@@ -1424,7 +1424,32 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
         حساباتك الخاصة — محفوظة في حسابك ولا تظهر لأي مستخدم آخر
       </div>
 
+      <!-- Email notifications -->
+      <div style="
+        background:var(--surface2);border:1px solid var(--border);
+        border-radius:12px;padding:16px;margin-bottom:24px;
+      ">
+        <div style="font-size:13px;font-weight:800;margin-bottom:4px">📧 إيميل التذكيرات</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
+          سيصلك إيميل تلقائي قبل يومين من كل رحلة
+        </div>
+        <div style="display:flex;gap:10px">
+          <input type="email" id="notifEmailInput" placeholder="example@gmail.com" style="
+            flex:1;background:var(--surface);border:1px solid var(--border);
+            border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;
+            font-size:13px;padding:10px 14px;direction:ltr;
+          ">
+          <button onclick="saveNotifEmail()" style="
+            background:var(--accent);border:none;border-radius:8px;
+            color:white;font-family:'Cairo',sans-serif;font-size:13px;
+            font-weight:800;padding:10px 18px;cursor:pointer;white-space:nowrap;
+          ">💾 حفظ</button>
+        </div>
+        <div id="notifEmailStatus" style="font-size:11px;margin-top:8px;color:var(--text-muted)"></div>
+      </div>
+
       <!-- Add new account -->
+      <div style="font-size:13px;font-weight:800;margin-bottom:12px">قائمة الحسابات</div>
       <div style="display:flex;gap:10px;margin-bottom:20px">
         <input type="text" id="newAccountInput" placeholder="اسم الحساب الجديد..." style="
           flex:1;background:var(--surface2);border:1px solid var(--border);
@@ -1745,6 +1770,7 @@ function initFirebase() {
       renderAll(); renderOverview(); renderUpcoming(); renderTrips();
       subscribeFirestore(user.uid);
       loadAccountsFromFirestore(user.uid);
+      loadNotifEmail();
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
     } else {
       _currentUid = null;
@@ -1789,7 +1815,7 @@ function showTab(name) {
   if (name === 'all')       renderAll();
   if (name === 'finance')   renderFinance();
   if (name === 'add')       initAddForm();
-  if (name === 'accounts')  renderAccounts();
+  if (name === 'accounts')  { renderAccounts(); loadNotifEmail(); }
 }
 
 // ─── HELPERS ───
@@ -1917,6 +1943,63 @@ function markPaid(id) {
   renderFinance();
   renderOverview();
   toast(`✅ تم تسديد التذكرة — ${t.category||''}`);
+}
+
+// ─── NOTIFICATION EMAIL ───
+function saveNotifEmail() {
+  const input  = document.getElementById('notifEmailInput');
+  const status = document.getElementById('notifEmailStatus');
+  const email  = input?.value.trim();
+
+  if (!email || !email.includes('@')) {
+    if (status) status.textContent = '⚠️ أدخل إيميل صحيح';
+    return;
+  }
+
+  // Save to localStorage
+  localStorage.setItem('ruh_jed_notif_email', email);
+
+  // Save to Firestore under user settings
+  if (_currentUid) {
+    _fbDb.collection('users').doc(_currentUid)
+         .collection('data').doc('settings')
+         .set({ notifEmail: email, updatedAt: Date.now() }, { merge: true })
+         .then(() => {
+           if (status) { status.textContent = '✅ تم حفظ الإيميل'; status.style.color = 'var(--paid)'; }
+           toast('✅ تم حفظ إيميل التذكيرات');
+         })
+         .catch(() => {
+           if (status) status.textContent = '❌ فشل الحفظ — حاول مرة ثانية';
+         });
+  } else {
+    if (status) { status.textContent = '✅ محفوظ محلياً'; status.style.color = 'var(--paid)'; }
+    toast('✅ تم حفظ إيميل التذكيرات');
+  }
+}
+
+function loadNotifEmail() {
+  // Load from localStorage first (instant)
+  const cached = localStorage.getItem('ruh_jed_notif_email');
+  if (cached) {
+    const input = document.getElementById('notifEmailInput');
+    if (input) input.value = cached;
+  }
+
+  // Then sync from Firestore
+  if (_currentUid) {
+    _fbDb.collection('users').doc(_currentUid)
+         .collection('data').doc('settings')
+         .get().then(snap => {
+           if (snap.exists) {
+             const email = snap.data()?.notifEmail;
+             if (email) {
+               localStorage.setItem('ruh_jed_notif_email', email);
+               const input = document.getElementById('notifEmailInput');
+               if (input) input.value = email;
+             }
+           }
+         }).catch(() => {});
+  }
 }
 
 // ─── ACCOUNTS MANAGEMENT ───
