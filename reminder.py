@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 # ── Config ──
 PROJECT_ID   = 'mytrips-9b054'
-REMINDER_DAYS = [1, 2, 3, 7]  # أيام التذكير — غيّرها حسب رغبتك
+REMINDER_DAYS = [1, 3, 5, 7]  # أيام التذكير — غيّرها حسب رغبتك
 
 sa_dict    = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
 GMAIL_USER = os.environ['GMAIL_USER']
