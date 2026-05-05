@@ -1099,6 +1099,14 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
         <option value="go">ذهاب</option>
         <option value="return">إياب</option>
       </select>
+      <select id="sortOrder" onchange="renderAll()" style="
+        background:var(--surface2);border:1px solid var(--border);
+        color:var(--text);font-family:'Cairo',sans-serif;
+        font-size:12px;padding:6px 10px;border-radius:8px;cursor:pointer;
+      ">
+        <option value="desc">⬇ الأحدث أولاً</option>
+        <option value="asc">⬆ الأقدم أولاً</option>
+      </select>
     </div>
     <div class="table-wrap">
       <table>
@@ -1295,10 +1303,6 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
           <label>وقت الرحلة</label>
           <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
 
-        <div class="form-group">
-          <label>رقم الرحلة <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
-          <input type="text" id="fFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
-        </div>
           <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
         </div>
 
@@ -1431,7 +1435,7 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
       ">
         <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔔 التذكيرات التلقائية</div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
-          سيصلك إيميل تلقائي قبل يوم الرحلة و قبها يومين و باسبوع من كل رحلة على إيميل حسابك في Google
+          سيصلك إيميل تلقائي قبل يومين من كل رحلة على إيميل حسابك في Google
         </div>
         <button onclick="enableReminders()" style="
           width:100%;background:linear-gradient(135deg,#10b981,#059669);
@@ -2593,7 +2597,16 @@ function renderTrips() {
   });
 
   const sortedCats = Object.keys(byCategory).sort((a,b) => {
-    return (parseInt(a.replace(/\D/g,''))||999) - (parseInt(b.replace(/\D/g,''))||999);
+    // Sort by most recent flight date in each category — newest first
+    const latestA = Math.max(...byCategory[a].map(p => {
+      const legs = [p.go, p.ret, ...(p.extra||[]), p.solo].filter(Boolean);
+      return Math.max(...legs.map(l => l.flightDate ? new Date(l.flightDate) : 0));
+    }));
+    const latestB = Math.max(...byCategory[b].map(p => {
+      const legs = [p.go, p.ret, ...(p.extra||[]), p.solo].filter(Boolean);
+      return Math.max(...legs.map(l => l.flightDate ? new Date(l.flightDate) : 0));
+    }));
+    return latestB - latestA; // newest first
   });
 
   // ── Render ──
@@ -2725,9 +2738,10 @@ function renderTrips() {
 
 // ─── ALL TABLE ───
 function renderAll() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const fa = document.getElementById('filterAirline').value;
-  const ft = document.getElementById('filterType').value;
+  const q    = document.getElementById('searchInput').value.toLowerCase();
+  const fa   = document.getElementById('filterAirline').value;
+  const ft   = document.getElementById('filterType').value;
+  const sort = document.getElementById('sortOrder')?.value || 'desc';
 
   let filtered = tickets.filter(t => {
     if (fa && t.airline !== fa) return false;
@@ -2737,7 +2751,10 @@ function renderAll() {
       if (!hay.includes(q)) return false;
     }
     return true;
-  }).sort((a,b) => new Date(a.flightDate) - new Date(b.flightDate)); // oldest first
+  }).sort((a,b) => sort === 'asc'
+    ? new Date(a.flightDate) - new Date(b.flightDate)
+    : new Date(b.flightDate) - new Date(a.flightDate)
+  );
 
   // Group by category to assign rowspan for trip number column
   // Build ordered list of unique categories preserving first-seen order
