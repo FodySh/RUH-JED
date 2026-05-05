@@ -125,7 +125,6 @@ for user in users_list:
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("airline","—")}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("category","—")}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{PNR}</td>'
             '</tr>'
         )
 
@@ -147,7 +146,6 @@ for user in users_list:
         '<th style="padding:12px;text-align:right">الوقت</th>'
         '<th style="padding:12px;text-align:right">الخط</th>'
         '<th style="padding:12px;text-align:right">رقم الرحلة</th>'
-        '<th style="padding:12px;text-align:right">PNR</th>'
         '</tr></thead>'
         f'<tbody>{rows}</tbody></table></div></div>'
         '<div style="background:#dbeafe;border-radius:10px;padding:14px;font-size:13px;color:#1e40af;margin-bottom:16px">'
