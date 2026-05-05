@@ -1,48 +1,67 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
-import smtplib, os, json
+import smtplib, os, json, urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
+import google.auth.transport.requests
+import google.oauth2.service_account
 
 print("Loading service account...")
 sa_dict = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
 print(f"Project ID: {sa_dict.get('project_id')}")
+PROJECT_ID = sa_dict.get('project_id')
 
-cred = credentials.Certificate(sa_dict)
-firebase_admin.initialize_app(cred)
+# Get access token using service account
+SCOPES = ['https://www.googleapis.com/auth/datastore',
+          'https://www.googleapis.com/auth/cloud-platform']
 
-# Try different database names
-databases_to_try = ['(default)', 'me-central2', 'mytrips-9b054']
+gsa_creds = google.oauth2.service_account.Credentials.from_service_account_info(
+    sa_dict, scopes=SCOPES)
+auth_req = google.auth.transport.requests.Request()
+gsa_creds.refresh(auth_req)
+token = gsa_creds.token
+print(f"Access token obtained: {token[:20]}...")
 
-db = None
-for db_name in databases_to_try:
+# Use Firestore REST API directly
+def firestore_list(collection_path):
+    url = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents/{collection_path}"
+    req = urllib.request.Request(url, headers={
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    })
     try:
-        if db_name == '(default)':
-            test_db = firestore.client()
-        else:
-            test_db = firestore.client(database_id=db_name)
-        
-        users = list(test_db.collection('users').limit(5).stream())
-        print(f"Database '{db_name}': {len(users)} users found")
-        
-        if len(users) > 0:
-            db = test_db
-            print(f"✅ Using database: {db_name}")
-            break
-    except Exception as e:
-        print(f"Database '{db_name}': Error — {e}")
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return {'error': e.code, 'msg': e.read().decode()}
 
-if not db:
-    print("❌ No database with users found")
+def get_field(fields, key):
+    if not fields or key not in fields:
+        return None
+    f = fields[key]
+    return (f.get('stringValue') or f.get('booleanValue') or
+            f.get('doubleValue') or f.get('integerValue') or
+            f.get('nullValue'))
+
+# List users
+print("\nListing users via REST API...")
+users_data = firestore_list('users')
+print(f"Response keys: {list(users_data.keys())}")
+
+if 'error' in users_data:
+    print(f"Error: {users_data}")
     exit(1)
+
+documents = users_data.get('documents', [])
+print(f"Users found: {len(documents)}")
 
 # Date setup
 tz_riyadh  = timezone(timedelta(hours=3))
 today      = datetime.now(tz_riyadh).date()
 target     = today + timedelta(days=2)
 target_str = target.strftime('%Y-%m-%d')
-print(f"\nToday: {today} | Target: {target_str}")
+print(f"\nTarget date: {target_str}")
 
 GMAIL_USER = os.environ['GMAIL_USER']
 GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD'].replace(' ', '')
@@ -68,53 +87,79 @@ def fmt_time(t):
         return t
 
 sent = 0
-users = list(db.collection('users').stream())
-print(f"Total users: {len(users)}")
 
-for user_doc in users:
-    uid = user_doc.id
+for user_doc in documents:
+    uid = user_doc['name'].split('/')[-1]
     print(f"\n--- User: {uid[:12]}... ---")
 
-    settings = db.collection('users').doc(uid).collection('data').document('settings').get()
-    if not settings.exists:
-        print("  No settings doc")
+    # Get settings
+    settings_data = firestore_list(f"users/{uid}/data/settings")
+    if 'error' in settings_data:
+        print(f"  Settings error: {settings_data}")
+        continue
+    settings_docs = settings_data.get('documents', [])
+    if not settings_docs:
+        print("  No settings")
         continue
 
-    notif_email = settings.to_dict().get('notifEmail', '')
+    fields = settings_docs[0].get('fields', {})
+    notif_email = get_field(fields, 'notifEmail') or ''
     print(f"  Email: {notif_email}")
     if not notif_email or '@' not in notif_email:
-        print("  No valid email — skipping")
+        print("  No valid email")
         continue
 
-    tickets_doc = db.collection('users').doc(uid).collection('data').document('tickets').get()
-    if not tickets_doc.exists:
-        print("  No tickets doc")
+    # Get tickets
+    tickets_data = firestore_list(f"users/{uid}/data/tickets")
+    if 'error' in tickets_data:
+        print(f"  Tickets error: {tickets_data}")
+        continue
+    tickets_docs = tickets_data.get('documents', [])
+    if not tickets_docs:
+        print("  No tickets")
         continue
 
-    tickets = tickets_doc.to_dict().get('tickets', [])
-    print(f"  Tickets: {len(tickets)}")
+    t_fields = tickets_docs[0].get('fields', {})
+    tickets_arr = t_fields.get('tickets', {}).get('arrayValue', {}).get('values', [])
+    print(f"  Tickets: {len(tickets_arr)}")
 
-    upcoming = [t for t in tickets
-                if t.get('flightDate') == target_str
-                and not t.get('missed', False)]
-    print(f"  Upcoming on {target_str}: {len(upcoming)}")
+    upcoming = []
+    for item in tickets_arr:
+        t_map = item.get('mapValue', {}).get('fields', {})
+        flight_date = get_field(t_map, 'flightDate')
+        if flight_date != target_str:
+            continue
+        if get_field(t_map, 'missed'):
+            continue
+        upcoming.append({
+            'type':     get_field(t_map, 'ticketType') or '',
+            'date':     flight_date or '',
+            'time':     get_field(t_map, 'flightTime') or '',
+            'airline':  get_field(t_map, 'airline') or '—',
+            'pnr':      get_field(t_map, 'pnr') or '',
+            'flightNo': get_field(t_map, 'flightNumber') or '',
+            'category': get_field(t_map, 'category') or '—',
+            'paid':     get_field(t_map, 'paid') or False,
+        })
 
+    print(f"  Upcoming ({target_str}): {len(upcoming)}")
     if not upcoming:
         continue
 
+    # Build email
     rows = ''
     for t in upcoming:
-        route    = 'RUH → JED' if t.get('ticketType') == 'go' else 'JED → RUH'
-        paid_str = 'مدفوع' if t.get('paid') else 'غير مدفوع'
-        fn       = t.get('flightNumber') or t.get('pnr') or '—'
+        route    = 'RUH → JED' if t['type'] == 'go' else 'JED → RUH'
+        paid_str = 'مدفوع' if t['paid'] else 'غير مدفوع'
+        fn       = t['flightNo'] or t['pnr'] or '—'
         rows += (
             '<tr>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-weight:700">{route}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_date(t.get("flightDate",""))}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_time(t.get("flightTime",""))}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("airline","—")}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_date(t["date"])}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_time(t["time"])}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t["airline"]}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("category","—")}</td>'
+            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t["category"]}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{paid_str}</td>'
             '</tr>'
         )
