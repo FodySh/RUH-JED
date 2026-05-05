@@ -1424,26 +1424,14 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
         حساباتك الخاصة — محفوظة في حسابك ولا تظهر لأي مستخدم آخر
       </div>
 
-      <!-- Email notifications -->
+      <!-- Notification reminders -->
       <div style="
         background:var(--surface2);border:1px solid var(--border);
         border-radius:12px;padding:16px;margin-bottom:24px;
       ">
-        <div style="font-size:13px;font-weight:800;margin-bottom:4px">📧 إيميل التذكيرات</div>
+        <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔔 التذكيرات التلقائية</div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
-          سيصلك إيميل تلقائي قبل يومين من كل رحلة
-        </div>
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <input type="email" id="notifEmailInput" placeholder="example@gmail.com" style="
-            flex:1;background:var(--surface);border:1px solid var(--border);
-            border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;
-            font-size:13px;padding:10px 14px;direction:ltr;
-          ">
-          <button onclick="saveNotifEmail()" style="
-            background:var(--accent);border:none;border-radius:8px;
-            color:white;font-family:'Cairo',sans-serif;font-size:13px;
-            font-weight:800;padding:10px 18px;cursor:pointer;white-space:nowrap;
-          ">💾 حفظ</button>
+          سيصلك إيميل تلقائي قبل يوم الرحلة و قبها يومين و باسبوع من كل رحلة على إيميل حسابك في Google
         </div>
         <button onclick="enableReminders()" style="
           width:100%;background:linear-gradient(135deg,#10b981,#059669);
@@ -1777,7 +1765,6 @@ function initFirebase() {
       renderAll(); renderOverview(); renderUpcoming(); renderTrips();
       subscribeFirestore(user.uid);
       loadAccountsFromFirestore(user.uid);
-      loadNotifEmail();
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
     } else {
       _currentUid = null;
@@ -1822,7 +1809,7 @@ function showTab(name) {
   if (name === 'all')       renderAll();
   if (name === 'finance')   renderFinance();
   if (name === 'add')       initAddForm();
-  if (name === 'accounts')  { renderAccounts(); loadNotifEmail(); }
+  if (name === 'accounts')  renderAccounts();
 }
 
 // ─── HELPERS ───
@@ -1956,16 +1943,19 @@ const USERS_CONFIG_WORKER = 'https://users-config-updater.shaheenhouse1.workers.
 
 async function enableReminders() {
   const status = document.getElementById('notifEmailStatus');
-  const email  = document.getElementById('notifEmailInput')?.value.trim();
 
-  if (!email || !email.includes('@')) {
-    status.textContent = '⚠️ أدخل إيميلك أولاً ثم اضغط حفظ';
+  if (!_currentUid) {
+    status.textContent = '⚠️ يجب تسجيل الدخول أولاً';
     status.style.color = 'var(--unpaid)';
     return;
   }
 
-  if (!_currentUid) {
-    status.textContent = '⚠️ يجب تسجيل الدخول أولاً';
+  // Use the signed-in Google account email
+  const user  = _fbAuth.currentUser;
+  const email = user?.email || '';
+
+  if (!email) {
+    status.textContent = '⚠️ لم يتم العثور على إيميل الحساب';
     status.style.color = 'var(--unpaid)';
     return;
   }
@@ -1982,7 +1972,7 @@ async function enableReminders() {
     const data = await res.json();
 
     if (data.success) {
-      status.textContent = `✅ تم التفعيل — أنت ضمن ${data.users} مستخدم يستقبل التذكيرات`;
+      status.textContent = `✅ تم التفعيل — التذكيرات ستصل إلى ${email}`;
       status.style.color = 'var(--paid)';
       toast('✅ تم تفعيل التذكيرات التلقائية!');
     } else {
@@ -1992,67 +1982,10 @@ async function enableReminders() {
   } catch(err) {
     status.textContent = '❌ خطأ في الاتصال — حاول مرة ثانية';
     status.style.color = 'var(--unpaid)';
-    console.error(err);
   }
 }
 
 // ─── NOTIFICATION EMAIL ───
-function saveNotifEmail() {
-  const input  = document.getElementById('notifEmailInput');
-  const status = document.getElementById('notifEmailStatus');
-  const email  = input?.value.trim();
-
-  if (!email || !email.includes('@')) {
-    if (status) status.textContent = '⚠️ أدخل إيميل صحيح';
-    return;
-  }
-
-  // Save to localStorage
-  localStorage.setItem('ruh_jed_notif_email', email);
-
-  // Save to Firestore under user settings
-  if (_currentUid) {
-    _fbDb.collection('users').doc(_currentUid)
-         .collection('data').doc('settings')
-         .set({ notifEmail: email, updatedAt: Date.now() }, { merge: true })
-         .then(() => {
-           if (status) { status.textContent = '✅ تم حفظ الإيميل'; status.style.color = 'var(--paid)'; }
-           toast('✅ تم حفظ إيميل التذكيرات');
-         })
-         .catch(() => {
-           if (status) status.textContent = '❌ فشل الحفظ — حاول مرة ثانية';
-         });
-  } else {
-    if (status) { status.textContent = '✅ محفوظ محلياً'; status.style.color = 'var(--paid)'; }
-    toast('✅ تم حفظ إيميل التذكيرات');
-  }
-}
-
-function loadNotifEmail() {
-  // Load from localStorage first (instant)
-  const cached = localStorage.getItem('ruh_jed_notif_email');
-  if (cached) {
-    const input = document.getElementById('notifEmailInput');
-    if (input) input.value = cached;
-  }
-
-  // Then sync from Firestore
-  if (_currentUid) {
-    _fbDb.collection('users').doc(_currentUid)
-         .collection('data').doc('settings')
-         .get().then(snap => {
-           if (snap.exists) {
-             const email = snap.data()?.notifEmail;
-             if (email) {
-               localStorage.setItem('ruh_jed_notif_email', email);
-               const input = document.getElementById('notifEmailInput');
-               if (input) input.value = email;
-             }
-           }
-         }).catch(() => {});
-  }
-}
-
 // ─── ACCOUNTS MANAGEMENT ───
 
 function renderAccounts() {
