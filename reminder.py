@@ -124,7 +124,6 @@ for user in users_list:
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{fmt_time(t.get("flightTime",""))}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("airline","—")}</td>'
             f'<td style="padding:12px;border-bottom:1px solid #e5e7eb;font-family:monospace">{fn}</td>'
-            f'<td style="padding:12px;border-bottom:1px solid #e5e7eb">{t.get("category","—")}</td>'
             '</tr>'
         )
 
