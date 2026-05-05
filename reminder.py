@@ -10,7 +10,8 @@ PROJECT_ID = 'mytrips-9b054'
 sa_dict    = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
 
 # Get users from SECRET directly
-USERS_CONFIG = os.environ.get('USERS_CONFIG', '[]')
+# Read from env (GitHub Actions variable)
+    USERS_CONFIG = os.environ.get('USERS_CONFIG', '[]')
 users_list   = json.loads(USERS_CONFIG)
 # Format: [{"uid": "xxx", "email": "xxx@gmail.com"}]
 print(f"Users from config: {len(users_list)}")
@@ -45,9 +46,11 @@ def get_val(field):
 
 tz_riyadh  = timezone(timedelta(hours=3))
 today      = datetime.now(tz_riyadh).date()
-target     = today + timedelta(days=2)
-target_str = target.strftime('%Y-%m-%d')
-print(f"Target date: {target_str}")
+
+# ── تذكيرات متعددة: اليوم التالي، يومين، 3 أيام، أسبوع ──
+REMINDER_DAYS = [1, 2, 3, 7]  # ← غيّر هذه القيم حسب رغبتك
+target_dates  = [(today + timedelta(days=d)).strftime('%Y-%m-%d') for d in REMINDER_DAYS]
+print(f"Checking dates: {target_dates}")
 
 GMAIL_USER = os.environ['GMAIL_USER']
 GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD'].replace(' ', '')
@@ -102,9 +105,11 @@ for user in users_list:
 
     upcoming = [t for t in tickets
                 if isinstance(t, dict)
-                and t.get('flightDate') == target_str
+                and t.get('flightDate') in target_dates
                 and not t.get('missed', False)]
-    print(f"  Upcoming on {target_str}: {len(upcoming)}")
+    # Sort by date
+    upcoming.sort(key=lambda t: t.get('flightDate',''))
+    print(f"  Upcoming in next {max(REMINDER_DAYS)} days: {len(upcoming)}")
 
     if not upcoming:
         continue
@@ -153,7 +158,7 @@ for user in users_list:
     )
 
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = f"تذكير — رحلتك بعد يومين {fmt_date(target_str)}"
+    msg['Subject'] = f"✈ تذكير — لديك {len(upcoming)} رحلة قادمة"
     msg['From']    = GMAIL_USER
     msg['To']      = notif_email
     msg.attach(MIMEText(html, 'html', 'utf-8'))
