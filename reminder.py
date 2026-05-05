@@ -11,7 +11,7 @@ sa_dict    = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
 
 # Get users from SECRET directly
 # Read from env (GitHub Actions variable)
-    USERS_CONFIG = os.environ.get('USERS_CONFIG', '[]')
+USERS_CONFIG = os.environ.get('USERS_CONFIG', '[]')
 users_list   = json.loads(USERS_CONFIG)
 # Format: [{"uid": "xxx", "email": "xxx@gmail.com"}]
 print(f"Users from config: {len(users_list)}")
