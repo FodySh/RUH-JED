@@ -6,21 +6,47 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 
 # Init Firebase Admin
-sa_dict = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
-cred    = credentials.Certificate(sa_dict)
+print("Loading service account...")
+sa_json = os.environ['FIREBASE_SERVICE_ACCOUNT']
+sa_dict = json.loads(sa_json)
+print(f"Project ID: {sa_dict.get('project_id')}")
+print(f"Client email: {sa_dict.get('client_email')}")
+
+cred = credentials.Certificate(sa_dict)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+print("Firebase initialized ✅")
+
+# Test Firestore connection
+print("\nTesting Firestore connection...")
+try:
+    # Try to list collections
+    collections = list(db.collections())
+    print(f"Collections found: {[c.id for c in collections]}")
+except Exception as e:
+    print(f"Error listing collections: {e}")
+
+# Try direct users collection
+print("\nTrying users collection directly...")
+try:
+    users_ref = db.collection('users')
+    users     = list(users_ref.limit(10).stream())
+    print(f"Users found: {len(users)}")
+    for u in users:
+        print(f"  - {u.id}")
+except Exception as e:
+    print(f"Error reading users: {type(e).__name__}: {e}")
 
 # Date setup
 tz_riyadh  = timezone(timedelta(hours=3))
 today      = datetime.now(tz_riyadh).date()
 target     = today + timedelta(days=2)
 target_str = target.strftime('%Y-%m-%d')
-print(f"Today: {today} | Target date: {target_str}")
+print(f"\nToday: {today} | Target: {target_str}")
 
 GMAIL_USER = os.environ['GMAIL_USER']
 GMAIL_PASS = os.environ['GMAIL_APP_PASSWORD'].replace(' ', '')
-print(f"Gmail user: {GMAIL_USER}")
+print(f"Gmail: {GMAIL_USER}")
 
 MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
              'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
@@ -43,50 +69,43 @@ def fmt_time(t):
         return t
 
 sent = 0
-
-# Loop users
 users = list(db.collection('users').stream())
-print(f"Total users found: {len(users)}")
+print(f"\nTotal users: {len(users)}")
 
 for user_doc in users:
     uid = user_doc.id
     print(f"\n--- User: {uid[:12]}... ---")
 
-    # Settings
     settings = db.collection('users').doc(uid).collection('data').document('settings').get()
     if not settings.exists:
-        print(f"  No settings doc")
-        continue
-    settings_data = settings.to_dict()
-    print(f"  Settings keys: {list(settings_data.keys())}")
-    notif_email = settings_data.get('notifEmail', '')
-    print(f"  notifEmail: '{notif_email}'")
-    if not notif_email or '@' not in notif_email:
-        print(f"  Skipping — no valid email")
+        print("  No settings")
         continue
 
-    # Tickets
+    notif_email = settings.to_dict().get('notifEmail', '')
+    print(f"  Email: {notif_email}")
+    if not notif_email or '@' not in notif_email:
+        print("  No valid email — skipping")
+        continue
+
     tickets_doc = db.collection('users').doc(uid).collection('data').document('tickets').get()
     if not tickets_doc.exists:
-        print(f"  No tickets doc")
+        print("  No tickets")
         continue
-    tickets = tickets_doc.to_dict().get('tickets', [])
-    print(f"  Total tickets: {len(tickets)}")
 
-    # Show all dates for debugging
+    tickets = tickets_doc.to_dict().get('tickets', [])
+    print(f"  Tickets: {len(tickets)}")
+
     dates = sorted(set(t.get('flightDate','') for t in tickets if t.get('flightDate')))
-    print(f"  Flight dates: {dates}")
-    print(f"  Looking for: {target_str}")
+    print(f"  Dates: {dates[-5:] if len(dates)>5 else dates}")
 
     upcoming = [t for t in tickets
                 if t.get('flightDate') == target_str
                 and not t.get('missed', False)]
-    print(f"  Matching flights: {len(upcoming)}")
+    print(f"  Upcoming ({target_str}): {len(upcoming)}")
 
     if not upcoming:
         continue
 
-    # Build email
     rows = ''
     for t in upcoming:
         route    = 'RUH → JED' if t.get('ticketType') == 'go' else 'JED → RUH'
@@ -139,13 +158,13 @@ for user_doc in users:
     msg.attach(MIMEText(html, 'html', 'utf-8'))
 
     try:
-        print(f"  Sending email to {notif_email}...")
+        print(f"  Sending to {notif_email}...")
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(GMAIL_USER, GMAIL_PASS)
             smtp.sendmail(GMAIL_USER, notif_email, msg.as_bytes())
-        print(f"  ✅ Sent!")
+        print("  ✅ Sent!")
         sent += 1
     except Exception as e:
-        print(f"  ❌ Email failed: {e}")
+        print(f"  ❌ Email error: {e}")
 
 print(f"\nDone — {sent} email(s) sent")
