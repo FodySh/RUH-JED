@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -7,9 +8,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <!-- Firebase Compat SDK — Auth + Firestore -->
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
 const _firebaseConfig = {
   apiKey:            "AIzaSyBUJMZoN-wZ_1y2OCDTBF6pCXSexNN78t0",
@@ -27,6 +32,7 @@ const _fbDb   = firebase.firestore();
 const _googleProvider = new firebase.auth.GoogleAuthProvider();
 _googleProvider.setCustomParameters({ prompt: 'select_account' });
 </script>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap');
 
@@ -273,6 +279,103 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
     white-space: nowrap;
     border: 1px solid rgba(59,130,246,0.2);
   }
+  /* ═══════════════════════════════════════════
+     APPLE MOTION DESIGN SYSTEM
+     ═══════════════════════════════════════════ */
+  :root {
+    --spring-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+    --spring-soft:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --dur-fast: 180ms; --dur-base: 320ms;
+    --dur-slow: 480ms; --dur-page: 520ms;
+  }
+  /* Page transition */
+  .section { display:none; opacity:0; transform:translateY(12px); }
+  .section.active { display:block; animation: sectionIn var(--dur-page) var(--ease-out-expo) forwards; }
+  @keyframes sectionIn {
+    from { opacity:0; transform:translateY(14px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  /* Row stagger */
+  @keyframes rowIn {
+    from { opacity:0; transform:translateX(-6px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  .animated-row { animation: rowIn var(--dur-base) var(--ease-out-expo) both; }
+  /* Card reveal */
+  @keyframes cardIn {
+    from { opacity:0; transform:translateY(20px) scale(0.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+  .card-animate { animation: cardIn var(--dur-slow) var(--spring-soft) both; }
+  /* Trip card hover */
+  .trip-card {
+    transition: transform var(--dur-fast) var(--spring-bounce),
+                box-shadow var(--dur-fast) var(--ease-out-quart),
+                border-color var(--dur-fast) ease;
+    will-change: transform;
+  }
+  .trip-card:hover { transform:translateY(-3px) scale(1.005); box-shadow:0 12px 32px rgba(0,0,0,0.25); border-color:rgba(59,130,246,0.4) !important; }
+  .trip-card:active { transform:scale(0.998); }
+  /* Upcoming card hover */
+  .upcoming-card {
+    transition: transform var(--dur-fast) var(--spring-bounce), box-shadow var(--dur-fast) var(--ease-out-quart);
+    will-change: transform;
+  }
+  .upcoming-card:hover { transform:translateY(-2px) scale(1.008); box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+  .upcoming-card:active { transform:scale(0.997); }
+  /* Button press */
+  button, .btn-icon, .btn-submit, .btn-save {
+    transition: transform var(--dur-fast) var(--spring-bounce), opacity var(--dur-fast) ease;
+    will-change: transform;
+  }
+  button:active:not(:disabled) { transform:scale(0.93); opacity:0.85; }
+  /* Tab ripple */
+  .tab { position:relative; overflow:hidden; }
+  .tab::after {
+    content:''; position:absolute; inset:0; background:rgba(59,130,246,0.06);
+    border-radius:6px; opacity:0; transform:scale(0.8);
+    transition: opacity var(--dur-fast) ease, transform var(--dur-fast) var(--spring-bounce);
+  }
+  .tab:hover::after { opacity:1; transform:scale(1); }
+  /* Modal spring */
+  @keyframes modalIn {
+    from { opacity:0; transform:scale(0.91) translateY(28px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
+  }
+  .modal-overlay[style*="flex"] .modal-box { animation: modalIn var(--dur-slow) var(--spring-bounce) forwards; }
+  #aiImportModal[style*="flex"] > div { animation: modalIn var(--dur-slow) var(--spring-bounce) forwards; }
+  /* Input focus */
+  input, select, textarea {
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, transform var(--dur-fast) var(--spring-soft);
+  }
+  input:focus, select:focus { transform:scale(1.004); box-shadow:0 0 0 3px rgba(59,130,246,0.18); }
+  /* Paid dot pulse */
+  .paid-dot.paid-yes { animation: paidPulse 2.6s ease-in-out infinite; }
+  @keyframes paidPulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(16,185,129,0.4); }
+    50%     { box-shadow:0 0 0 4px rgba(16,185,129,0); }
+  }
+  /* Toast */
+  @keyframes toastIn {
+    from { opacity:0; transform:translateX(-50%) translateY(10px) scale(0.9); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+  }
+  /* Pull-to-refresh */
+  #pullIndicator {
+    position:fixed; top:-48px; left:50%; transform:translateX(-50%);
+    background:var(--accent); color:white; border-radius:20px;
+    padding:6px 16px; font-size:12px; font-weight:700;
+    font-family:'Cairo',sans-serif; transition:top var(--dur-base) var(--spring-bounce);
+    z-index:9000; pointer-events:none;
+  }
+  #pullIndicator.visible { top:12px; }
+  /* Scroll reveal */
+  .scroll-hidden { opacity:0; transform:translateY(16px);
+    transition: opacity var(--dur-slow) var(--ease-out-expo), transform var(--dur-slow) var(--ease-out-expo); }
+  .scroll-hidden.scroll-visible { opacity:1; transform:translateY(0); }
+
   .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; min-width: 600px; }
   @media(min-width: 900px) { table { min-width: unset; } }
@@ -924,10 +1027,12 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
     color:var(--accent); font-weight:600; display:inline-flex; align-items:center; gap:5px;
   }
 </style>
+
 </head>
 <body>
 
 <!-- ── LOGIN SCREEN ── -->
+
 <div id="loginScreen" style="
   position:fixed;inset:0;z-index:9999;
   background:var(--bg);
@@ -961,6 +1066,7 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
   <div id="loginStatus" style="margin-top:20px;font-size:12px;color:var(--text-muted)"></div>
 
   <!-- Contact -->
+
   <div style="
     position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
     text-align:center;white-space:nowrap;
@@ -981,8 +1087,11 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
     </a>
   </div>
 
-  <button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
+<button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
+
 </div>
+
+<div id="pullIndicator">↓ اسحب للتحديث</div>
 
 <div class="header">
   <div>
@@ -1014,61 +1123,68 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
 <div class="content">
 
   <!-- OVERVIEW -->
+
   <div class="section active" id="sec-overview">
     <!-- Next trip banner -->
     <div id="nextTripBanner"></div>
 
-    <!-- KPI strip -->
-    <div class="kpi-strip" id="kpiStrip"></div>
+```
+<!-- KPI strip -->
+<div class="kpi-strip" id="kpiStrip"></div>
 
-    <!-- Payment progress -->
-    <div class="chart-card" style="margin-bottom:14px" id="payCard"></div>
+<!-- Payment progress -->
+<div class="chart-card" style="margin-bottom:14px" id="payCard"></div>
 
-    <!-- Monthly spend + Type split -->
-    <div class="dash-row col2">
-      <div class="chart-card" id="monthlyChart"></div>
-      <div class="chart-card" id="typeSplit"></div>
-    </div>
+<!-- Monthly spend + Type split -->
+<div class="dash-row col2">
+  <div class="chart-card" id="monthlyChart"></div>
+  <div class="chart-card" id="typeSplit"></div>
+</div>
 
-    <!-- Airline breakdown + Account usage -->
-    <div class="dash-row col2">
-      <div class="chart-card" id="airlineChart"></div>
-      <div class="chart-card" id="accountChart"></div>
-    </div>
+<!-- Airline breakdown + Account usage -->
+<div class="dash-row col2">
+  <div class="chart-card" id="airlineChart"></div>
+  <div class="chart-card" id="accountChart"></div>
+</div>
 
-    <!-- Month heat map + Insights row -->
-    <div class="chart-card" style="margin-bottom:14px" id="heatMap"></div>
+<!-- Month heat map + Insights row -->
+<div class="chart-card" style="margin-bottom:14px" id="heatMap"></div>
 
-    <!-- Insights pills -->
-    <div id="insightsRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+<!-- Insights pills -->
+<div id="insightsRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
 
-    <!-- Monthly report button -->
-    <div style="text-align:center;margin-bottom:20px">
-      <button onclick="sendMonthlyReport()" style="
-        background:linear-gradient(135deg,#3b82f6,#6366f1);
-        border:none;border-radius:12px;color:white;
-        font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
-        padding:14px 28px;cursor:pointer;
-        box-shadow:0 4px 16px rgba(59,130,246,0.35);
-        transition:transform 0.15s,box-shadow 0.15s;
-      " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(59,130,246,0.45)'"
-         onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(59,130,246,0.35)'">
-        ✉️ إرسال تقرير شهري
-      </button>
-    </div>
+<!-- Monthly report button -->
+<div style="text-align:center;margin-bottom:20px">
+  <button onclick="sendMonthlyReport()" style="
+    background:linear-gradient(135deg,#3b82f6,#6366f1);
+    border:none;border-radius:12px;color:white;
+    font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+    padding:14px 28px;cursor:pointer;
+    box-shadow:0 4px 16px rgba(59,130,246,0.35);
+    transition:transform 0.15s,box-shadow 0.15s;
+  " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(59,130,246,0.45)'"
+     onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(59,130,246,0.35)'">
+    ✉️ إرسال تقرير شهري
+  </button>
+</div>
+```
+
   </div>
 
   <!-- UPCOMING -->
+
   <div class="section" id="sec-upcoming">
     <div id="upcomingList"></div>
   </div>
 
   <!-- TRIPS (paired) -->
+
   <div class="section" id="sec-trips">
     <div id="tripsList"></div>
   </div>
 
   <!-- ALL TICKETS -->
+
   <div class="section" id="sec-all">
     <div class="io-bar">
       <span style="font-size:11px;color:var(--text-muted);font-weight:700;align-self:center">تصدير:</span>
@@ -1137,290 +1253,299 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
   </div>
 
   <!-- ADD FORM -->
+
   <div class="section" id="sec-add">
 
-    <!-- AI IMPORT MODAL -->
-    <div id="aiImportModal" style="
-      display:none;position:fixed;inset:0;z-index:8000;
-      background:rgba(0,0,0,0.75);
-      align-items:center;justify-content:center;padding:20px;
-    " onclick="if(event.target===this)closeAIImport()">
-      <div style="
-        background:var(--surface);border:1px solid var(--border);
-        border-radius:16px;padding:24px;max-width:420px;width:100%;
-        font-family:'Cairo',sans-serif;direction:rtl;
-      ">
-        <div style="font-size:17px;font-weight:900;margin-bottom:6px">🤖 استيراد حجز بالذكاء الاصطناعي</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
-          ارفع صورة أو screenshot لتأكيد الحجز وسيستخرج Claude البيانات تلقائياً
-        </div>
-
-        <!-- Upload zone -->
-        <label for="aiImageInput" id="aiDropZone" style="
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-          gap:10px;border:2px dashed var(--border);border-radius:12px;
-          padding:28px 16px;cursor:pointer;transition:border-color 0.2s;
-          background:var(--surface2);margin-bottom:16px;
-        " onmouseover="this.style.borderColor='var(--accent)'"
-           onmouseout="this.style.borderColor='var(--border)'">
-          <div id="aiDropIcon" style="font-size:36px">📎</div>
-          <div id="aiDropLabel" style="font-size:13px;font-weight:700;color:var(--text)">اضغط لرفع صورة الحجز</div>
-          <div style="font-size:11px;color:var(--text-muted)">PNG، JPG، JPEG، WEBP</div>
-        </label>
-        <input type="file" id="aiImageInput" accept="image/*" style="display:none" onchange="onAIImageSelected(event)">
-
-        <!-- Preview -->
-        <div id="aiPreviewWrap" style="display:none;margin-bottom:16px;text-align:center">
-          <img id="aiPreviewImg" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--border)">
-        </div>
-
-        <!-- Status -->
-        <div id="aiStatus" style="font-size:12px;color:var(--text-muted);text-align:center;min-height:18px;margin-bottom:16px"></div>
-
-        <!-- Extracted data preview -->
-        <div id="aiExtracted" style="display:none;background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;line-height:1.9"></div>
-
-        <!-- Actions -->
-        <div style="display:flex;gap:10px">
-          <button id="aiAnalyzeBtn" onclick="analyzeBookingImage()" style="
-            flex:1;background:linear-gradient(135deg,#3b82f6,#6366f1);
-            border:none;border-radius:10px;color:white;
-            font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
-            padding:12px;cursor:pointer;opacity:0.4;
-          " disabled>✨ استخراج البيانات</button>
-          <button onclick="closeAIImport()" style="
-            background:var(--surface2);border:1px solid var(--border);
-            border-radius:10px;color:var(--text-muted);
-            font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
-            padding:12px 16px;cursor:pointer;
-          ">إلغاء</button>
-        </div>
-      </div>
+```
+<!-- AI IMPORT MODAL -->
+<div id="aiImportModal" style="
+  display:none;position:fixed;inset:0;z-index:8000;
+  background:rgba(0,0,0,0.75);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="if(event.target===this)closeAIImport()">
+  <div style="
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;padding:24px;max-width:420px;width:100%;
+    font-family:'Cairo',sans-serif;direction:rtl;
+  ">
+    <div style="font-size:17px;font-weight:900;margin-bottom:6px">🤖 استيراد حجز بالذكاء الاصطناعي</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+      ارفع صورة أو screenshot لتأكيد الحجز وسيستخرج Claude البيانات تلقائياً
     </div>
 
-    <div class="form-card">
-      <!-- AI Import trigger -->
-      <div style="margin-bottom:20px;text-align:center">
-        <button onclick="openAIImport()" style="
-          display:inline-flex;align-items:center;gap:8px;
-          background:linear-gradient(135deg,#6366f1,#8b5cf6);
-          border:none;border-radius:12px;color:white;
-          font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
-          padding:13px 28px;cursor:pointer;
-          box-shadow:0 4px 16px rgba(99,102,241,0.35);
-          transition:transform 0.15s,box-shadow 0.15s;
-        " onmouseover="this.style.transform='translateY(-2px)'"
-           onmouseout="this.style.transform=''">
-          🤖 استيراد من صورة الحجز
-        </button>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
-          أو أدخل البيانات يدوياً أدناه
-        </div>
-      </div>
-      <div class="form-title">➕ إضافة تذكرة جديدة</div>
-      <div class="form-grid">
+    <!-- Upload zone -->
+    <label for="aiImageInput" id="aiDropZone" style="
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:10px;border:2px dashed var(--border);border-radius:12px;
+      padding:28px 16px;cursor:pointer;transition:border-color 0.2s;
+      background:var(--surface2);margin-bottom:16px;
+    " onmouseover="this.style.borderColor='var(--accent)'"
+       onmouseout="this.style.borderColor='var(--border)'">
+      <div id="aiDropIcon" style="font-size:36px">📎</div>
+      <div id="aiDropLabel" style="font-size:13px;font-weight:700;color:var(--text)">اضغط لرفع صورة الحجز</div>
+      <div style="font-size:11px;color:var(--text-muted)">PNG، JPG، JPEG، WEBP</div>
+    </label>
+    <input type="file" id="aiImageInput" accept="image/*" style="display:none" onchange="onAIImageSelected(event)">
 
-        <!-- ① رقم الرحلة + راتب شهر -->
-        <div class="trip-num-display">
-          <span class="tn-label">رقم الرحلة (تلقائي)</span>
-          <span class="tn-val" id="fTripNumDisplay">—</span>
-        </div>
-        <div class="form-group full">
-          <label>راتب شهر</label>
-          <select id="fSalaryMonth">
-            <option value="">— اختر الشهر —</option>
-            <option value="راتب يناير">يناير — January</option>
-            <option value="راتب فبراير">فبراير — February</option>
-            <option value="راتب مارس">مارس — March</option>
-            <option value="راتب أبريل">أبريل — April</option>
-            <option value="راتب مايو">مايو — May</option>
-            <option value="راتب يونيو">يونيو — June</option>
-            <option value="راتب يوليو">يوليو — July</option>
-            <option value="راتب أغسطس">أغسطس — August</option>
-            <option value="راتب سبتمبر">سبتمبر — September</option>
-            <option value="راتب أكتوبر">أكتوبر — October</option>
-            <option value="راتب نوفمبر">نوفمبر — November</option>
-            <option value="راتب ديسمبر">ديسمبر — December</option>
-          </select>
-        </div>
-
-        <hr class="form-divider">
-        <div class="form-section-label">🎫 معلومات التذكرة</div>
-
-        <!-- ② نوع التذكرة -->
-        <div class="form-group">
-          <label>نوع التذكرة</label>
-          <select id="fType">
-            <option value="go">🛫 ذهاب (RUH → JED)</option>
-            <option value="return">🛬 إياب (JED → RUH)</option>
-          </select>
-        </div>
-
-        <!-- ③ الخط الجوي -->
-        <div class="form-group">
-          <label>الخط الجوي</label>
-          <select id="fAirline">
-            <option value="طيران الرياض" style="color:#786793">🟣 طيران الرياض</option>
-            <option value="ناس"          style="color:#00b7ac">🔵 فلاي ناس</option>
-            <option value="اديل"         style="color:#cdde00">🟡 اديل</option>
-            <option value="سعودية"       style="color:#026634">🟢 السعودية</option>
-          </select>
-        </div>
-
-        <!-- ④ منصة الحجز -->
-        <div class="form-group">
-          <label>منصة الحجز</label>
-          <select id="fPlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
-        </div>
-
-        <!-- ⑤ PNR -->
-        <div class="form-group">
-          <label>PNR #</label>
-          <input type="text" id="fPNR" placeholder="ABCDEF" maxlength="10" style="text-transform:uppercase">
-        </div>
-
-        <!-- ⑤b رقم الرحلة -->
-        <div class="form-group">
-          <label>رقم الرحلة ✈ <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
-          <input type="text" id="fFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
-        </div>
-
-        <!-- ⑥ تاريخ الشراء -->
-        <div class="form-group">
-          <label>تاريخ الشراء</label>
-          <input type="date" id="fPurchaseDate">
-        </div>
-
-        <hr class="form-divider">
-        <div class="form-section-label">✈ تفاصيل الرحلة</div>
-
-        <!-- ⑦ تاريخ الرحلة + وقت الرحلة -->
-        <div class="form-group">
-          <label>تاريخ الرحلة</label>
-          <input type="date" id="fFlightDate">
-        </div>
-        <div class="form-group">
-          <label>وقت الرحلة</label>
-          <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
-
-          <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
-        </div>
-
-        <hr class="form-divider">
-        <div class="form-section-label">🚗 المواصلات</div>
-
-        <!-- ⑨ Rented Car -->
-        <div class="form-group full">
-          <label class="form-toggle">
-            <input type="checkbox" id="fRentedCar" onchange="updateFormTotal()">
-            <span>🚗 Rented Car?</span>
-          </label>
-        </div>
-
-        <!-- ⑩ المواصلات -->
-        <div class="form-group full">
-          <label>تكلفة المواصلات (ريال)</label>
-          <input type="number" id="fTransport" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
-        </div>
-
-        <hr class="form-divider">
-        <div class="form-section-label">💳 الحساب والسداد</div>
-
-        <!-- ⑪ السداد من حساب -->
-        <div class="form-group">
-          <label>السداد من حساب</label>
-          <select id="fPaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-        </div>
-
-        <!-- ⑫ يسترد إلى حساب -->
-        <div class="form-group">
-          <label>يسترد إلى حساب</label>
-          <select id="fRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-        </div>
-
-        <!-- ⑬ ملاحظات -->
-        <div class="form-group full">
-          <label>ملاحظات</label>
-          <textarea id="fNotes" placeholder="أي ملاحظات إضافية..."></textarea>
-        </div>
-
-        <hr class="form-divider">
-
-        <!-- ⑭ Paid? -->
-        <div class="form-group full">
-          <label class="form-toggle">
-            <input type="checkbox" id="fPaidStatus" checked>
-            <span>✅ Paid?</span>
-          </label>
-        </div>
-
-        <hr class="form-divider">
-
-        <!-- ⑮ Total -->
-        <div class="total-display">
-          <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
-          <span class="tot-val" id="fTotalDisplay">0 ريال</span>
-        </div>
-
-      </div>
-      <button class="btn-submit" onclick="addTicket()" style="margin-top:16px">حفظ التذكرة</button>
+    <!-- Preview -->
+    <div id="aiPreviewWrap" style="display:none;margin-bottom:16px;text-align:center">
+      <img id="aiPreviewImg" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--border)">
     </div>
+
+    <!-- Status -->
+    <div id="aiStatus" style="font-size:12px;color:var(--text-muted);text-align:center;min-height:18px;margin-bottom:16px"></div>
+
+    <!-- Extracted data preview -->
+    <div id="aiExtracted" style="display:none;background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;line-height:1.9"></div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px">
+      <button id="aiAnalyzeBtn" onclick="analyzeBookingImage()" style="
+        flex:1;background:linear-gradient(135deg,#3b82f6,#6366f1);
+        border:none;border-radius:10px;color:white;
+        font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+        padding:12px;cursor:pointer;opacity:0.4;
+      " disabled>✨ استخراج البيانات</button>
+      <button onclick="closeAIImport()" style="
+        background:var(--surface2);border:1px solid var(--border);
+        border-radius:10px;color:var(--text-muted);
+        font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+        padding:12px 16px;cursor:pointer;
+      ">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="form-card">
+  <!-- AI Import trigger -->
+  <div style="margin-bottom:20px;text-align:center">
+    <button onclick="openAIImport()" style="
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      border:none;border-radius:12px;color:white;
+      font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+      padding:13px 28px;cursor:pointer;
+      box-shadow:0 4px 16px rgba(99,102,241,0.35);
+      transition:transform 0.15s,box-shadow 0.15s;
+    " onmouseover="this.style.transform='translateY(-2px)'"
+       onmouseout="this.style.transform=''">
+      🤖 استيراد من صورة الحجز
+    </button>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
+      أو أدخل البيانات يدوياً أدناه
+    </div>
+  </div>
+  <div class="form-title">➕ إضافة تذكرة جديدة</div>
+  <div class="form-grid">
+
+    <!-- ① رقم الرحلة + راتب شهر -->
+    <div class="trip-num-display">
+      <span class="tn-label">رقم الرحلة (تلقائي)</span>
+      <span class="tn-val" id="fTripNumDisplay">—</span>
+    </div>
+    <div class="form-group full">
+      <label>راتب شهر</label>
+      <select id="fSalaryMonth">
+        <option value="">— اختر الشهر —</option>
+        <option value="راتب يناير">يناير — January</option>
+        <option value="راتب فبراير">فبراير — February</option>
+        <option value="راتب مارس">مارس — March</option>
+        <option value="راتب أبريل">أبريل — April</option>
+        <option value="راتب مايو">مايو — May</option>
+        <option value="راتب يونيو">يونيو — June</option>
+        <option value="راتب يوليو">يوليو — July</option>
+        <option value="راتب أغسطس">أغسطس — August</option>
+        <option value="راتب سبتمبر">سبتمبر — September</option>
+        <option value="راتب أكتوبر">أكتوبر — October</option>
+        <option value="راتب نوفمبر">نوفمبر — November</option>
+        <option value="راتب ديسمبر">ديسمبر — December</option>
+      </select>
+    </div>
+
+    <hr class="form-divider">
+    <div class="form-section-label">🎫 معلومات التذكرة</div>
+
+    <!-- ② نوع التذكرة -->
+    <div class="form-group">
+      <label>نوع التذكرة</label>
+      <select id="fType">
+        <option value="go">🛫 ذهاب (RUH → JED)</option>
+        <option value="return">🛬 إياب (JED → RUH)</option>
+      </select>
+    </div>
+
+    <!-- ③ الخط الجوي -->
+    <div class="form-group">
+      <label>الخط الجوي</label>
+      <select id="fAirline">
+        <option value="طيران الرياض" style="color:#786793">🟣 طيران الرياض</option>
+        <option value="ناس"          style="color:#00b7ac">🔵 فلاي ناس</option>
+        <option value="اديل"         style="color:#cdde00">🟡 اديل</option>
+        <option value="سعودية"       style="color:#026634">🟢 السعودية</option>
+      </select>
+    </div>
+
+    <!-- ④ منصة الحجز -->
+    <div class="form-group">
+      <label>منصة الحجز</label>
+      <select id="fPlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
+    </div>
+
+    <!-- ⑤ PNR -->
+    <div class="form-group">
+      <label>PNR #</label>
+      <input type="text" id="fPNR" placeholder="ABCDEF" maxlength="10" style="text-transform:uppercase">
+    </div>
+
+    <!-- ⑤b رقم الرحلة -->
+    <div class="form-group">
+      <label>رقم الرحلة ✈ <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
+      <input type="text" id="fFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
+    </div>
+
+    <!-- ⑥ تاريخ الشراء -->
+    <div class="form-group">
+      <label>تاريخ الشراء</label>
+      <input type="date" id="fPurchaseDate">
+    </div>
+
+    <hr class="form-divider">
+    <div class="form-section-label">✈ تفاصيل الرحلة</div>
+
+    <!-- ⑦ تاريخ الرحلة + وقت الرحلة -->
+    <div class="form-group">
+      <label>تاريخ الرحلة</label>
+      <input type="date" id="fFlightDate">
+    </div>
+    <div class="form-group">
+      <label>وقت الرحلة</label>
+      <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
+
+      <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
+    </div>
+
+    <hr class="form-divider">
+    <div class="form-section-label">🚗 المواصلات</div>
+
+    <!-- ⑨ Rented Car -->
+    <div class="form-group full">
+      <label class="form-toggle">
+        <input type="checkbox" id="fRentedCar" onchange="updateFormTotal()">
+        <span>🚗 Rented Car?</span>
+      </label>
+    </div>
+
+    <!-- ⑩ المواصلات -->
+    <div class="form-group full">
+      <label>تكلفة المواصلات (ريال)</label>
+      <input type="number" id="fTransport" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
+    </div>
+
+    <hr class="form-divider">
+    <div class="form-section-label">💳 الحساب والسداد</div>
+
+    <!-- ⑪ السداد من حساب -->
+    <div class="form-group">
+      <label>السداد من حساب</label>
+      <select id="fPaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+    </div>
+
+    <!-- ⑫ يسترد إلى حساب -->
+    <div class="form-group">
+      <label>يسترد إلى حساب</label>
+      <select id="fRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+    </div>
+
+    <!-- ⑬ ملاحظات -->
+    <div class="form-group full">
+      <label>ملاحظات</label>
+      <textarea id="fNotes" placeholder="أي ملاحظات إضافية..."></textarea>
+    </div>
+
+    <hr class="form-divider">
+
+    <!-- ⑭ Paid? -->
+    <div class="form-group full">
+      <label class="form-toggle">
+        <input type="checkbox" id="fPaidStatus" checked>
+        <span>✅ Paid?</span>
+      </label>
+    </div>
+
+    <hr class="form-divider">
+
+    <!-- ⑮ Total -->
+    <div class="total-display">
+      <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
+      <span class="tot-val" id="fTotalDisplay">0 ريال</span>
+    </div>
+
+  </div>
+  <button class="btn-submit" onclick="addTicket()" style="margin-top:16px">حفظ التذكرة</button>
+</div>
+```
+
   </div>
 
   <!-- FINANCE SECTION -->
+
   <div class="section" id="sec-finance">
     <div class="form-card" style="margin-bottom:16px">
 
-      <!-- Header KPIs -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="financeKPIs"></div>
+```
+  <!-- Header KPIs -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="financeKPIs"></div>
 
-      <!-- Unpaid tickets table -->
-      <div style="font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span>⏳ التذاكر غير المدفوعة</span>
-        <span id="unpaidCount" style="background:var(--unpaid);color:white;border-radius:20px;padding:2px 10px;font-size:11px"></span>
-      </div>
-      <div class="table-wrap" style="margin-bottom:24px">
-        <table id="unpaidTable">
-          <thead>
-            <tr>
-              <th>تاريخ الرحلة</th>
-              <th>النوع</th>
-              <th>الخط</th>
-              <th>سعر التذكرة</th>
-              <th>تُحوَّل إلى</th>
-              <th>الرحلة</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="unpaidBody"></tbody>
-          <tfoot id="unpaidFoot"></tfoot>
-        </table>
-      </div>
+  <!-- Unpaid tickets table -->
+  <div style="font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+    <span>⏳ التذاكر غير المدفوعة</span>
+    <span id="unpaidCount" style="background:var(--unpaid);color:white;border-radius:20px;padding:2px 10px;font-size:11px"></span>
+  </div>
+  <div class="table-wrap" style="margin-bottom:24px">
+    <table id="unpaidTable">
+      <thead>
+        <tr>
+          <th>تاريخ الرحلة</th>
+          <th>النوع</th>
+          <th>الخط</th>
+          <th>سعر التذكرة</th>
+          <th>تُحوَّل إلى</th>
+          <th>الرحلة</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="unpaidBody"></tbody>
+      <tfoot id="unpaidFoot"></tfoot>
+    </table>
+  </div>
 
-      <!-- Accounts summary table -->
-      <div style="font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span>💳 ملخص الحسابات</span>
-        <span style="font-size:11px;color:var(--text-muted);font-weight:400">المبالغ المستحقة لكل حساب</span>
-      </div>
-      <div class="table-wrap">
-        <table id="accountsSummaryTable">
-          <thead>
-            <tr>
-              <th>الحساب (يُسترد من)</th>
-              <th>عدد التذاكر</th>
-              <th>قيمة التذاكر</th>
-              <th>الإجمالي المستحق</th>
-            </tr>
-          </thead>
-          <tbody id="accountsSummaryBody"></tbody>
-          <tfoot id="accountsSummaryFoot"></tfoot>
-        </table>
-      </div>
+  <!-- Accounts summary table -->
+  <div style="font-size:15px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+    <span>💳 ملخص الحسابات</span>
+    <span style="font-size:11px;color:var(--text-muted);font-weight:400">المبالغ المستحقة لكل حساب</span>
+  </div>
+  <div class="table-wrap">
+    <table id="accountsSummaryTable">
+      <thead>
+        <tr>
+          <th>الحساب (يُسترد من)</th>
+          <th>عدد التذاكر</th>
+          <th>قيمة التذاكر</th>
+          <th>الإجمالي المستحق</th>
+        </tr>
+      </thead>
+      <tbody id="accountsSummaryBody"></tbody>
+      <tfoot id="accountsSummaryFoot"></tfoot>
+    </table>
+  </div>
 
-    </div>
+</div>
+```
+
   </div>
 
   <!-- ACCOUNTS MANAGEMENT -->
+
   <div class="section" id="sec-accounts">
     <div class="form-card">
       <div class="form-title">💳 حساباتي</div>
@@ -1428,43 +1553,46 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
         حساباتك الخاصة — محفوظة في حسابك ولا تظهر لأي مستخدم آخر
       </div>
 
-      <!-- Notification reminders -->
-      <div style="
-        background:var(--surface2);border:1px solid var(--border);
-        border-radius:12px;padding:16px;margin-bottom:24px;
-      ">
-        <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔔 التذكيرات التلقائية</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
-          سيصلك إيميل تلقائي قبل يومين من كل رحلة على إيميل حسابك في Google
-        </div>
-        <button onclick="enableReminders()" style="
-          width:100%;background:linear-gradient(135deg,#10b981,#059669);
-          border:none;border-radius:8px;color:white;
-          font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;
-          padding:11px;cursor:pointer;display:flex;align-items:center;
-          justify-content:center;gap:8px;
-        ">🔔 تفعيل التذكيرات التلقائية</button>
-        <div id="notifEmailStatus" style="font-size:11px;margin-top:8px;color:var(--text-muted);text-align:center"></div>
-      </div>
-
-      <!-- Add new account -->
-      <div style="font-size:13px;font-weight:800;margin-bottom:12px">قائمة الحسابات</div>
-      <div style="display:flex;gap:10px;margin-bottom:20px">
-        <input type="text" id="newAccountInput" placeholder="اسم الحساب الجديد..." style="
-          flex:1;background:var(--surface2);border:1px solid var(--border);
-          border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;
-          font-size:13px;padding:10px 14px;direction:rtl;
-        " onkeydown="if(event.key==='Enter') addNewAccount()">
-        <button onclick="addNewAccount()" style="
-          background:var(--accent);border:none;border-radius:8px;
-          color:white;font-family:'Cairo',sans-serif;font-size:13px;
-          font-weight:800;padding:10px 18px;cursor:pointer;white-space:nowrap;
-        ">＋ إضافة</button>
-      </div>
-
-      <!-- Accounts list -->
-      <div id="accountsList"></div>
+```
+  <!-- Notification reminders -->
+  <div style="
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:12px;padding:16px;margin-bottom:24px;
+  ">
+    <div style="font-size:13px;font-weight:800;margin-bottom:4px">🔔 التذكيرات التلقائية</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">
+      سيصلك إيميل تلقائي قبل يومين من كل رحلة على إيميل حسابك في Google
     </div>
+    <button onclick="enableReminders()" style="
+      width:100%;background:linear-gradient(135deg,#10b981,#059669);
+      border:none;border-radius:8px;color:white;
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;
+      padding:11px;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;gap:8px;
+    ">🔔 تفعيل التذكيرات التلقائية</button>
+    <div id="notifEmailStatus" style="font-size:11px;margin-top:8px;color:var(--text-muted);text-align:center"></div>
+  </div>
+
+  <!-- Add new account -->
+  <div style="font-size:13px;font-weight:800;margin-bottom:12px">قائمة الحسابات</div>
+  <div style="display:flex;gap:10px;margin-bottom:20px">
+    <input type="text" id="newAccountInput" placeholder="اسم الحساب الجديد..." style="
+      flex:1;background:var(--surface2);border:1px solid var(--border);
+      border-radius:8px;color:var(--text);font-family:'Cairo',sans-serif;
+      font-size:13px;padding:10px 14px;direction:rtl;
+    " onkeydown="if(event.key==='Enter') addNewAccount()">
+    <button onclick="addNewAccount()" style="
+      background:var(--accent);border:none;border-radius:8px;
+      color:white;font-family:'Cairo',sans-serif;font-size:13px;
+      font-weight:800;padding:10px 18px;cursor:pointer;white-space:nowrap;
+    ">＋ إضافة</button>
+  </div>
+
+  <!-- Accounts list -->
+  <div id="accountsList"></div>
+</div>
+```
+
   </div>
 
 </div>
@@ -1478,151 +1606,154 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
     <input type="hidden" id="eId">
     <div class="form-grid">
 
-      <!-- رقم الرحلة (عرض فقط) + راتب شهر -->
-      <div class="trip-num-display">
-        <span class="tn-label">رقم الرحلة</span>
-        <span class="tn-val" id="eTripNumDisplay">—</span>
-      </div>
-      <div class="form-group full">
-        <label>راتب شهر</label>
-        <select id="eSalaryMonth">
-          <option value="">— اختر الشهر —</option>
-          <option value="راتب يناير">يناير — January</option>
-          <option value="راتب فبراير">فبراير — February</option>
-          <option value="راتب مارس">مارس — March</option>
-          <option value="راتب أبريل">أبريل — April</option>
-          <option value="راتب مايو">مايو — May</option>
-          <option value="راتب يونيو">يونيو — June</option>
-          <option value="راتب يوليو">يوليو — July</option>
-          <option value="راتب أغسطس">أغسطس — August</option>
-          <option value="راتب سبتمبر">سبتمبر — September</option>
-          <option value="راتب أكتوبر">أكتوبر — October</option>
-          <option value="راتب نوفمبر">نوفمبر — November</option>
-          <option value="راتب ديسمبر">ديسمبر — December</option>
-        </select>
-      </div>
+```
+  <!-- رقم الرحلة (عرض فقط) + راتب شهر -->
+  <div class="trip-num-display">
+    <span class="tn-label">رقم الرحلة</span>
+    <span class="tn-val" id="eTripNumDisplay">—</span>
+  </div>
+  <div class="form-group full">
+    <label>راتب شهر</label>
+    <select id="eSalaryMonth">
+      <option value="">— اختر الشهر —</option>
+      <option value="راتب يناير">يناير — January</option>
+      <option value="راتب فبراير">فبراير — February</option>
+      <option value="راتب مارس">مارس — March</option>
+      <option value="راتب أبريل">أبريل — April</option>
+      <option value="راتب مايو">مايو — May</option>
+      <option value="راتب يونيو">يونيو — June</option>
+      <option value="راتب يوليو">يوليو — July</option>
+      <option value="راتب أغسطس">أغسطس — August</option>
+      <option value="راتب سبتمبر">سبتمبر — September</option>
+      <option value="راتب أكتوبر">أكتوبر — October</option>
+      <option value="راتب نوفمبر">نوفمبر — November</option>
+      <option value="راتب ديسمبر">ديسمبر — December</option>
+    </select>
+  </div>
 
-      <hr class="form-divider">
-      <div class="form-section-label">🎫 معلومات التذكرة</div>
+  <hr class="form-divider">
+  <div class="form-section-label">🎫 معلومات التذكرة</div>
 
-      <div class="form-group">
-        <label>نوع التذكرة</label>
-        <select id="eType">
-          <option value="go">🛫 ذهاب (RUH → JED)</option>
-          <option value="return">🛬 إياب (JED → RUH)</option>
-        </select>
-      </div>
+  <div class="form-group">
+    <label>نوع التذكرة</label>
+    <select id="eType">
+      <option value="go">🛫 ذهاب (RUH → JED)</option>
+      <option value="return">🛬 إياب (JED → RUH)</option>
+    </select>
+  </div>
 
-      <div class="form-group">
-        <label>الخط الجوي</label>
-        <select id="eAirline">
-          <option value="طيران الرياض">🟣 طيران الرياض</option>
-          <option value="ناس">🔵 فلاي ناس</option>
-          <option value="اديل">🟡 اديل</option>
-          <option value="سعودية">🟢 السعودية</option>
-        </select>
-      </div>
+  <div class="form-group">
+    <label>الخط الجوي</label>
+    <select id="eAirline">
+      <option value="طيران الرياض">🟣 طيران الرياض</option>
+      <option value="ناس">🔵 فلاي ناس</option>
+      <option value="اديل">🟡 اديل</option>
+      <option value="سعودية">🟢 السعودية</option>
+    </select>
+  </div>
 
-      <div class="form-group">
-        <label>منصة الحجز</label>
-        <select id="ePlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
-      </div>
+  <div class="form-group">
+    <label>منصة الحجز</label>
+    <select id="ePlatform" onchange="handleAddNew(this,'platform',getPlatforms,savePlatforms,'اسم المنصة الجديدة:')"></select>
+  </div>
 
-      <div class="form-group">
-        <label>PNR #</label>
-        <input type="text" id="ePNR" maxlength="10" style="text-transform:uppercase" placeholder="ABCDEF">
-      </div>
+  <div class="form-group">
+    <label>PNR #</label>
+    <input type="text" id="ePNR" maxlength="10" style="text-transform:uppercase" placeholder="ABCDEF">
+  </div>
 
-      <div class="form-group">
-        <label>رقم الرحلة ✈ <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
-        <input type="text" id="eFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
-      </div>
+  <div class="form-group">
+    <label>رقم الرحلة ✈ <span style="font-size:10px;color:var(--text-muted)">(للتتبع — مثال: SV535)</span></label>
+    <input type="text" id="eFlightNumber" placeholder="SV535" maxlength="10" style="text-transform:uppercase">
+  </div>
 
-      <div class="form-group">
-        <label>تاريخ الشراء</label>
-        <input type="date" id="ePurchaseDate">
-      </div>
+  <div class="form-group">
+    <label>تاريخ الشراء</label>
+    <input type="date" id="ePurchaseDate">
+  </div>
 
-      <hr class="form-divider">
-      <div class="form-section-label">✈ تفاصيل الرحلة</div>
+  <hr class="form-divider">
+  <div class="form-section-label">✈ تفاصيل الرحلة</div>
 
-      <div class="form-group">
-        <label>تاريخ الرحلة</label>
-        <input type="date" id="eFlightDate">
-      </div>
-      <div class="form-group">
-        <label>وقت الرحلة</label>
-        <input type="time" id="eFlightTime" placeholder="مثال: 01:00">
-      </div>
+  <div class="form-group">
+    <label>تاريخ الرحلة</label>
+    <input type="date" id="eFlightDate">
+  </div>
+  <div class="form-group">
+    <label>وقت الرحلة</label>
+    <input type="time" id="eFlightTime" placeholder="مثال: 01:00">
+  </div>
 
-      <div class="form-group">
-        <label>سعر التذكرة (ريال)</label>
-        <input type="number" id="ePrice" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
-      </div>
+  <div class="form-group">
+    <label>سعر التذكرة (ريال)</label>
+    <input type="number" id="ePrice" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
+  </div>
 
-      <hr class="form-divider">
-      <div class="form-section-label">🚗 المواصلات</div>
+  <hr class="form-divider">
+  <div class="form-section-label">🚗 المواصلات</div>
 
-      <div class="form-group full">
-        <label class="form-toggle">
-          <input type="checkbox" id="eRentedCar" onchange="updateEditTotal()">
-          <span>🚗 Rented Car?</span>
-        </label>
-      </div>
+  <div class="form-group full">
+    <label class="form-toggle">
+      <input type="checkbox" id="eRentedCar" onchange="updateEditTotal()">
+      <span>🚗 Rented Car?</span>
+    </label>
+  </div>
 
-      <div class="form-group full">
-        <label>تكلفة المواصلات (ريال)</label>
-        <input type="number" id="eTransport" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
-      </div>
+  <div class="form-group full">
+    <label>تكلفة المواصلات (ريال)</label>
+    <input type="number" id="eTransport" step="0.01" min="0" placeholder="0" oninput="updateEditTotal()">
+  </div>
 
-      <hr class="form-divider">
-      <div class="form-section-label">💳 الحساب والسداد</div>
+  <hr class="form-divider">
+  <div class="form-section-label">💳 الحساب والسداد</div>
 
-      <div class="form-group">
-        <label>السداد من حساب</label>
-        <select id="ePaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-      </div>
+  <div class="form-group">
+    <label>السداد من حساب</label>
+    <select id="ePaidBy" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+  </div>
 
-      <div class="form-group">
-        <label>يسترد إلى حساب</label>
-        <select id="eRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
-      </div>
+  <div class="form-group">
+    <label>يسترد إلى حساب</label>
+    <select id="eRefundTo" onchange="handleAddNew(this,'account',getAccounts,saveAccounts,'اسم الحساب الجديد:')"></select>
+  </div>
 
-      <div class="form-group full">
-        <label>ملاحظات</label>
-        <textarea id="eNotes" placeholder="أي ملاحظات إضافية..."></textarea>
-      </div>
+  <div class="form-group full">
+    <label>ملاحظات</label>
+    <textarea id="eNotes" placeholder="أي ملاحظات إضافية..."></textarea>
+  </div>
 
-      <hr class="form-divider">
+  <hr class="form-divider">
 
-      <div class="form-group full">
-        <label class="form-toggle">
-          <input type="checkbox" id="ePaid">
-          <span>✅ Paid?</span>
-        </label>
-      </div>
+  <div class="form-group full">
+    <label class="form-toggle">
+      <input type="checkbox" id="ePaid">
+      <span>✅ Paid?</span>
+    </label>
+  </div>
 
-      <hr class="form-divider">
+  <hr class="form-divider">
 
-      <!-- ربط بتذكرة أخرى -->
-      <div class="form-group full">
-        <label>🔗 ربط بتذكرة أخرى <span style="color:var(--text-muted);font-weight:400;font-size:11px">(ذهاب ↔ إياب)</span></label>
-        <select id="eLinkedId">
-          <option value="">— بدون ربط —</option>
-        </select>
-      </div>
+  <!-- ربط بتذكرة أخرى -->
+  <div class="form-group full">
+    <label>🔗 ربط بتذكرة أخرى <span style="color:var(--text-muted);font-weight:400;font-size:11px">(ذهاب ↔ إياب)</span></label>
+    <select id="eLinkedId">
+      <option value="">— بدون ربط —</option>
+    </select>
+  </div>
 
-      <!-- Total -->
-      <div class="total-display">
-        <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
-        <span class="tot-val" id="eTotalDisplay">0 ريال</span>
-      </div>
+  <!-- Total -->
+  <div class="total-display">
+    <span class="tot-label">💰 Total (تذكرة + مواصلات)</span>
+    <span class="tot-val" id="eTotalDisplay">0 ريال</span>
+  </div>
 
-    </div>
-    <div class="modal-footer">
-      <button class="btn-save" onclick="saveEdit()">💾 حفظ التعديلات</button>
-      <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
-    </div>
+</div>
+<div class="modal-footer">
+  <button class="btn-save" onclick="saveEdit()">💾 حفظ التعديلات</button>
+  <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+</div>
+```
+
   </div>
 </div>
 
@@ -3488,480 +3619,466 @@ async function trackFlight(flightNum, date, ticketId) {
     let data;
     try { data = JSON.parse(text); } catch(e) {
       statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ رد غير صالح من الخادم</div><pre style="font-size:9px;overflow:auto;max-height:100px">${text.slice(0,200)}</pre>`;
-      return;
-    }
 
-    // Show raw data for debugging
-    if (data.error) {
-      statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ ${data.error.message || JSON.stringify(data.error)}</div>`;
-      return;
-    }
+```
+  return;
+}
 
-    if (!data.data || !data.data.length) {
-      statusEl.innerHTML = `
-        <div style="font-size:11px;color:var(--text-muted);padding:6px 0">⚠️ لا توجد بيانات لهذه الرحلة</div>
-        <div style="font-size:10px;color:var(--text-muted)">رقم الرحلة المُرسل: <strong>${flightNum}</strong> | التاريخ: <strong>${date||'غير محدد'}</strong></div>
-        <div style="font-size:10px;color:var(--text-muted)">تأكد أن الصيغة صحيحة: مثال <strong>SV535</strong> أو <strong>XY14</strong></div>`;
-      return;
-    }
+// Show raw data for debugging
+if (data.error) {
+  statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ ${data.error.message || JSON.stringify(data.error)}</div>`;
+  return;
+}
 
-    const f = data.data[0];
-    const statusMap = {
-      'scheduled':  { label: 'في الموعد',     color: '#10b981', icon: '✅' },
-      'active':     { label: 'في الجو الآن',  color: '#3b82f6', icon: '🛫' },
-      'landed':     { label: 'هبطت',           color: '#6366f1', icon: '🛬' },
-      'cancelled':  { label: 'ملغاة',          color: '#f43f5e', icon: '❌' },
-      'incident':   { label: 'حادثة',          color: '#f59e0b', icon: '⚠️' },
-      'diverted':   { label: 'حُوِّلت',        color: '#f59e0b', icon: '🔄' },
-    };
-    const st = statusMap[f.flight_status] || { label: f.flight_status, color: '#64748b', icon: '✈' };
-    const dep = f.departure;
-    const arr = f.arrival;
+if (!data.data || !data.data.length) {
+  statusEl.innerHTML = `
+    <div style="font-size:11px;color:var(--text-muted);padding:6px 0">⚠️ لا توجد بيانات لهذه الرحلة</div>
+    <div style="font-size:10px;color:var(--text-muted)">رقم الرحلة المُرسل: <strong>${flightNum}</strong> | التاريخ: <strong>${date||'غير محدد'}</strong></div>
+    <div style="font-size:10px;color:var(--text-muted)">تأكد أن الصيغة صحيحة: مثال <strong>SV535</strong> أو <strong>XY14</strong></div>`;
+  return;
+}
 
-    const fmt = (iso) => {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    };
+const f = data.data[0];
+const statusMap = {
+  'scheduled':  { label: 'في الموعد',     color: '#10b981', icon: '✅' },
+  'active':     { label: 'في الجو الآن',  color: '#3b82f6', icon: '🛫' },
+  'landed':     { label: 'هبطت',           color: '#6366f1', icon: '🛬' },
+  'cancelled':  { label: 'ملغاة',          color: '#f43f5e', icon: '❌' },
+  'incident':   { label: 'حادثة',          color: '#f59e0b', icon: '⚠️' },
+  'diverted':   { label: 'حُوِّلت',        color: '#f59e0b', icon: '🔄' },
+};
+const st = statusMap[f.flight_status] || { label: f.flight_status, color: '#64748b', icon: '✈' };
+const dep = f.departure;
+const arr = f.arrival;
 
-    const depScheduled = fmt(dep?.scheduled);
-    const arrScheduled = fmt(arr?.scheduled);
-    const depDelay = dep?.delay ? `<span style="color:#f59e0b"> ⏱ ${dep.delay}د</span>` : '';
-    const arrDelay = arr?.delay ? `<span style="color:#f59e0b"> ⏱ ${arr.delay}د</span>` : '';
-    const gate     = dep?.gate     ? ` · بوابة ${dep.gate}` : '';
-    const terminal = dep?.terminal ? ` · ترمينال ${dep.terminal}` : '';
-    const airlineName = f.airline?.name || '';
-    const flightIata  = f.flight?.iata  || flightNum;
-    const depActual = dep?.actual ? `<div style="font-size:10px;color:var(--paid)">✅ أقلع: ${fmt(dep.actual)}</div>` : '';
-    const arrActual = arr?.actual ? `<div style="font-size:10px;color:var(--paid)">✅ وصل: ${fmt(arr.actual)}</div>`  : '';
+const fmt = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+};
 
-    statusEl.innerHTML = `
-      <div style="
-        background:var(--surface2);border:1px solid var(--border);
-        border-radius:10px;padding:10px 12px;margin-top:8px;
-        border-right:3px solid ${st.color};font-size:11px;
-      ">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-weight:900;font-size:13px;font-family:monospace">${flightIata}</span>
-          <span style="background:${st.color}22;color:${st.color};padding:3px 10px;border-radius:20px;font-weight:800">
-            ${st.icon} ${st.label}
-          </span>
-        </div>
-        <div style="color:var(--text-muted);margin-bottom:8px;font-size:11px">${airlineName}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="color:var(--text-muted);font-size:10px;margin-bottom:4px">🛫 إقلاع</div>
-            <div style="font-weight:900;font-size:14px">${depScheduled}${depDelay}</div>
-            ${depActual}
-            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${dep?.airport||''}${terminal}${gate}</div>
-          </div>
-          <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="color:var(--text-muted);font-size:10px;margin-bottom:4px">🛬 وصول</div>
-            <div style="font-weight:900;font-size:14px">${arrScheduled}${arrDelay}</div>
-            ${arrActual}
-            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${arr?.airport||''}${arr?.terminal?' · ترمينال '+arr.terminal:''}</div>
-          </div>
-        </div>
-        <div style="margin-top:8px;display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px">
-          <span>${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}</span>
-          <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
-            background:none;border:none;color:var(--accent);
-            cursor:pointer;font-size:11px;font-family:'Cairo',sans-serif;">
-            🔄 تحديث
-          </button>
-        </div>
-      </div>`;
+const depScheduled = fmt(dep?.scheduled);
+const arrScheduled = fmt(arr?.scheduled);
+const depDelay = dep?.delay ? `<span style="color:#f59e0b"> ⏱ ${dep.delay}د</span>` : '';
+const arrDelay = arr?.delay ? `<span style="color:#f59e0b"> ⏱ ${arr.delay}د</span>` : '';
+const gate     = dep?.gate     ? ` · بوابة ${dep.gate}` : '';
+const terminal = dep?.terminal ? ` · ترمينال ${dep.terminal}` : '';
+const airlineName = f.airline?.name || '';
+const flightIata  = f.flight?.iata  || flightNum;
+const depActual = dep?.actual ? `<div style="font-size:10px;color:var(--paid)">✅ أقلع: ${fmt(dep.actual)}</div>` : '';
+const arrActual = arr?.actual ? `<div style="font-size:10px;color:var(--paid)">✅ وصل: ${fmt(arr.actual)}</div>`  : '';
 
-  } catch(err) {
-    console.error('trackFlight error:', err);
-    statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ ${err.message}</div>`;
-  }
+statusEl.innerHTML = `
+  <div style="
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;margin-top:8px;
+    border-right:3px solid ${st.color};font-size:11px;
+  ">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-weight:900;font-size:13px;font-family:monospace">${flightIata}</span>
+      <span style="background:${st.color}22;color:${st.color};padding:3px 10px;border-radius:20px;font-weight:800">
+        ${st.icon} ${st.label}
+      </span>
+    </div>
+    <div style="color:var(--text-muted);margin-bottom:8px;font-size:11px">${airlineName}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:var(--surface);border-radius:8px;padding:8px">
+        <div style="color:var(--text-muted);font-size:10px;margin-bottom:4px">🛫 إقلاع</div>
+        <div style="font-weight:900;font-size:14px">${depScheduled}${depDelay}</div>
+        ${depActual}
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${dep?.airport||''}${terminal}${gate}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:8px">
+        <div style="color:var(--text-muted);font-size:10px;margin-bottom:4px">🛬 وصول</div>
+        <div style="font-weight:900;font-size:14px">${arrScheduled}${arrDelay}</div>
+        ${arrActual}
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${arr?.airport||''}${arr?.terminal?' · ترمينال '+arr.terminal:''}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px">
+      <span>${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}</span>
+      <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
+        background:none;border:none;color:var(--accent);
+        cursor:pointer;font-size:11px;font-family:'Cairo',sans-serif;">
+        🔄 تحديث
+      </button>
+    </div>
+  </div>`;
+```
+
+} catch(err) {
+console.error(‘trackFlight error:’, err);
+statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ ${err.message}</div>`;
+}
 }
 
 function askFlightNumber(ticketId) {
-  const num = prompt('أدخل رقم الرحلة (مثال: SV535 أو XY123):');
-  if (!num || !num.trim()) return;
-  const t = tickets.find(x => x.id === ticketId);
-  if (!t) return;
-  t.flightNumber = num.trim().toUpperCase();
-  save(tickets);
-  renderUpcoming();
-  toast(`✅ تم حفظ رقم الرحلة ${t.flightNumber}`);
+const num = prompt(‘أدخل رقم الرحلة (مثال: SV535 أو XY123):’);
+if (!num || !num.trim()) return;
+const t = tickets.find(x => x.id === ticketId);
+if (!t) return;
+t.flightNumber = num.trim().toUpperCase();
+save(tickets);
+renderUpcoming();
+toast(`✅ تم حفظ رقم الرحلة ${t.flightNumber}`);
 }
 
 function addToGoogleCalendar(ticket) {
-  const route    = ticket.ticketType === 'go' ? 'RUH → JED' : 'JED → RUH';
-  const title    = `✈ ${route} — ${ticket.category||'رحلة'} — ${ticket.airline||''}`;
-  const location = ticket.ticketType === 'go'
-    ? 'مطار الملك خالد الدولي، الرياض'
-    : 'مطار الملك عبدالعزيز الدولي، جدة';
-  const details  = [
-    ticket.pnr    ? `PNR: ${ticket.pnr}`       : '',
-    ticket.paidBy ? `الحساب: ${ticket.paidBy}` : '',
-    ticket.notes  ? ticket.notes                : '',
-    `السعر: ${ticket.ticketPrice||0} ريال`,
-  ].filter(Boolean).join(' | ');
+const route    = ticket.ticketType === ‘go’ ? ‘RUH → JED’ : ‘JED → RUH’;
+const title    = `✈ ${route} — ${ticket.category||'رحلة'} — ${ticket.airline||''}`;
+const location = ticket.ticketType === ‘go’
+? ‘مطار الملك خالد الدولي، الرياض’
+: ‘مطار الملك عبدالعزيز الدولي، جدة’;
+const details  = [
+ticket.pnr    ? `PNR: ${ticket.pnr}`       : ‘’,
+ticket.paidBy ? `الحساب: ${ticket.paidBy}` : ‘’,
+ticket.notes  ? ticket.notes                : ‘’,
+`السعر: ${ticket.ticketPrice||0} ريال`,
+].filter(Boolean).join(’ | ’);
 
-  const dateStr = (ticket.flightDate||'').replace(/-/g,'');
-  let dates;
-  if (ticket.flightTime) {
-    const timeStr = ticket.flightTime.replace(':','') + '00';
-    const [h,m]   = ticket.flightTime.split(':').map(Number);
-    const endH    = String((h+2)%24).padStart(2,'0');
-    const endTime = `${endH}${String(m).padStart(2,'0')}00`;
-    dates = `${dateStr}T${timeStr}/${dateStr}T${endTime}`;
-  } else {
-    const d = new Date(ticket.flightDate);
-    d.setDate(d.getDate() + 1);
-    const endDate = d.toISOString().slice(0,10).replace(/-/g,'');
-    dates = `${dateStr}/${endDate}`;
-  }
+const dateStr = (ticket.flightDate||’’).replace(/-/g,’’);
+let dates;
+if (ticket.flightTime) {
+const timeStr = ticket.flightTime.replace(’:’,’’) + ‘00’;
+const [h,m]   = ticket.flightTime.split(’:’).map(Number);
+const endH    = String((h+2)%24).padStart(2,‘0’);
+const endTime = `${endH}${String(m).padStart(2,'0')}00`;
+dates = `${dateStr}T${timeStr}/${dateStr}T${endTime}`;
+} else {
+const d = new Date(ticket.flightDate);
+d.setDate(d.getDate() + 1);
+const endDate = d.toISOString().slice(0,10).replace(/-/g,’’);
+dates = `${dateStr}/${endDate}`;
+}
 
-  const url = new URL('https://calendar.google.com/calendar/render');
-  url.searchParams.set('action',   'TEMPLATE');
-  url.searchParams.set('text',     title);
-  url.searchParams.set('dates',    dates);
-  url.searchParams.set('details',  details);
-  url.searchParams.set('location', location);
-  window.open(url.toString(), '_blank');
-  toast('📅 فتح Google Calendar...');
+const url = new URL(‘https://calendar.google.com/calendar/render’);
+url.searchParams.set(‘action’,   ‘TEMPLATE’);
+url.searchParams.set(‘text’,     title);
+url.searchParams.set(‘dates’,    dates);
+url.searchParams.set(‘details’,  details);
+url.searchParams.set(‘location’, location);
+window.open(url.toString(), ‘_blank’);
+toast(‘📅 فتح Google Calendar…’);
 }
 
 // ─── EXPORT JSON ───
 function exportJSON() {
-  const str = JSON.stringify(tickets, null, 2);
-  mobileDownload(str, 'رحلاتي.json', 'application/json');
-  toast('📤 تصدير JSON...');
+const str = JSON.stringify(tickets, null, 2);
+mobileDownload(str, ‘رحلاتي.json’, ‘application/json’);
+toast(‘📤 تصدير JSON…’);
 }
 
 // ─── EXPORT CSV ───
 function exportCSV() {
-  const BOM = '\uFEFF';
-  const header = [
-    'رحلة','ID','النوع','تاريخ الرحلة','تاريخ الشراء',
-    'الخط','منصة الحجز','PNR',
-    'سعر التذكرة','مواصلات','سيارة مستأجرة','الإجمالي',
-    'السداد من','يسترد إلى','راتب شهر',
-    'مدفوع','ملاحظات','الفئة',
-    'linkedId','التذكرة المرتبطة'
-  ];
-  const escape = v => {
-    const s = String(v ?? '').replace(/"/g, '""');
-    return s.includes(',') || s.includes('\n') || s.includes('"') ? `"${s}"` : s;
-  };
-  const rows = tickets
-    .sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate))
-    .map(t => {
-      const transport = t.transport || 0;
-      const total = (t.ticketPrice||0) + transport;
-      const linked = t.linkedId ? tickets.find(x => x.id === t.linkedId) : null;
-      const linkedDesc = linked
-        ? `${linked.ticketType==='go'?'ذهاب':'إياب'} • ${linked.flightDate||''} • ${linked.airline||''}`
-        : '';
-      return [
-        (t.category||'').replace(/\D/g,'')||'',
-        t.id, t.ticketType==='go'?'ذهاب':'إياب',
-        t.flightDate||'', t.purchaseDate||'',
-        t.airline||'', t.platform||'', t.pnr||'',
-        t.ticketPrice||0, transport||'',
-        t.rentedCar?'نعم':'لا', total,
-        t.paidBy||'', t.refundTo||'', t.salaryMonth||'',
-        t.paid?'نعم':'لا', t.notes||'', t.category||'',
-        t.linkedId||'', linkedDesc
-      ].map(escape);
-    });
-  const csv = BOM + [header.map(escape), ...rows].map(r => r.join(',')).join('\n');
-  mobileDownload(csv, 'رحلاتي.csv', 'text/csv');
-  toast('📊 تصدير CSV...');
+const BOM = ‘\uFEFF’;
+const header = [
+‘رحلة’,‘ID’,‘النوع’,‘تاريخ الرحلة’,‘تاريخ الشراء’,
+‘الخط’,‘منصة الحجز’,‘PNR’,
+‘سعر التذكرة’,‘مواصلات’,‘سيارة مستأجرة’,‘الإجمالي’,
+‘السداد من’,‘يسترد إلى’,‘راتب شهر’,
+‘مدفوع’,‘ملاحظات’,‘الفئة’,
+‘linkedId’,‘التذكرة المرتبطة’
+];
+const escape = v => {
+const s = String(v ?? ‘’).replace(/”/g, ‘””’);
+return s.includes(’,’) || s.includes(’\n’) || s.includes(’”’) ? `"${s}"` : s;
+};
+const rows = tickets
+.sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate))
+.map(t => {
+const transport = t.transport || 0;
+const total = (t.ticketPrice||0) + transport;
+const linked = t.linkedId ? tickets.find(x => x.id === t.linkedId) : null;
+const linkedDesc = linked
+? `${linked.ticketType==='go'?'ذهاب':'إياب'} • ${linked.flightDate||''} • ${linked.airline||''}`
+: ‘’;
+return [
+(t.category||’’).replace(/\D/g,’’)||’’,
+t.id, t.ticketType===‘go’?‘ذهاب’:‘إياب’,
+t.flightDate||’’, t.purchaseDate||’’,
+t.airline||’’, t.platform||’’, t.pnr||’’,
+t.ticketPrice||0, transport||’’,
+t.rentedCar?‘نعم’:‘لا’, total,
+t.paidBy||’’, t.refundTo||’’, t.salaryMonth||’’,
+t.paid?‘نعم’:‘لا’, t.notes||’’, t.category||’’,
+t.linkedId||’’, linkedDesc
+].map(escape);
+});
+const csv = BOM + [header.map(escape), …rows].map(r => r.join(’,’)).join(’\n’);
+mobileDownload(csv, ‘رحلاتي.csv’, ‘text/csv’);
+toast(‘📊 تصدير CSV…’);
 }
 
 // ─── EXPORT XLSX ───
 function exportXLSX() {
-  const headers = [
-    'رحلة','ID','النوع','تاريخ الرحلة','تاريخ الشراء',
-    'الخط','منصة الحجز','PNR',
-    'سعر التذكرة','مواصلات','سيارة مستأجرة','الإجمالي',
-    'السداد من','يسترد إلى','راتب شهر',
-    'مدفوع','ملاحظات','الفئة',
-    'linkedId','التذكرة المرتبطة'
-  ];
-  const rows = tickets
-    .sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate))
-    .map(t => {
-      const transport = t.transport || 0;
-      const total = (t.ticketPrice||0) + transport;
-      const linked = t.linkedId ? tickets.find(x => x.id === t.linkedId) : null;
-      const linkedDesc = linked
-        ? `${linked.ticketType==='go'?'ذهاب':'إياب'} • ${linked.flightDate||''} • ${linked.airline||''}`
-        : '';
-      return [
-        (t.category||'').replace(/\D/g,'')||'', t.id,
-        t.ticketType==='go'?'ذهاب':'إياب',
-        t.flightDate||'', t.purchaseDate||'',
-        t.airline||'', t.platform||'', t.pnr||'',
-        t.ticketPrice||0, transport||0,
-        t.rentedCar?'نعم':'لا', total,
-        t.paidBy||'', t.refundTo||'', t.salaryMonth||'',
-        t.paid?'نعم':'لا', t.notes||'', t.category||'',
-        t.linkedId||'', linkedDesc
-      ];
-    });
+const headers = [
+‘رحلة’,‘ID’,‘النوع’,‘تاريخ الرحلة’,‘تاريخ الشراء’,
+‘الخط’,‘منصة الحجز’,‘PNR’,
+‘سعر التذكرة’,‘مواصلات’,‘سيارة مستأجرة’,‘الإجمالي’,
+‘السداد من’,‘يسترد إلى’,‘راتب شهر’,
+‘مدفوع’,‘ملاحظات’,‘الفئة’,
+‘linkedId’,‘التذكرة المرتبطة’
+];
+const rows = tickets
+.sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate))
+.map(t => {
+const transport = t.transport || 0;
+const total = (t.ticketPrice||0) + transport;
+const linked = t.linkedId ? tickets.find(x => x.id === t.linkedId) : null;
+const linkedDesc = linked
+? `${linked.ticketType==='go'?'ذهاب':'إياب'} • ${linked.flightDate||''} • ${linked.airline||''}`
+: ‘’;
+return [
+(t.category||’’).replace(/\D/g,’’)||’’, t.id,
+t.ticketType===‘go’?‘ذهاب’:‘إياب’,
+t.flightDate||’’, t.purchaseDate||’’,
+t.airline||’’, t.platform||’’, t.pnr||’’,
+t.ticketPrice||0, transport||0,
+t.rentedCar?‘نعم’:‘لا’, total,
+t.paidBy||’’, t.refundTo||’’, t.salaryMonth||’’,
+t.paid?‘نعم’:‘لا’, t.notes||’’, t.category||’’,
+t.linkedId||’’, linkedDesc
+];
+});
 
-  try {
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    ws['!cols'] = [
-      {wch:6},{wch:5},{wch:8},{wch:13},{wch:13},
-      {wch:14},{wch:14},{wch:10},
-      {wch:12},{wch:10},{wch:8},{wch:10},
-      {wch:16},{wch:16},{wch:14},
-      {wch:8},{wch:30},{wch:10},
-      {wch:9},{wch:30}
-    ];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'رحلاتي');
-    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-    mobileDownload(new Uint8Array(wbout), 'رحلاتي.xlsx',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    toast('📗 تصدير Excel...');
-  } catch(err) {
-    toast('❌ فشل تصدير Excel — جرّب CSV');
-    console.error('XLSX export error:', err);
-  }
+try {
+const ws = XLSX.utils.aoa_to_sheet([headers, …rows]);
+ws[’!cols’] = [
+{wch:6},{wch:5},{wch:8},{wch:13},{wch:13},
+{wch:14},{wch:14},{wch:10},
+{wch:12},{wch:10},{wch:8},{wch:10},
+{wch:16},{wch:16},{wch:14},
+{wch:8},{wch:30},{wch:10},
+{wch:9},{wch:30}
+];
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, ‘رحلاتي’);
+const wbout = XLSX.write(wb, {bookType:‘xlsx’, type:‘array’});
+mobileDownload(new Uint8Array(wbout), ‘رحلاتي.xlsx’,
+‘application/vnd.openxmlformats-officedocument.spreadsheetml.sheet’);
+toast(‘📗 تصدير Excel…’);
+} catch(err) {
+toast(‘❌ فشل تصدير Excel — جرّب CSV’);
+console.error(‘XLSX export error:’, err);
+}
 }
 
 // ─── MONTHLY REPORT EMAIL ───
 function sendMonthlyReport() {
-  const now        = new Date();
-  const thisYear   = now.getFullYear();
-  const thisMonth  = now.getMonth(); // 0-indexed
+const now        = new Date();
+const thisYear   = now.getFullYear();
+const thisMonth  = now.getMonth(); // 0-indexed
 
-  // Previous month
-  const prevDate   = new Date(thisYear, thisMonth - 1, 1);
-  const prevYear   = prevDate.getFullYear();
-  const prevMonth  = prevDate.getMonth();
+// Previous month
+const prevDate   = new Date(thisYear, thisMonth - 1, 1);
+const prevYear   = prevDate.getFullYear();
+const prevMonth  = prevDate.getMonth();
 
-  const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
-                     'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const MONTHS_AR = [‘يناير’,‘فبراير’,‘مارس’,‘أبريل’,‘مايو’,‘يونيو’,
+‘يوليو’,‘أغسطس’,‘سبتمبر’,‘أكتوبر’,‘نوفمبر’,‘ديسمبر’];
 
-  const prevLabel = `${MONTHS_AR[prevMonth]} ${prevYear}`;
-  const currLabel = `${MONTHS_AR[thisMonth]} ${thisYear}`;
+const prevLabel = `${MONTHS_AR[prevMonth]} ${prevYear}`;
+const currLabel = `${MONTHS_AR[thisMonth]} ${thisYear}`;
 
-  // Filter tickets by month
-  const forMonth = (y, m) => tickets.filter(t => {
-    if (!t.flightDate) return false;
-    const d = new Date(t.flightDate);
-    return d.getFullYear() === y && d.getMonth() === m;
-  });
+// Filter tickets by month
+const forMonth = (y, m) => tickets.filter(t => {
+if (!t.flightDate) return false;
+const d = new Date(t.flightDate);
+return d.getFullYear() === y && d.getMonth() === m;
+});
 
-  const prevTickets = forMonth(prevYear, prevMonth);
-  const currTickets = forMonth(thisYear, thisMonth);
+const prevTickets = forMonth(prevYear, prevMonth);
+const currTickets = forMonth(thisYear, thisMonth);
 
-  // Build section text
-  const section = (label, list) => {
-    if (!list.length) return `📅 ${label}\nلا توجد رحلات هذا الشهر.\n`;
+// Build section text
+const section = (label, list) => {
+if (!list.length) return `📅 ${label}\nلا توجد رحلات هذا الشهر.\n`;
 
-    const totalPrice   = list.reduce((s,t) => s+(t.ticketPrice||0), 0);
-    const totalTrans   = list.reduce((s,t) => s+(t.transport||0), 0);
-    const grandTotal   = totalPrice + totalTrans;
-    const paidCount    = list.filter(t=>t.paid).length;
-    const unpaidCount  = list.length - paidCount;
-    const paidAmt      = list.filter(t=>t.paid).reduce((s,t)=>s+(t.ticketPrice||0),0);
-    const unpaidAmt    = totalPrice - paidAmt;
-    const trips        = [...new Set(list.map(t=>t.category))];
-    const rented       = list.filter(t=>t.rentedCar).length;
+```
+const totalPrice   = list.reduce((s,t) => s+(t.ticketPrice||0), 0);
+const totalTrans   = list.reduce((s,t) => s+(t.transport||0), 0);
+const grandTotal   = totalPrice + totalTrans;
+const paidCount    = list.filter(t=>t.paid).length;
+const unpaidCount  = list.length - paidCount;
+const paidAmt      = list.filter(t=>t.paid).reduce((s,t)=>s+(t.ticketPrice||0),0);
+const unpaidAmt    = totalPrice - paidAmt;
+const trips        = [...new Set(list.map(t=>t.category))];
+const rented       = list.filter(t=>t.rentedCar).length;
 
-    // Days in JED for this month's trips
-    const byTrip = {};
-    list.forEach(t => {
-      if (!byTrip[t.category]) byTrip[t.category] = {};
-      if (t.ticketType==='go')     byTrip[t.category].go  = t.flightDate;
-      if (t.ticketType==='return') byTrip[t.category].ret = t.flightDate;
-    });
-    let daysInJED = 0;
-    Object.values(byTrip).forEach(p => {
-      if (p.go && p.ret) {
-        const d = Math.round((new Date(p.ret)-new Date(p.go))/86400000);
-        if (d > 0) daysInJED += d;
-      }
-    });
+// Days in JED for this month's trips
+const byTrip = {};
+list.forEach(t => {
+  if (!byTrip[t.category]) byTrip[t.category] = {};
+  if (t.ticketType==='go')     byTrip[t.category].go  = t.flightDate;
+  if (t.ticketType==='return') byTrip[t.category].ret = t.flightDate;
+});
+let daysInJED = 0;
+Object.values(byTrip).forEach(p => {
+  if (p.go && p.ret) {
+    const d = Math.round((new Date(p.ret)-new Date(p.go))/86400000);
+    if (d > 0) daysInJED += d;
+  }
+});
 
-    // Ticket lines
-    const lines = list
-      .sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate))
-      .map(t => {
-        const dir    = t.ticketType==='go' ? '🛫 ذهاب' : '🛬 إياب';
-        const paid   = t.paid ? '✓' : '⏳';
-        const trans  = t.transport ? ` + ${t.transport} مواصلات` : '';
-        const total  = (t.ticketPrice||0) + (t.transport||0);
-        return `  ${paid} ${t.flightDate} | ${dir} | ${t.category} | ${t.airline||''} | ${fmtNum(total)} ريال${trans}`;
-      }).join('\n');
+// Ticket lines
+const lines = list
+  .sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate))
+  .map(t => {
+    const dir    = t.ticketType==='go' ? '🛫 ذهاب' : '🛬 إياب';
+    const paid   = t.paid ? '✓' : '⏳';
+    const trans  = t.transport ? ` + ${t.transport} مواصلات` : '';
+    const total  = (t.ticketPrice||0) + (t.transport||0);
+    return `  ${paid} ${t.flightDate} | ${dir} | ${t.category} | ${t.airline||''} | ${fmtNum(total)} ريال${trans}`;
+  }).join('\n');
 
-    return `📅 ${label}
-${'─'.repeat(40)}
-الرحلات: ${trips.join('، ')}
+return `📅 ${label}
+```
+
+${‘─’.repeat(40)}
+الرحلات: ${trips.join(’، ’)}
 التذاكر: ${list.length} تذكرة (${paidCount} مدفوعة، ${unpaidCount} معلقة)
-${daysInJED > 0 ? `الأيام في جدة: ${daysInJED} يوم\n` : ''}سعر التذاكر: ${fmtNum(totalPrice)} ريال
+${daysInJED > 0 ? `الأيام في جدة: ${daysInJED} يوم\n` : ‘’}سعر التذاكر: ${fmtNum(totalPrice)} ريال
 المواصلات:   ${fmtNum(totalTrans)} ريال
 الإجمالي:    ${fmtNum(grandTotal)} ريال
 مدفوع:       ${fmtNum(paidAmt)} ريال
 معلق:        ${fmtNum(unpaidAmt)} ريال
-${rented > 0 ? `سيارات مستأجرة: ${rented} مرة\n` : ''}
+${rented > 0 ? `سيارات مستأجرة: ${rented} مرة\n` : ‘’}
 التفاصيل:
 ${lines}
 `;
-  };
+};
 
-  // Overall totals
-  const allTotal   = tickets.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
-  const allPaid    = tickets.filter(t=>t.paid).reduce((s,t)=>s+(t.ticketPrice||0),0);
-  const allTrips   = new Set(tickets.map(t=>t.category)).size;
+// Overall totals
+const allTotal   = tickets.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
+const allPaid    = tickets.filter(t=>t.paid).reduce((s,t)=>s+(t.ticketPrice||0),0);
+const allTrips   = new Set(tickets.map(t=>t.category)).size;
 
-  const subject = `تقرير رحلاتي RUH↔JED — ${currLabel}`;
+const subject = `تقرير رحلاتي RUH↔JED — ${currLabel}`;
 
-  const body =
+const body =
 `السلام عليكم،
 
 هذا تقرير رحلاتي الشهري من الرياض إلى جدة والعكس.
 
-${'═'.repeat(45)}
+${‘═’.repeat(45)}
 ${section(prevLabel, prevTickets)}
-${'═'.repeat(45)}
+${‘═’.repeat(45)}
 ${section(currLabel, currTickets)}
-${'═'.repeat(45)}
+${‘═’.repeat(45)}
 📊 ملخص إجمالي (جميع الرحلات)
-${'─'.repeat(40)}
+${‘─’.repeat(40)}
 إجمالي الرحلات:  ${allTrips} رحلة
 إجمالي التذاكر:  ${tickets.length} تذكرة
 إجمالي المصروف: ${fmtNum(allTotal)} ريال
 إجمالي المدفوع:  ${fmtNum(allPaid)} ريال
 
 تم إنشاء هذا التقرير تلقائياً من تطبيق رحلاتي RUH↔JED
-التاريخ: ${now.toLocaleDateString('ar-SA')}`;
+التاريخ: ${now.toLocaleDateString(‘ar-SA’)}`;
 
-  const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  // Show preview panel before opening mail app
-  showReportPanel(prevLabel, currLabel, prevTickets, currTickets, mailto);
+// Show preview panel before opening mail app
+showReportPanel(prevLabel, currLabel, prevTickets, currTickets, mailto);
 }
 
 function showReportPanel(prevLabel, currLabel, prevTickets, currTickets, mailto) {
-  let panel = document.getElementById('reportPanel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'reportPanel';
-    panel.style.cssText = `
-      position:fixed;inset:0;z-index:9999;
-      background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
-      display:flex;align-items:flex-end;justify-content:center;
-    `;
-    document.body.appendChild(panel);
-  }
+let panel = document.getElementById(‘reportPanel’);
+if (!panel) {
+panel = document.createElement(‘div’);
+panel.id = ‘reportPanel’;
+panel.style.cssText = `position:fixed;inset:0;z-index:9999; background:rgba(0,0,0,0.6);backdrop-filter:blur(4px); display:flex;align-items:flex-end;justify-content:center;`;
+document.body.appendChild(panel);
+}
 
-  const prevTotal = prevTickets.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
-  const currTotal = currTickets.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
-  const prevPaid  = prevTickets.filter(t=>t.paid).length;
-  const currPaid  = currTickets.filter(t=>t.paid).length;
+const prevTotal = prevTickets.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
+const currTotal = currTickets.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
+const prevPaid  = prevTickets.filter(t=>t.paid).length;
+const currPaid  = currTickets.filter(t=>t.paid).length;
 
-  const monthCard = (label, list, total, paid) => `
-    <div style="background:var(--surface);border-radius:10px;padding:12px 14px;flex:1;min-width:130px">
-      <div style="font-size:10px;font-weight:800;color:var(--text-muted);margin-bottom:6px">${label}</div>
-      ${list.length
-        ? `<div style="font-size:20px;font-weight:900;color:var(--accent)">${total.toFixed(0)} ريال</div>
-           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${list.length} تذكرة • ${paid} مدفوعة</div>`
-        : `<div style="font-size:12px;color:var(--text-muted)">لا توجد رحلات</div>`
-      }
-    </div>`;
+const monthCard = (label, list, total, paid) => `<div style="background:var(--surface);border-radius:10px;padding:12px 14px;flex:1;min-width:130px"> <div style="font-size:10px;font-weight:800;color:var(--text-muted);margin-bottom:6px">${label}</div> ${list.length ?`<div style="font-size:20px;font-weight:900;color:var(--accent)">${total.toFixed(0)} ريال</div>
+<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${list.length} تذكرة • ${paid} مدفوعة</div>`:`<div style="font-size:12px;color:var(--text-muted)">لا توجد رحلات</div>` } </div>`;
 
-  panel.innerHTML = `
-    <div style="
-      background:var(--surface2);width:100%;max-width:480px;
-      border-radius:20px 20px 0 0;padding:24px 20px 32px;
-      border-top:2px solid var(--accent);
-      box-shadow:0 -8px 40px rgba(0,0,0,0.5);
-      font-family:'Cairo',sans-serif;direction:rtl;
-    ">
-      <div style="font-size:16px;font-weight:900;margin-bottom:4px">✉️ تقرير شهري</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px">
-        سيفتح تطبيق البريد مع التقرير جاهزاً للإرسال
-      </div>
+panel.innerHTML = `
+<div style="
+background:var(--surface2);width:100%;max-width:480px;
+border-radius:20px 20px 0 0;padding:24px 20px 32px;
+border-top:2px solid var(--accent);
+box-shadow:0 -8px 40px rgba(0,0,0,0.5);
+font-family:'Cairo',sans-serif;direction:rtl;
+">
+<div style="font-size:16px;font-weight:900;margin-bottom:4px">✉️ تقرير شهري</div>
+<div style="font-size:11px;color:var(--text-muted);margin-bottom:16px">
+سيفتح تطبيق البريد مع التقرير جاهزاً للإرسال
+</div>
 
-      <div style="display:flex;gap:10px;margin-bottom:16px">
-        ${monthCard(prevLabel, prevTickets, prevTotal, prevPaid)}
-        ${monthCard(currLabel, currTickets, currTotal, currPaid)}
-      </div>
+```
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    ${monthCard(prevLabel, prevTickets, prevTotal, prevPaid)}
+    ${monthCard(currLabel, currTickets, currTotal, currPaid)}
+  </div>
 
-      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);
-                  border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text-muted);margin-bottom:16px">
-        💡 التقرير يتضمن تفاصيل كل تذكرة، المصروفات، حالة السداد، والأيام في جدة
-      </div>
+  <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);
+              border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text-muted);margin-bottom:16px">
+    💡 التقرير يتضمن تفاصيل كل تذكرة، المصروفات، حالة السداد، والأيام في جدة
+  </div>
 
-      <div style="display:flex;gap:10px">
-        <a href="${mailto}" style="
-          flex:3;padding:13px;border-radius:10px;
-          background:linear-gradient(135deg,#3b82f6,#6366f1);
-          color:white;font-weight:800;font-size:14px;
-          font-family:'Cairo',sans-serif;text-decoration:none;
-          display:flex;align-items:center;justify-content:center;gap:6px;
-        " onclick="document.getElementById('reportPanel').style.display='none'">
-          ✉️ فتح تطبيق البريد
-        </a>
-        <button onclick="document.getElementById('reportPanel').style.display='none'" style="
-          flex:1;padding:13px;border-radius:10px;
-          background:var(--surface);border:1px solid var(--border);
-          color:var(--text-muted);font-family:'Cairo',sans-serif;
-          font-size:13px;cursor:pointer;
-        ">إغلاق</button>
-      </div>
-    </div>`;
+  <div style="display:flex;gap:10px">
+    <a href="${mailto}" style="
+      flex:3;padding:13px;border-radius:10px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      color:white;font-weight:800;font-size:14px;
+      font-family:'Cairo',sans-serif;text-decoration:none;
+      display:flex;align-items:center;justify-content:center;gap:6px;
+    " onclick="document.getElementById('reportPanel').style.display='none'">
+      ✉️ فتح تطبيق البريد
+    </a>
+    <button onclick="document.getElementById('reportPanel').style.display='none'" style="
+      flex:1;padding:13px;border-radius:10px;
+      background:var(--surface);border:1px solid var(--border);
+      color:var(--text-muted);font-family:'Cairo',sans-serif;
+      font-size:13px;cursor:pointer;
+    ">إغلاق</button>
+  </div>
+</div>`;
+```
 
-  panel.style.display = 'flex';
-  panel.onclick = e => { if (e.target === panel) panel.style.display='none'; };
+panel.style.display = ‘flex’;
+panel.onclick = e => { if (e.target === panel) panel.style.display=‘none’; };
 }
 function exportPDF() {
-  const sorted = [...tickets].sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate));
-  const totalCost  = sorted.reduce((s,t)=>s+(t.ticketPrice||0),0);
-  const totalAll   = sorted.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
-  const paidCount  = sorted.filter(t=>t.paid).length;
-  const paidCost   = sorted.filter(t=>t.paid).reduce((s,t)=>s+(t.ticketPrice||0),0);
-  const trips      = new Set(sorted.map(t=>t.category)).size;
+const sorted = […tickets].sort((a,b) => new Date(a.flightDate)-new Date(b.flightDate));
+const totalCost  = sorted.reduce((s,t)=>s+(t.ticketPrice||0),0);
+const totalAll   = sorted.reduce((s,t)=>s+(t.ticketPrice||0)+(t.transport||0),0);
+const paidCount  = sorted.filter(t=>t.paid).length;
+const paidCost   = sorted.filter(t=>t.paid).reduce((s,t)=>s+(t.ticketPrice||0),0);
+const trips      = new Set(sorted.map(t=>t.category)).size;
 
-  const airlineColors = {
-    'سعودية':'#026634','ناس':'#00b7ac','اديل':'#cdde00','طيران الرياض':'#786793'
-  };
-  const col = a => airlineColors[a] || '#3b82f6';
+const airlineColors = {
+‘سعودية’:’#026634’,‘ناس’:’#00b7ac’,‘اديل’:’#cdde00’,‘طيران الرياض’:’#786793’
+};
+const col = a => airlineColors[a] || ‘#3b82f6’;
 
-  const rows = sorted.map((t,i) => {
-    const transport = t.transport||0;
-    const total = (t.ticketPrice||0)+transport;
-    const linked = t.linkedId ? sorted.find(x=>x.id===t.linkedId) : null;
-    const dir = t.ticketType==='go'
-      ? `<span style="background:#f59e0b22;color:#d97706;padding:2px 8px;border-radius:12px;font-weight:700;font-size:11px">🛫 ذهاب</span>`
-      : `<span style="background:#06b6d422;color:#0891b2;padding:2px 8px;border-radius:12px;font-weight:700;font-size:11px">🛬 إياب</span>`;
-    const paidBadge = t.paid
-      ? `<span style="color:#10b981;font-weight:700">✓</span>`
-      : `<span style="color:#ef4444;font-weight:700">⏳</span>`;
-    const airBadge = `<span style="background:${col(t.airline)}22;color:${col(t.airline)};padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${t.airline||'—'}</span>`;
-    const linkedInfo = linked
-      ? `<span style="color:#3b82f6;font-size:10px">🔗${linked.id}</span>` : '';
-    const rowBg = i%2===0 ? '#f8fafc' : '#ffffff';
-    const missedStyle = t.missed ? 'opacity:0.5;text-decoration:line-through' : '';
-    return `<tr style="background:${rowBg};${missedStyle}">
-      <td style="padding:7px 10px;font-weight:800;color:#3b82f6;text-align:center">${(t.category||'').replace(/\D/g,'')||'—'}</td>
-      <td style="padding:7px 10px">${dir}</td>
-      <td style="padding:7px 10px;white-space:nowrap">${t.flightDate||'—'}</td>
-      <td style="padding:7px 10px">${airBadge}</td>
-      <td style="padding:7px 10px;font-family:monospace;font-size:10px">${t.pnr||'—'}</td>
-      <td style="padding:7px 10px;font-weight:700;text-align:right">${fmtNum(t.ticketPrice||0)}</td>
-      <td style="padding:7px 10px;text-align:right;color:#64748b">${transport?fmtNum(transport):'—'}</td>
-      <td style="padding:7px 10px;font-weight:800;text-align:right;color:#1d4ed8">${fmtNum(total)}</td>
-      <td style="padding:7px 10px;font-size:10px;color:#64748b">${t.paidBy||'—'}</td>
-      <td style="padding:7px 10px;font-size:10px;color:#64748b">${t.salaryMonth||'—'}</td>
-      <td style="padding:7px 10px;text-align:center">${paidBadge} ${linkedInfo}</td>
-    </tr>`;
-  }).join('');
+const rows = sorted.map((t,i) => {
+const transport = t.transport||0;
+const total = (t.ticketPrice||0)+transport;
+const linked = t.linkedId ? sorted.find(x=>x.id===t.linkedId) : null;
+const dir = t.ticketType===‘go’
+? `<span style="background:#f59e0b22;color:#d97706;padding:2px 8px;border-radius:12px;font-weight:700;font-size:11px">🛫 ذهاب</span>`
+: `<span style="background:#06b6d422;color:#0891b2;padding:2px 8px;border-radius:12px;font-weight:700;font-size:11px">🛬 إياب</span>`;
+const paidBadge = t.paid
+? `<span style="color:#10b981;font-weight:700">✓</span>`
+: `<span style="color:#ef4444;font-weight:700">⏳</span>`;
+const airBadge = `<span style="background:${col(t.airline)}22;color:${col(t.airline)};padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">${t.airline||'—'}</span>`;
+const linkedInfo = linked
+? `<span style="color:#3b82f6;font-size:10px">🔗${linked.id}</span>` : ‘’;
+const rowBg = i%2===0 ? ‘#f8fafc’ : ‘#ffffff’;
+const missedStyle = t.missed ? ‘opacity:0.5;text-decoration:line-through’ : ‘’;
+return `<tr style="background:${rowBg};${missedStyle}"> <td style="padding:7px 10px;font-weight:800;color:#3b82f6;text-align:center">${(t.category||'').replace(/\D/g,'')||'—'}</td> <td style="padding:7px 10px">${dir}</td> <td style="padding:7px 10px;white-space:nowrap">${t.flightDate||'—'}</td> <td style="padding:7px 10px">${airBadge}</td> <td style="padding:7px 10px;font-family:monospace;font-size:10px">${t.pnr||'—'}</td> <td style="padding:7px 10px;font-weight:700;text-align:right">${fmtNum(t.ticketPrice||0)}</td> <td style="padding:7px 10px;text-align:right;color:#64748b">${transport?fmtNum(transport):'—'}</td> <td style="padding:7px 10px;font-weight:800;text-align:right;color:#1d4ed8">${fmtNum(total)}</td> <td style="padding:7px 10px;font-size:10px;color:#64748b">${t.paidBy||'—'}</td> <td style="padding:7px 10px;font-size:10px;color:#64748b">${t.salaryMonth||'—'}</td> <td style="padding:7px 10px;text-align:center">${paidBadge} ${linkedInfo}</td> </tr>`;
+}).join(’’);
 
-  const now = new Date().toLocaleDateString('ar-SA');
-  const html = `<!DOCTYPE html>
+const now = new Date().toLocaleDateString(‘ar-SA’);
+const html = `<!DOCTYPE html>
+
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
@@ -4443,12 +4560,153 @@ function resetToExcel() {
   toast('✅ تم إعادة تحميل البيانات');
 }
 
+// ─── MOTION ENGINE ───
+function initMotion() {
+
+  // 1. Stagger table rows in renderAll
+  const origRenderAll = renderAll;
+  window.renderAll = function() {
+    origRenderAll.apply(this, arguments);
+    requestAnimationFrame(() => {
+      document.querySelectorAll('#tableBody tr').forEach((row, i) => {
+        row.classList.add('animated-row');
+        row.style.animationDelay = `${i * 28}ms`;
+      });
+    });
+  };
+
+  // 2. Stagger trip cards in renderTrips
+  const origRenderTrips = renderTrips;
+  window.renderTrips = function() {
+    origRenderTrips.apply(this, arguments);
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.trip-card').forEach((card, i) => {
+        card.classList.add('card-animate');
+        card.style.animationDelay = `${i * 55}ms`;
+      });
+    });
+  };
+
+  // 3. Stagger upcoming cards
+  const origRenderUpcoming = renderUpcoming;
+  window.renderUpcoming = function() {
+    origRenderUpcoming.apply(this, arguments);
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.upcoming-card').forEach((card, i) => {
+        card.classList.add('card-animate');
+        card.style.animationDelay = `${i * 70}ms`;
+      });
+    });
+  };
+
+  // 4. Scroll reveal observer
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('scroll-visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  const observeScrollItems = () => {
+    document.querySelectorAll('.kpi-card, .chart-section, .upcoming-card, .trip-card').forEach(el => {
+      el.classList.add('scroll-hidden');
+      observer.observe(el);
+    });
+  };
+
+  // Re-observe after renders
+  const origRenderOverview = renderOverview;
+  window.renderOverview = function() {
+    origRenderOverview.apply(this, arguments);
+    requestAnimationFrame(observeScrollItems);
+  };
+
+  // 5. Tab transition — add exit animation
+  const origShowTab = showTab;
+  window.showTab = function(name) {
+    const current = document.querySelector('.section.active');
+    if (current) {
+      current.style.transition = 'opacity 120ms ease, transform 120ms ease';
+      current.style.opacity    = '0';
+      current.style.transform  = 'translateY(-6px)';
+      setTimeout(() => {
+        current.style.transition = '';
+        current.style.opacity    = '';
+        current.style.transform  = '';
+        origShowTab(name);
+      }, 100);
+    } else {
+      origShowTab(name);
+    }
+  };
+
+  // 6. Pull-to-refresh (mobile)
+  let startY = 0, pulling = false;
+  const indicator = document.getElementById('pullIndicator');
+
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!startY) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 60 && window.scrollY === 0) {
+      pulling = true;
+      if (indicator) indicator.classList.add('visible');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (pulling) {
+      pulling = false;
+      if (indicator) indicator.classList.remove('visible');
+      startY = 0;
+      // Refresh current tab data
+      const active = document.querySelector('.tab.active');
+      if (active) {
+        const tabName = active.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+        if (tabName === 'all') { renderAll(); toast('🔄 تم التحديث'); }
+        else if (tabName === 'trips') { renderTrips(); toast('🔄 تم التحديث'); }
+        else if (tabName === 'overview') { renderOverview(); }
+      }
+    }
+    startY = 0;
+  });
+
+  // 7. Form field entrance stagger
+  document.querySelectorAll('.form-group').forEach((el, i) => {
+    el.style.opacity    = '0';
+    el.style.transform  = 'translateY(8px)';
+    el.style.transition = `opacity 280ms ease ${i*35}ms, transform 280ms cubic-bezier(0.25,1,0.5,1) ${i*35}ms`;
+    setTimeout(() => {
+      el.style.opacity   = '1';
+      el.style.transform = 'translateY(0)';
+    }, 80 + i * 35);
+  });
+
+  // 8. Toast animation override
+  const origToast = toast;
+  window.toast = function(msg, duration) {
+    origToast(msg, duration);
+    const t = document.getElementById('toast');
+    if (t) {
+      t.style.animation = 'none';
+      t.offsetHeight; // reflow
+      t.style.animation = 'toastIn 320ms cubic-bezier(0.34,1.56,0.64,1) forwards';
+    }
+  };
+}
+
 // ─── INIT ───
 initTheme();
 initFirebase();
 rebuildSelectLists();
 renderOverview();
 renderUpcoming();
+initMotion();
 
 // ─── VERIFY localStorage IS WORKING ───
 (function verifyStorage() {
@@ -4463,5 +4721,6 @@ renderUpcoming();
   }
 })();
 </script>
+
 </body>
 </html>
