@@ -148,6 +148,8 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
   @media(min-width: 900px) {
     .content { padding: 20px 32px; }
   }
+  .section { display: none; }
+  .section.active { display: block; }
 
   /* ── STATS CARDS ── */
   .stats-grid {
@@ -1035,69 +1037,58 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
   position:fixed;inset:0;z-index:9999;
   background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  font-family:'Cairo',sans-serif;direction:rtl;padding:24px;
+  font-family:'Cairo',sans-serif;direction:rtl;padding:32px;
 ">
-  <div style="font-size:44px;margin-bottom:10px">✈</div>
+  <div style="font-size:48px;margin-bottom:16px">✈</div>
   <div style="font-size:22px;font-weight:900;background:linear-gradient(90deg,#3b82f6,#0ea5e9);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px">
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px">
     رحلاتي RUH ↔ JED
   </div>
-  <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px;text-align:center;max-width:260px;line-height:1.7">
+  <div style="font-size:13px;color:var(--text-muted);margin-bottom:40px;text-align:center;max-width:260px;line-height:1.7">
     سجّل دخولك لمزامنة بياناتك عبر جميع الأجهزة
   </div>
-
-  <div style="width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;">
-    <!-- Tabs -->
-    <div style="display:flex;gap:6px;margin-bottom:20px;background:var(--surface2);border-radius:10px;padding:4px">
-      <button id="tabEmailBtn" onclick="switchLoginTab('email')" style="flex:1;border:none;border-radius:8px;padding:8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:800;cursor:pointer;background:var(--accent);color:white;transition:all 0.2s;">📧 بالإيميل</button>
-      <button id="tabGoogleBtn" onclick="switchLoginTab('google')" style="flex:1;border:none;border-radius:8px;padding:8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:800;cursor:pointer;background:transparent;color:var(--text-muted);transition:all 0.2s;">🔵 Google</button>
-    </div>
-
-```
-<!-- Email Panel -->
-<div id="emailLoginPanel">
-  <div style="display:flex;gap:4px;margin-bottom:16px;font-size:11px;color:var(--text-muted);justify-content:center">
-    <span id="loginModeLabel">ليس لديك حساب؟</span>
-    <button onclick="toggleEmailMode()" id="loginModeBtn" style="background:none;border:none;color:var(--accent);font-family:'Cairo',sans-serif;font-size:11px;font-weight:800;cursor:pointer;padding:0;">إنشاء حساب</button>
-  </div>
-  <div id="signupNameField" style="display:none;margin-bottom:12px">
-    <input type="text" id="loginName" placeholder="الاسم الكامل" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:11px 14px;direction:rtl;">
-  </div>
-  <div style="margin-bottom:12px">
-    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:11px 14px;direction:ltr;text-align:right;" onkeydown="if(event.key==='Enter')document.getElementById('loginPassword').focus()">
-  </div>
-  <div style="margin-bottom:6px;position:relative">
-    <input type="password" id="loginPassword" placeholder="كلمة المرور" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:11px 14px;direction:ltr;text-align:right;" onkeydown="if(event.key==='Enter')handleEmailAuth()">
-    <button onclick="togglePasswordVisibility()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-muted);padding:0;" id="eyeBtn">👁</button>
-  </div>
-  <div id="forgotWrap" style="text-align:left;margin-bottom:16px">
-    <button onclick="handleForgotPassword()" style="background:none;border:none;color:var(--accent);font-family:'Cairo',sans-serif;font-size:11px;cursor:pointer;padding:4px 0;">نسيت كلمة المرور؟</button>
-  </div>
-  <button onclick="handleEmailAuth()" id="emailAuthBtn" style="width:100%;background:linear-gradient(135deg,#3b82f6,#6366f1);border:none;border-radius:10px;color:white;font-family:'Cairo',sans-serif;font-size:14px;font-weight:900;padding:12px;cursor:pointer;transition:opacity 0.2s;">دخول</button>
-</div>
-
-<!-- Google Panel -->
-<div id="googleLoginPanel" style="display:none">
-  <button onclick="handleAuth()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:white;color:#1a1a1a;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.15);transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+  <button onclick="handleAuth()" style="
+    display:flex;align-items:center;gap:12px;
+    background:white;color:#1a1a1a;
+    border:none;border-radius:12px;
+    padding:14px 28px;font-size:15px;font-weight:800;
+    font-family:'Cairo',sans-serif;cursor:pointer;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    transition:transform 0.15s;
+  " onmouseover="this.style.transform='translateY(-2px)'"
+     onmouseout="this.style.transform=''">
     <img src="https://www.google.com/favicon.ico" style="width:20px;height:20px">
     تسجيل الدخول بـ Google
   </button>
-  <div style="font-size:11px;color:var(--text-muted);margin-top:10px;text-align:center;line-height:1.6">على iPhone: سيتم توجيهك لـ Google ثم العودة تلقائياً ✅</div>
-</div>
-
-<div id="loginStatus" style="font-size:12px;margin-top:12px;text-align:center;color:var(--text-muted);min-height:18px"></div>
-```
-
+  <div style="font-size:11px;color:var(--text-muted);margin-top:12px;text-align:center;max-width:240px;line-height:1.6">
+    على iPhone: سيتم توجيهك لـ Google ثم العودة تلقائياً ✅
   </div>
+  <div id="loginStatus" style="margin-top:20px;font-size:12px;color:var(--text-muted)"></div>
 
-  <div style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap">
+  <!-- Contact -->
+
+  <div style="
+    position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+    text-align:center;white-space:nowrap;
+  ">
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">للتواصل</div>
-    <a href="https://x.com/fahad_shaheen" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 16px;text-decoration:none;color:var(--text);font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#fff'" onmouseout="this.style.borderColor='var(--border)'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    <a href="https://x.com/fahad_shaheen" target="_blank" style="
+      display:inline-flex;align-items:center;gap:7px;
+      background:var(--surface2);border:1px solid var(--border);
+      border-radius:20px;padding:7px 16px;text-decoration:none;
+      color:var(--text);font-size:12px;font-weight:700;
+      font-family:'Cairo',sans-serif;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='#fff'" onmouseout="this.style.borderColor='var(--border)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
       @fahad_shaheen
     </a>
   </div>
-  <button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
+
+<button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
+
 </div>
 
 <div id="pullIndicator">↓ اسحب للتحديث</div>
@@ -1604,6 +1595,8 @@ _googleProvider.setCustomParameters({ prompt: 'select_account' });
 
   </div>
 
+</div>
+
 <div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
   <div class="modal-box">
     <div class="modal-title">
@@ -1780,111 +1773,7 @@ const STORE_KEY = 'ruh_jed_v3';
 let _currentUid  = null;
 let _unsubscribe = null;
 
-// ─── EMAIL AUTH FUNCTIONS ───
-let _emailMode = 'signin'; // 'signin' | 'signup'
-
-function switchLoginTab(tab) {
-  const emailPanel  = document.getElementById('emailLoginPanel');
-  const googlePanel = document.getElementById('googleLoginPanel');
-  const tabEmail    = document.getElementById('tabEmailBtn');
-  const tabGoogle   = document.getElementById('tabGoogleBtn');
-  if (tab === 'email') {
-    emailPanel.style.display  = 'block';
-    googlePanel.style.display = 'none';
-    tabEmail.style.background  = 'var(--accent)';  tabEmail.style.color  = 'white';
-    tabGoogle.style.background = 'transparent';     tabGoogle.style.color = 'var(--text-muted)';
-  } else {
-    emailPanel.style.display  = 'none';
-    googlePanel.style.display = 'block';
-    tabEmail.style.background  = 'transparent';    tabEmail.style.color  = 'var(--text-muted)';
-    tabGoogle.style.background = 'var(--accent)';  tabGoogle.style.color = 'white';
-  }
-}
-
-function toggleEmailMode() {
-  _emailMode = _emailMode === 'signin' ? 'signup' : 'signin';
-  const isSignup = _emailMode === 'signup';
-  document.getElementById('signupNameField').style.display = isSignup ? 'block' : 'none';
-  document.getElementById('forgotWrap').style.display      = isSignup ? 'none'  : 'block';
-  document.getElementById('loginModeLabel').textContent    = isSignup ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟';
-  document.getElementById('loginModeBtn').textContent      = isSignup ? 'تسجيل الدخول' : 'إنشاء حساب';
-  document.getElementById('emailAuthBtn').textContent      = isSignup ? 'إنشاء الحساب' : 'دخول';
-}
-
-function togglePasswordVisibility() {
-  const input = document.getElementById('loginPassword');
-  const btn   = document.getElementById('eyeBtn');
-  if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
-  else                           { input.type = 'password'; btn.textContent = '👁';  }
-}
-
-async function handleEmailAuth() {
-  const ls       = document.getElementById('loginStatus');
-  const email    = document.getElementById('loginEmail')?.value.trim();
-  const password = document.getElementById('loginPassword')?.value;
-  const name     = document.getElementById('loginName')?.value.trim();
-  const btn      = document.getElementById('emailAuthBtn');
-
-  if (!email || !password) {
-    ls.textContent = '⚠️ أدخل البريد الإلكتروني وكلمة المرور';
-    ls.style.color = 'var(--unpaid)'; return;
-  }
-  if (_emailMode === 'signup' && !name) {
-    ls.textContent = '⚠️ أدخل اسمك الكامل';
-    ls.style.color = 'var(--unpaid)'; return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '⏳';
-  ls.textContent = '⏳ جاري التحقق...';
-  ls.style.color = 'var(--text-muted)';
-
-  try {
-    let result;
-    if (_emailMode === 'signup') {
-      result = await _fbAuth.createUserWithEmailAndPassword(email, password);
-      if (name && result.user) await result.user.updateProfile({ displayName: name });
-    } else {
-      result = await _fbAuth.signInWithEmailAndPassword(email, password);
-    }
-    // onAuthStateChanged will handle showLoginScreen(false) + render
-    ls.textContent = '';
-  } catch(err) {
-    const msgs = {
-      'auth/user-not-found':       '❌ البريد الإلكتروني غير مسجّل',
-      'auth/wrong-password':       '❌ كلمة المرور غير صحيحة',
-      'auth/invalid-credential':   '❌ البريد أو كلمة المرور غير صحيحة',
-      'auth/email-already-in-use': '❌ البريد مستخدم — جرّب تسجيل الدخول',
-      'auth/weak-password':        '❌ كلمة المرور قصيرة (6 أحرف على الأقل)',
-      'auth/invalid-email':        '❌ صيغة البريد الإلكتروني غير صحيحة',
-      'auth/too-many-requests':    '❌ محاولات كثيرة — حاول لاحقاً',
-    };
-    ls.textContent = msgs[err.code] || `❌ ${err.message}`;
-    ls.style.color = 'var(--unpaid)';
-    btn.disabled   = false;
-    btn.textContent = _emailMode === 'signup' ? 'إنشاء الحساب' : 'دخول';
-  }
-}
-
-async function handleForgotPassword() {
-  const email = document.getElementById('loginEmail')?.value.trim();
-  const ls    = document.getElementById('loginStatus');
-  if (!email) {
-    ls.textContent = '⚠️ أدخل بريدك الإلكتروني أولاً';
-    ls.style.color = 'var(--unpaid)';
-    return;
-  }
-  try {
-    await _fbAuth.sendPasswordResetEmail(email);
-    ls.textContent = `✅ تم إرسال رابط إعادة التعيين إلى ${email}`;
-    ls.style.color = 'var(--paid)';
-  } catch(err) {
-    ls.textContent = '❌ البريد غير مسجّل في النظام';
-    ls.style.color = 'var(--unpaid)';
-  }
-}
-
-// ─── AUTH (Google) ───
+// ─── AUTH — Firebase Auth (popup) ───
 
 function userDocRef(uid) {
   return _fbDb.collection('users').doc(uid).collection('data').doc('tickets');
@@ -1930,27 +1819,7 @@ function subscribeFirestore(uid) {
 
 function showLoginScreen(show) {
   const ls = document.getElementById('loginScreen');
-  if (!ls) return;
-  ls.style.display = show ? 'flex' : 'none';
-  if (show) {
-    // Reset to email tab, clear fields and status
-    switchLoginTab('email');
-    _emailMode = 'signin';
-    const fields = ['loginEmail','loginPassword','loginName'];
-    fields.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-    const status = document.getElementById('loginStatus');
-    if (status) status.textContent = '';
-    const btn = document.getElementById('emailAuthBtn');
-    if (btn) { btn.disabled = false; btn.textContent = 'دخول'; }
-    const nameField = document.getElementById('signupNameField');
-    if (nameField) nameField.style.display = 'none';
-    const forgot = document.getElementById('forgotWrap');
-    if (forgot) forgot.style.display = 'block';
-    const modeLabel = document.getElementById('loginModeLabel');
-    if (modeLabel) modeLabel.textContent = 'ليس لديك حساب؟';
-    const modeBtn = document.getElementById('loginModeBtn');
-    if (modeBtn) modeBtn.textContent = 'إنشاء حساب';
-  }
+  if (ls) ls.style.display = show ? 'flex' : 'none';
 }
 
 function updateAuthUI(user) {
@@ -1971,6 +1840,7 @@ function updateAuthUI(user) {
 }
 
 function handleAuth() {
+  const ls = document.getElementById('loginStatus');
   if (_currentUid) {
     if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
     _fbAuth.signOut().then(() => {
@@ -1982,18 +1852,21 @@ function handleAuth() {
       toast('👋 تم تسجيل الخروج');
     });
   } else {
-    const ls = document.getElementById('loginStatus');
-    if (ls) { ls.textContent = '⏳ جاري تسجيل الدخول...'; ls.style.color = 'var(--text-muted)'; }
+    if (ls) ls.textContent = '⏳ جاري تسجيل الدخول...';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOS || isSafari) {
+      // iOS/Safari: use redirect — popup breaks due to sessionStorage partitioning
       _fbAuth.signInWithRedirect(_googleProvider).catch(err => {
-        if (ls) { ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية'); ls.style.color = 'var(--unpaid)'; }
+        console.error(err);
+        if (ls) ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية');
       });
     } else {
       _fbAuth.signInWithPopup(_googleProvider)
         .then(() => { if (ls) ls.textContent = ''; })
         .catch(err => {
-          if (ls) { ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية'); ls.style.color = 'var(--unpaid)'; }
+          console.error(err);
+          if (ls) ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية');
         });
     }
   }
@@ -2029,7 +1902,7 @@ function initFirebase() {
       loadAccountsFromFirestore(user.uid);
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
     } else {
-      if (_currentUid) return; // تجاهل null المؤقت بعد Google popup
+      _currentUid = null;
       updateAuthUI(null);
       showLoginScreen(true);
     }
