@@ -1403,8 +1403,10 @@ function handleAuth() {
           <label>وقت الرحلة</label>
           <input type="time" id="fFlightTime" placeholder="مثال: 01:00"></div>
 
-          <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()">
-        </div>
+        <div class="form-group" style="opacity: 1; transform: translateY(0px); transition: opacity 280ms 280ms, transform 280ms cubic-bezier(0.25, 1, 0.5, 1) 280ms;">
+          <label>سعر الشراء</label>
+          <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()" style=""></div>
+        
 
         <hr class="form-divider">
         <div class="form-section-label">🚗 المواصلات</div>
