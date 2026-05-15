@@ -3765,36 +3765,23 @@ function renderWeatherCard(data, el) {
   el.innerHTML = `
     <div style="
       margin-top:8px;background:var(--surface2);border:1px solid var(--border);
-      border-radius:10px;padding:10px 12px;font-size:11px;
+      border-radius:10px;padding:8px 10px;font-size:10px;
       border-right:3px solid ${tempColor};
     ">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:20px">${emoji}</span>
-          <div>
-            <div style="font-weight:900;font-size:13px;color:${tempColor}">${temp}°C</div>
-            <div style="color:var(--text-muted);font-size:10px">${desc}</div>
-          </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="font-size:15px">${emoji}</span>
+          <span style="font-weight:900;font-size:14px;color:${tempColor}">${temp}°C</span>
+          <span style="color:var(--text-muted);font-size:9px">${desc}</span>
         </div>
-        <div style="text-align:left;color:var(--text-muted);font-size:10px">
-          ${l?.name || city}
-        </div>
+        <span style="color:var(--text-muted);font-size:9px">${l?.name || city}</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
-        <div style="background:var(--surface);border-radius:7px;padding:6px">
-          <div style="font-size:9px;color:var(--text-muted)">يُحسّ كـ</div>
-          <div style="font-weight:800;color:var(--text)">${feels}°</div>
-        </div>
-        <div style="background:var(--surface);border-radius:7px;padding:6px">
-          <div style="font-size:9px;color:var(--text-muted)">💧 رطوبة</div>
-          <div style="font-weight:800;color:var(--text)">${humid}%</div>
-        </div>
-        <div style="background:var(--surface);border-radius:7px;padding:6px">
-          <div style="font-size:9px;color:var(--text-muted)">💨 رياح</div>
-          <div style="font-weight:800;color:var(--text)">${wind} km</div>
-        </div>
+      <div style="display:flex;gap:8px;font-size:9px;color:var(--text-muted)">
+        <span>🌡 يُحسّ <strong style="color:var(--text)">${feels}°</strong></span>
+        <span>💧 <strong style="color:var(--text)">${humid}%</strong></span>
+        <span>💨 <strong style="color:var(--text)">${wind}km</strong></span>
+        ${uv ? `<span>🔆 UV <strong style="color:var(--text)">${uv}</strong></span>` : ''}
       </div>
-      ${uv ? `<div style="margin-top:6px;font-size:10px;color:var(--text-muted);text-align:center">UV Index: ${uv}</div>` : ''}
     </div>`;
 }
 
