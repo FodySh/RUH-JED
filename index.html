@@ -2775,11 +2775,19 @@ function renderUpcoming() {
         </div>
         <!-- Flight status result -->
         <div id="flight-status-${t.id}" style="margin-top:8px"></div>
+        <!-- Weather widget -->
+        <div id="weather-${t.id}"></div>
       </div>
       <div class="countdown">${countdown}</div>
     </div>`;
   }).join('');
   document.getElementById('upcomingList').innerHTML = html;
+
+  // Auto-fetch weather for upcoming flights
+  upcoming.forEach(t => {
+    const city = t.ticketType === 'go' ? 'Jeddah' : 'Riyadh';
+    fetchWeather(city, t.id);
+  });
 }
 
 // ─── TRIPS (paired via linkedId) ───
@@ -3694,6 +3702,102 @@ function showMobileExportPanel(dataUri, filename) {
 
 // ─── ADD TO GOOGLE CALENDAR ───
 // ─── FLIGHT TRACKING — AviationStack ───
+const WEATHER_KEY = 'd417a56b80d952490926cdf53eaf096f';
+const WEATHER_CACHE = {}; // cache by city+date
+
+async function fetchWeather(city, ticketId) {
+  const cacheKey = city;
+  const el = document.getElementById(`weather-${ticketId}`);
+  if (!el) return;
+
+  // Return cached result
+  if (WEATHER_CACHE[cacheKey]) {
+    renderWeatherCard(WEATHER_CACHE[cacheKey], el);
+    return;
+  }
+
+  el.innerHTML = `<div style="font-size:10px;color:var(--text-muted);padding:4px 0">⏳ جاري جلب الطقس...</div>`;
+
+  try {
+    const res  = await fetch(`https://api.weatherstack.com/current?access_key=${WEATHER_KEY}&query=${encodeURIComponent(city)}&units=m`);
+    const data = await res.json();
+
+    if (data.error) {
+      el.innerHTML = `<div style="font-size:10px;color:var(--text-muted)">⚠️ ${data.error.info || 'تعذّر جلب الطقس'}</div>`;
+      return;
+    }
+
+    WEATHER_CACHE[cacheKey] = data;
+    renderWeatherCard(data, el);
+  } catch(err) {
+    el.innerHTML = `<div style="font-size:10px;color:var(--text-muted)">⚠️ خطأ في الاتصال</div>`;
+  }
+}
+
+function renderWeatherCard(data, el) {
+  const c = data.current;
+  const l = data.location;
+  if (!c) return;
+
+  const desc   = c.weather_descriptions?.[0] || '';
+  const icon   = c.weather_icons?.[0] || '';
+  const temp   = c.temperature;
+  const feels  = c.feelslike;
+  const humid  = c.humidity;
+  const wind   = c.wind_speed;
+  const uv     = c.uv_index;
+
+  // Weather icon mapping to emoji
+  const descLower = desc.toLowerCase();
+  let emoji = '🌤';
+  if (descLower.includes('sunny') || descLower.includes('clear'))  emoji = '☀️';
+  else if (descLower.includes('cloud'))  emoji = '☁️';
+  else if (descLower.includes('rain'))   emoji = '🌧';
+  else if (descLower.includes('storm'))  emoji = '⛈';
+  else if (descLower.includes('snow'))   emoji = '❄️';
+  else if (descLower.includes('fog') || descLower.includes('mist')) emoji = '🌫';
+  else if (descLower.includes('sand') || descLower.includes('dust')) emoji = '🌪';
+  else if (descLower.includes('partly')) emoji = '⛅';
+
+  // Temp color
+  const tempColor = temp >= 40 ? '#f43f5e' : temp >= 30 ? '#f59e0b' : temp >= 20 ? '#10b981' : '#3b82f6';
+
+  el.innerHTML = `
+    <div style="
+      margin-top:8px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:10px;padding:10px 12px;font-size:11px;
+      border-right:3px solid ${tempColor};
+    ">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:20px">${emoji}</span>
+          <div>
+            <div style="font-weight:900;font-size:13px;color:${tempColor}">${temp}°C</div>
+            <div style="color:var(--text-muted);font-size:10px">${desc}</div>
+          </div>
+        </div>
+        <div style="text-align:left;color:var(--text-muted);font-size:10px">
+          ${l?.name || city}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
+        <div style="background:var(--surface);border-radius:7px;padding:6px">
+          <div style="font-size:9px;color:var(--text-muted)">يُحسّ كـ</div>
+          <div style="font-weight:800;color:var(--text)">${feels}°</div>
+        </div>
+        <div style="background:var(--surface);border-radius:7px;padding:6px">
+          <div style="font-size:9px;color:var(--text-muted)">💧 رطوبة</div>
+          <div style="font-weight:800;color:var(--text)">${humid}%</div>
+        </div>
+        <div style="background:var(--surface);border-radius:7px;padding:6px">
+          <div style="font-size:9px;color:var(--text-muted)">💨 رياح</div>
+          <div style="font-weight:800;color:var(--text)">${wind} km</div>
+        </div>
+      </div>
+      ${uv ? `<div style="margin-top:6px;font-size:10px;color:var(--text-muted);text-align:center">UV Index: ${uv}</div>` : ''}
+    </div>`;
+}
+
 const AVIATION_PROXY = 'https://aviation-proxy.shaheenhouse1.workers.dev';
 
 async function trackFlight(flightNum, date, ticketId) {
