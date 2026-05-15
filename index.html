@@ -1185,6 +1185,7 @@ function handleAuth() {
       <input type="file" id="importXLSXFile" accept=".xlsx,.xls" onchange="importXLSX(event)">
       <button class="btn-sm" onclick="resetToExcel()" style="border-color:#f59e0b;color:#f59e0b;margin-right:4px">↺ إعادة تحميل</button>
       <button class="btn-sm danger" id="clearBtn" onclick="handleClearAll(this)">🗑 مسح</button>
+      <button class="btn-sm" onclick="restoreFromBackup()" style="border-color:#10b981;color:#10b981;" title="استرجاع من آخر نسخة احتياطية تلقائية">🛡 استرجاع</button>
     </div>
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="بحث..." oninput="renderAll()">
@@ -1744,11 +1745,34 @@ function userDocRef(uid) {
   return _fbDb.collection('users').doc(uid).collection('data').doc('tickets');
 }
 
+// ── Backup key for auto-snapshots ──
+const BACKUP_KEY = 'ruh_jed_backup';
+
 function save(data) {
+  // 🛡 PROTECTION 1: Never write empty or suspiciously small array to Firestore
+  // if current data is larger — this prevents accidental overwrites
+  if (!Array.isArray(data)) return;
+
+  // Always save to localStorage
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
+
+  // 🛡 PROTECTION 2: Auto-backup before every Firestore write
+  if (data.length > 0) {
+    try {
+      const backup = { tickets: data, savedAt: Date.now(), count: data.length };
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+    } catch(e) {}
+  }
+
   const storedUid = localStorage.getItem('ruh_jed_uid');
   if (_currentUid && _currentUid === storedUid) {
-    userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now() })
+    // 🛡 PROTECTION 3: Never overwrite Firestore with fewer tickets than already there
+    // unless it's a deliberate delete (deleteTicket sets _allowShrink)
+    if (data.length === 0 && !window._allowEmptySave) {
+      console.warn('🛡 Blocked empty save to Firestore');
+      return;
+    }
+    userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now(), count: data.length })
       .catch(e => console.warn('Firestore write failed:', e));
   }
 }
@@ -1756,15 +1780,31 @@ function save(data) {
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch(e) {}
   return JSON.parse(JSON.stringify(EXCEL_DATA));
 }
 
 function applyRemoteData(remoteTickets) {
   if (!Array.isArray(remoteTickets)) return;
+  // 🛡 PROTECTION 5: Never replace existing data with empty/smaller remote data
+  // This prevents Firestore sync from wiping local data after accidental empty write
+  const localCount = tickets?.length || 0;
+  if (remoteTickets.length === 0 && localCount > 0) {
+    console.warn(`🛡 Blocked replacing ${localCount} local tickets with empty remote data`);
+    return;
+  }
   tickets = remoteTickets;
   try { localStorage.setItem(STORE_KEY, JSON.stringify(tickets)); } catch(e) {}
+  // Auto-backup on receive
+  if (tickets.length > 0) {
+    try {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify({ tickets, savedAt: Date.now(), count: tickets.length }));
+    } catch(e) {}
+  }
   renderAll(); renderOverview(); renderUpcoming(); renderTrips();
 }
 
@@ -1844,15 +1884,19 @@ function initFirebase() {
 
   _fbAuth.onAuthStateChanged(user => {
     if (user) {
-      // ── Successful login ──
       const lastUid = localStorage.getItem('ruh_jed_uid');
+      // 🛡 PROTECTION 4: Never clear localStorage data on uid mismatch
+      // Old code deleted everything here — now we just switch uid safely
       if (lastUid && lastUid !== user.uid) {
+        console.warn('🛡 UID changed — clearing local cache safely (not Firestore)');
+        // Only clear localStorage, Firestore data is per-uid and safe
         localStorage.removeItem(STORE_KEY);
         localStorage.removeItem(LS_ACCOUNTS);
         tickets = [];
+        // Don't write empty tickets to Firestore!
       }
       localStorage.setItem('ruh_jed_uid', user.uid);
-      localStorage.setItem('ruh_jed_auth', '1'); // mark as authenticated
+      localStorage.setItem('ruh_jed_auth', '1');
       _currentUid = user.uid;
       updateAuthUI(user);
       showLoginScreen(false);
@@ -1862,8 +1906,6 @@ function initFirebase() {
       loadAccountsFromFirestore(user.uid);
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
     } else {
-      // ── Signed out or transient null ──
-      // If we have a valid auth marker, ignore this null — it's transient (Google popup quirk)
       if (localStorage.getItem('ruh_jed_auth') === '1') {
         console.log('Transient null ignored — user was authenticated');
         return;
@@ -4639,16 +4681,42 @@ function handleClearAll(btn) {
 }
 
 function clearAll() {
+  // 🛡 Allow empty save to Firestore only when user explicitly clears
+  window._allowEmptySave = true;
   tickets = [];
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify([]));
-    localStorage.setItem(STORE_KEY + '_ver', String(DATA_VERSION));
   } catch(e) {}
-  renderAll();
-  renderOverview();
-  renderUpcoming();
-  renderTrips();
+  // Write empty to Firestore intentionally
+  const storedUid = localStorage.getItem('ruh_jed_uid');
+  if (_currentUid && _currentUid === storedUid) {
+    userDocRef(_currentUid).set({ tickets: [], updatedAt: Date.now(), count: 0 })
+      .catch(e => console.warn('Firestore write failed:', e));
+  }
+  window._allowEmptySave = false;
+  renderAll(); renderOverview(); renderUpcoming(); renderTrips();
   toast('🗑 تم مسح جميع البيانات');
+}
+
+// 🛡 Restore from auto-backup
+function restoreFromBackup() {
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) { toast('⚠️ لا توجد نسخة احتياطية'); return; }
+    const backup = JSON.parse(raw);
+    if (!Array.isArray(backup.tickets) || !backup.tickets.length) {
+      toast('⚠️ النسخة الاحتياطية فارغة'); return;
+    }
+    const date = new Date(backup.savedAt).toLocaleString('ar-SA');
+    if (!confirm(`استرجاع ${backup.count} تذكرة من نسخة بتاريخ ${date}؟`)) return;
+    tickets = backup.tickets;
+    window._allowEmptySave = false;
+    save(tickets);
+    renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+    toast(`✅ تم استرجاع ${backup.count} تذكرة`);
+  } catch(e) {
+    toast('❌ فشل الاسترجاع: ' + e.message);
+  }
 }
 
 // ─── RESET TO EXCEL DATA ───
