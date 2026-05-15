@@ -1185,6 +1185,8 @@ function handleAuth() {
       <input type="file" id="importXLSXFile" accept=".xlsx,.xls" onchange="importXLSX(event)">
       <button class="btn-sm" onclick="resetToExcel()" style="border-color:#f59e0b;color:#f59e0b;margin-right:4px">↺ إعادة تحميل</button>
       <button class="btn-sm danger" id="clearBtn" onclick="handleClearAll(this)">🗑 مسح</button>
+      <button class="btn-sm" onclick="restoreFromBackup()" style="border-color:#10b981;color:#10b981;" title="استرجاع من آخر نسخة احتياطية تلقائية">🛡 استرجاع</button>
+      <button class="btn-sm" onclick="restoreFromBackup()" style="border-color:#10b981;color:#10b981;" title="استرجاع من آخر نسخة احتياطية تلقائية">🛡 استرجاع</button>
     </div>
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="بحث..." oninput="renderAll()">
@@ -1406,7 +1408,6 @@ function handleAuth() {
         <div class="form-group" style="opacity: 1; transform: translateY(0px); transition: opacity 280ms 280ms, transform 280ms cubic-bezier(0.25, 1, 0.5, 1) 280ms;">
           <label>سعر الشراء</label>
           <input type="number" id="fPrice" placeholder="0" step="0.01" min="0" oninput="updateFormTotal()" style=""></div>
-        
 
         <hr class="form-divider">
         <div class="form-section-label">🚗 المواصلات</div>
@@ -1746,11 +1747,34 @@ function userDocRef(uid) {
   return _fbDb.collection('users').doc(uid).collection('data').doc('tickets');
 }
 
+// ── Backup key for auto-snapshots ──
+const BACKUP_KEY = 'ruh_jed_backup';
+
 function save(data) {
+  // 🛡 PROTECTION 1: Never write empty or suspiciously small array to Firestore
+  // if current data is larger — this prevents accidental overwrites
+  if (!Array.isArray(data)) return;
+
+  // Always save to localStorage
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
+
+  // 🛡 PROTECTION 2: Auto-backup before every Firestore write
+  if (data.length > 0) {
+    try {
+      const backup = { tickets: data, savedAt: Date.now(), count: data.length };
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
+    } catch(e) {}
+  }
+
   const storedUid = localStorage.getItem('ruh_jed_uid');
   if (_currentUid && _currentUid === storedUid) {
-    userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now() })
+    // 🛡 PROTECTION 3: Never overwrite Firestore with fewer tickets than already there
+    // unless it's a deliberate delete (deleteTicket sets _allowShrink)
+    if (data.length === 0 && !window._allowEmptySave) {
+      console.warn('🛡 Blocked empty save to Firestore');
+      return;
+    }
+    userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now(), count: data.length })
       .catch(e => console.warn('Firestore write failed:', e));
   }
 }
@@ -1758,15 +1782,31 @@ function save(data) {
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch(e) {}
   return JSON.parse(JSON.stringify(EXCEL_DATA));
 }
 
 function applyRemoteData(remoteTickets) {
   if (!Array.isArray(remoteTickets)) return;
+  // 🛡 PROTECTION 5: Never replace existing data with empty/smaller remote data
+  // This prevents Firestore sync from wiping local data after accidental empty write
+  const localCount = tickets?.length || 0;
+  if (remoteTickets.length === 0 && localCount > 0) {
+    console.warn(`🛡 Blocked replacing ${localCount} local tickets with empty remote data`);
+    return;
+  }
   tickets = remoteTickets;
   try { localStorage.setItem(STORE_KEY, JSON.stringify(tickets)); } catch(e) {}
+  // Auto-backup on receive
+  if (tickets.length > 0) {
+    try {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify({ tickets, savedAt: Date.now(), count: tickets.length }));
+    } catch(e) {}
+  }
   renderAll(); renderOverview(); renderUpcoming(); renderTrips();
 }
 
@@ -1812,6 +1852,7 @@ function handleAuth() {
     _fbAuth.signOut().then(() => {
       _currentUid = null;
       localStorage.removeItem('ruh_jed_uid');
+      localStorage.removeItem('ruh_jed_auth'); // clear auth marker
       tickets = [];
       updateAuthUI(null);
       showLoginScreen(true);
@@ -1836,11 +1877,7 @@ function handleAuth() {
 }
 
 function initFirebase() {
-  // Handle redirect result first (iOS returns here after Google login)
   _fbAuth.getRedirectResult()
-    .then(result => {
-      // onAuthStateChanged will handle the user session
-    })
     .catch(err => {
       if (err.code !== 'auth/no-current-user') {
         console.warn('Redirect result error:', err.code);
@@ -1850,12 +1887,18 @@ function initFirebase() {
   _fbAuth.onAuthStateChanged(user => {
     if (user) {
       const lastUid = localStorage.getItem('ruh_jed_uid');
+      // 🛡 PROTECTION 4: Never clear localStorage data on uid mismatch
+      // Old code deleted everything here — now we just switch uid safely
       if (lastUid && lastUid !== user.uid) {
+        console.warn('🛡 UID changed — clearing local cache safely (not Firestore)');
+        // Only clear localStorage, Firestore data is per-uid and safe
         localStorage.removeItem(STORE_KEY);
         localStorage.removeItem(LS_ACCOUNTS);
         tickets = [];
+        // Don't write empty tickets to Firestore!
       }
       localStorage.setItem('ruh_jed_uid', user.uid);
+      localStorage.setItem('ruh_jed_auth', '1');
       _currentUid = user.uid;
       updateAuthUI(user);
       showLoginScreen(false);
@@ -1865,7 +1908,11 @@ function initFirebase() {
       loadAccountsFromFirestore(user.uid);
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
     } else {
-      if (_currentUid) return; // تجاهل null المؤقت بعد Google popup
+      if (localStorage.getItem('ruh_jed_auth') === '1') {
+        console.log('Transient null ignored — user was authenticated');
+        return;
+      }
+      _currentUid = null;
       updateAuthUI(null);
       showLoginScreen(true);
     }
@@ -3641,7 +3688,7 @@ function renderWeatherCard(data, el) {
         <div style="display:flex;align-items:center;gap:5px">
           <span style="font-size:15px">${emoji}</span>
           <span style="font-weight:900;font-size:14px;color:${tempColor}">${temp}°C</span>
-          <span style="color:var(--text-muted);font-size:11px">${desc}</span>
+          <span style="color:var(--text-muted);font-size:9px">${desc}</span>
         </div>
         <span style="color:var(--text-muted);font-size:9px">${l?.name || city}</span>
       </div>
@@ -3661,7 +3708,7 @@ async function trackFlight(flightNum, date, ticketId) {
   const statusEl = document.getElementById(`flight-status-${ticketId}`);
   if (!statusEl) return;
 
-  statusEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
+  statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
 
   const url = `${AVIATION_PROXY}?flight=${encodeURIComponent(flightNum)}`;
   console.log('🛫 trackFlight:', url);
@@ -3714,15 +3761,25 @@ async function trackFlight(flightNum, date, ticketId) {
       return `${h12}:${String(m).padStart(2,'0')} ${period}`;
     };
 
-    const delayBadge = mins => mins
-      ? `<span style="background:#f59e0b22;color:#d97706;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700">⏱ تأخير ${mins}د</span>`
-      : `<span style="background:#10b98122;color:#10b981;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700">في الموعد</span>`;
+    // احسب التأخير الحقيقي من الفرق بين المجدول والفعلي (بالدقائق)
+    const calcDelay = (scheduled, actual) => {
+      if (!scheduled || !actual) return null;
+      const diff = Math.round((new Date(actual) - new Date(scheduled)) / 60000);
+      return diff > 0 ? diff : null;
+    };
+
+    const depDelay = dep?.delay || calcDelay(dep?.scheduled, dep?.actual || dep?.estimated);
+    const arrDelay = arr?.delay || calcDelay(arr?.scheduled, arr?.actual || arr?.estimated);
+
+    const delayBadge = mins => mins && mins > 0
+      ? `<span style="background:#f59e0b22;color:#d97706;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">⏱ تأخير ${mins}د</span>`
+      : `<span style="background:#10b98122;color:#10b981;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">✓ في الموعد</span>`;
 
     const timeBlock = (sched, est, actual) => {
       const rows = [];
-      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
-      if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
-      if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:12px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
+      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
+      if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
+      if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:9px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
       return rows.join('');
     };
 
@@ -3744,29 +3801,30 @@ async function trackFlight(flightNum, date, ticketId) {
         <!-- Dep / Arr -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="font-size:15px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
+            <div style="font-size:9px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
             ${timeBlock(dep?.scheduled, dep?.estimated, dep?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-              ${dep?.terminal ? `<span style="font-size:12px;color:var(--go-color)">🏢 T${dep.terminal}</span>` : ''}
-              ${dep?.gate     ? `<span style="font-size:12px;color:var(--go-color)">🚪 ${dep.gate}</span>`      : ''}
-              ${dep?.iata     ? `<span style="font-size:12px;color:var(--go-color)">📍 ${dep.iata}</span>`      : ''}
-              <div style="margin-top:3px">${delayBadge(dep?.delay)}</div>
+              ${dep?.terminal ? `<span style="font-size:9px;color:var(--text-muted)">🏢 T${dep.terminal}</span>` : ''}
+              ${dep?.gate     ? `<span style="font-size:9px;color:var(--accent);font-weight:700">🚪 بوابة ${dep.gate}</span>` : ''}
+              ${dep?.iata     ? `<span style="font-size:9px;color:var(--text-muted)">📍 ${dep.iata}</span>`      : ''}
+              <div style="margin-top:3px">${delayBadge(depDelay)}</div>
             </div>
           </div>
           <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="font-size:15px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
+            <div style="font-size:9px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
             ${timeBlock(arr?.scheduled, arr?.estimated, arr?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-              ${arr?.terminal ? `<span style="font-size:12px;color:var(--return-color)">🏢 T${arr.terminal}</span>` : ''}
-              ${arr?.baggage  ? `<span style="font-size:12px;color:var(--return-color)">🧳 ${arr.baggage}</span>`   : ''}
-              ${arr?.iata     ? `<span style="font-size:12px;color:var(--return-color)">📍 ${arr.iata}</span>`      : ''}
-              <div style="margin-top:3px">${delayBadge(arr?.delay)}</div>
+              ${arr?.terminal ? `<span style="font-size:9px;color:var(--text-muted)">🏢 T${arr.terminal}</span>` : ''}
+              ${arr?.gate     ? `<span style="font-size:9px;color:var(--accent);font-weight:700">🚪 بوابة ${arr.gate}</span>` : ''}
+              ${arr?.baggage  ? `<span style="font-size:9px;color:var(--text-muted)">🧳 ${arr.baggage}</span>`   : ''}
+              ${arr?.iata     ? `<span style="font-size:9px;color:var(--text-muted)">📍 ${arr.iata}</span>`      : ''}
+              <div style="margin-top:3px">${delayBadge(arrDelay)}</div>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:11px;border-top:1px solid var(--border);padding-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:9px;border-top:1px solid var(--border);padding-top:6px">
           <span>آخر تحديث: ${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}</span>
           <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
             background:none;border:none;color:var(--accent);cursor:pointer;
@@ -4625,16 +4683,42 @@ function handleClearAll(btn) {
 }
 
 function clearAll() {
+  // 🛡 Allow empty save to Firestore only when user explicitly clears
+  window._allowEmptySave = true;
   tickets = [];
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify([]));
-    localStorage.setItem(STORE_KEY + '_ver', String(DATA_VERSION));
   } catch(e) {}
-  renderAll();
-  renderOverview();
-  renderUpcoming();
-  renderTrips();
+  // Write empty to Firestore intentionally
+  const storedUid = localStorage.getItem('ruh_jed_uid');
+  if (_currentUid && _currentUid === storedUid) {
+    userDocRef(_currentUid).set({ tickets: [], updatedAt: Date.now(), count: 0 })
+      .catch(e => console.warn('Firestore write failed:', e));
+  }
+  window._allowEmptySave = false;
+  renderAll(); renderOverview(); renderUpcoming(); renderTrips();
   toast('🗑 تم مسح جميع البيانات');
+}
+
+// 🛡 Restore from auto-backup
+function restoreFromBackup() {
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) { toast('⚠️ لا توجد نسخة احتياطية'); return; }
+    const backup = JSON.parse(raw);
+    if (!Array.isArray(backup.tickets) || !backup.tickets.length) {
+      toast('⚠️ النسخة الاحتياطية فارغة'); return;
+    }
+    const date = new Date(backup.savedAt).toLocaleString('ar-SA');
+    if (!confirm(`استرجاع ${backup.count} تذكرة من نسخة بتاريخ ${date}؟`)) return;
+    tickets = backup.tickets;
+    window._allowEmptySave = false;
+    save(tickets);
+    renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+    toast(`✅ تم استرجاع ${backup.count} تذكرة`);
+  } catch(e) {
+    toast('❌ فشل الاسترجاع: ' + e.message);
+  }
 }
 
 // ─── RESET TO EXCEL DATA ───
