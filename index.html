@@ -3661,7 +3661,7 @@ async function trackFlight(flightNum, date, ticketId) {
 
   statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
 
-  const url = `${AVIATION_PROXY}?flight=${encodeURIComponent(flightNum)}${date ? '&date=' + date : ''}`;
+  const url = `${AVIATION_PROXY}?flight=${encodeURIComponent(flightNum)}`;
   console.log('🛫 trackFlight:', url);
 
   try {
