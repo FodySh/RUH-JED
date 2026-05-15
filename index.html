@@ -3639,15 +3639,15 @@ function renderWeatherCard(data, el) {
         <div style="display:flex;align-items:center;gap:5px">
           <span style="font-size:15px">${emoji}</span>
           <span style="font-weight:900;font-size:14px;color:${tempColor}">${temp}°C</span>
-          <span style="color:var(--text-muted);font-size:9px">${desc}</span>
+          <span style="color:var(--text-muted);font-size:11px">${desc}</span>
         </div>
         <span style="color:var(--text-muted);font-size:9px">${l?.name || city}</span>
       </div>
-      <div style="display:flex;gap:8px;font-size:9px;color:var(--text-muted)">
-        <span>🌡 يُحسّ <strong style="color:var(--text)">${feels}°</strong></span>
-        <span>💧 <strong style="color:var(--text)">${humid}%</strong></span>
-        <span>💨 <strong style="color:var(--text)">${wind}km</strong></span>
-        ${uv ? `<span>🔆 UV <strong style="color:var(--text)">${uv}</strong></span>` : ''}
+      <div style="display:flex;gap:8px;font-size:13px;color:var(--go-color)">
+        <span>🌡 يُحسّ <strong style="color:var(--return-color)">${feels}°</strong></span>
+        <span>💧 <strong style="color:var(--return-color)">${humid}%</strong></span>
+        <span>💨 <strong style="color:var(--return-color)">${wind}km</strong></span>
+        ${uv ? `<span>🔆 UV <strong style="color:var(--return-color)">${uv}</strong></span>` : ''}
       </div>
     </div>`;
 }
@@ -3659,7 +3659,7 @@ async function trackFlight(flightNum, date, ticketId) {
   const statusEl = document.getElementById(`flight-status-${ticketId}`);
   if (!statusEl) return;
 
-  statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
+  statusEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
 
   const url = `${AVIATION_PROXY}?flight=${encodeURIComponent(flightNum)}`;
   console.log('🛫 trackFlight:', url);
