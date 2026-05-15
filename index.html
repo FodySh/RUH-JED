@@ -3718,7 +3718,7 @@ async function trackFlight(flightNum, date, ticketId) {
 
     const timeBlock = (sched, est, actual) => {
       const rows = [];
-      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
+      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:19px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
       if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
       if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:9px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
       return rows.join('');
