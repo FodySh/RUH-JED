@@ -66,6 +66,21 @@ function togglePasswordVisibility() {
 }
 
 window._emailMode = 'signin';
+
+// Stub — الدالة الحقيقية تُعرَّف لاحقاً في الـ script الرئيسي
+// لكن نحتاج تعريفها هنا لأن HTML يستدعيها قبل تحميل الـ script الرئيسي
+function handleAuth() {
+  if (window._handleAuthReal) return window._handleAuthReal();
+  // Fallback: wait for main script
+  setTimeout(() => { if (window._handleAuthReal) window._handleAuthReal(); }, 300);
+}
+function handleEmailAuth() {
+  if (window._handleEmailAuthReal) return window._handleEmailAuthReal();
+  setTimeout(() => { if (window._handleEmailAuthReal) window._handleEmailAuthReal(); }, 300);
+}
+function handleForgotPassword() {
+  if (window._handleForgotPasswordReal) return window._handleForgotPasswordReal();
+}
 </script>
 </script>
 <style>
@@ -4997,6 +5012,9 @@ function initMotion() {
 }
 
 // ─── INIT ───
+window._handleAuthReal          = handleAuth;
+window._handleEmailAuthReal     = handleEmailAuth;
+window._handleForgotPasswordReal= handleForgotPassword;
 initTheme();
 initFirebase();
 rebuildSelectLists();
