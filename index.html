@@ -3713,14 +3713,14 @@ async function trackFlight(flightNum, date, ticketId) {
     };
 
     const delayBadge = mins => mins
-      ? `<span style="background:#f59e0b22;color:#d97706;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">⏱ تأخير ${mins}د</span>`
-      : `<span style="background:#10b98122;color:#10b981;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">في الموعد</span>`;
+      ? `<span style="background:#f59e0b22;color:#d97706;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700">⏱ تأخير ${mins}د</span>`
+      : `<span style="background:#10b98122;color:#10b981;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700">في الموعد</span>`;
 
     const timeBlock = (sched, est, actual) => {
       const rows = [];
-      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:19px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
-      if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
-      if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:9px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
+      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
+      if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
+      if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:12px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
       return rows.join('');
     };
 
@@ -3745,9 +3745,9 @@ async function trackFlight(flightNum, date, ticketId) {
             <div style="font-size:9px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
             ${timeBlock(dep?.scheduled, dep?.estimated, dep?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-              ${dep?.terminal ? `<span style="font-size:9px;color:var(--text-muted)">🏢 T${dep.terminal}</span>` : ''}
-              ${dep?.gate     ? `<span style="font-size:9px;color:var(--text-muted)">🚪 ${dep.gate}</span>`      : ''}
-              ${dep?.iata     ? `<span style="font-size:9px;color:var(--text-muted)">📍 ${dep.iata}</span>`      : ''}
+              ${dep?.terminal ? `<span style="font-size:12px;color:var(--go-color)">🏢 T${dep.terminal}</span>` : ''}
+              ${dep?.gate     ? `<span style="font-size:12px;color:var(--go-color)">🚪 ${dep.gate}</span>`      : ''}
+              ${dep?.iata     ? `<span style="font-size:12px;color:var(--go-color)">📍 ${dep.iata}</span>`      : ''}
               <div style="margin-top:3px">${delayBadge(dep?.delay)}</div>
             </div>
           </div>
@@ -3755,16 +3755,16 @@ async function trackFlight(flightNum, date, ticketId) {
             <div style="font-size:9px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
             ${timeBlock(arr?.scheduled, arr?.estimated, arr?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-              ${arr?.terminal ? `<span style="font-size:9px;color:var(--text-muted)">🏢 T${arr.terminal}</span>` : ''}
-              ${arr?.baggage  ? `<span style="font-size:9px;color:var(--text-muted)">🧳 ${arr.baggage}</span>`   : ''}
-              ${arr?.iata     ? `<span style="font-size:9px;color:var(--text-muted)">📍 ${arr.iata}</span>`      : ''}
+              ${arr?.terminal ? `<span style="font-size:12px;color:var(--return-color)">🏢 T${arr.terminal}</span>` : ''}
+              ${arr?.baggage  ? `<span style="font-size:12px;color:var(--return-color)">🧳 ${arr.baggage}</span>`   : ''}
+              ${arr?.iata     ? `<span style="font-size:12px;color:var(--return-color)">📍 ${arr.iata}</span>`      : ''}
               <div style="margin-top:3px">${delayBadge(arr?.delay)}</div>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:9px;border-top:1px solid var(--border);padding-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:11px;border-top:1px solid var(--border);padding-top:6px">
           <span>آخر تحديث: ${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}</span>
           <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
             background:none;border:none;color:var(--accent);cursor:pointer;
