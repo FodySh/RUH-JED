@@ -26,6 +26,47 @@ const _fbDb   = firebase.firestore();
 
 const _googleProvider = new firebase.auth.GoogleAuthProvider();
 _googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// ── Early login UI functions (must be defined before HTML renders) ──
+function switchLoginTab(tab) {
+  const emailPanel  = document.getElementById('emailLoginPanel');
+  const googlePanel = document.getElementById('googleLoginPanel');
+  const tabEmail    = document.getElementById('tabEmailBtn');
+  const tabGoogle   = document.getElementById('tabGoogleBtn');
+  if (!emailPanel) return;
+  if (tab === 'email') {
+    emailPanel.style.display  = 'block';
+    googlePanel.style.display = 'none';
+    tabEmail.style.background  = 'var(--accent)'; tabEmail.style.color  = 'white';
+    tabGoogle.style.background = 'transparent';   tabGoogle.style.color = 'var(--text-muted)';
+  } else {
+    emailPanel.style.display  = 'none';
+    googlePanel.style.display = 'block';
+    tabEmail.style.background  = 'transparent';   tabEmail.style.color  = 'var(--text-muted)';
+    tabGoogle.style.background = 'var(--accent)'; tabGoogle.style.color = 'white';
+  }
+}
+
+function toggleEmailMode() {
+  window._emailMode = window._emailMode === 'signup' ? 'signin' : 'signup';
+  const isSignup = window._emailMode === 'signup';
+  document.getElementById('signupNameField').style.display = isSignup ? 'block' : 'none';
+  document.getElementById('forgotWrap').style.display      = isSignup ? 'none'  : 'block';
+  document.getElementById('loginModeLabel').textContent    = isSignup ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟';
+  document.getElementById('loginModeBtn').textContent      = isSignup ? 'تسجيل الدخول' : 'إنشاء حساب';
+  document.getElementById('emailAuthBtn').textContent      = isSignup ? 'إنشاء الحساب' : 'دخول';
+}
+
+function togglePasswordVisibility() {
+  const input = document.getElementById('loginPassword');
+  const btn   = document.getElementById('eyeBtn');
+  if (!input) return;
+  if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
+  else                           { input.type = 'password'; btn.textContent = '👁'; }
+}
+
+window._emailMode = 'signin';
+</script>
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap');
@@ -1748,42 +1789,6 @@ let _currentUid  = null;
 let _unsubscribe = null;
 
 // ─── EMAIL AUTH FUNCTIONS ───
-let _emailMode = 'signin'; // 'signin' | 'signup'
-
-function switchLoginTab(tab) {
-  const emailPanel  = document.getElementById('emailLoginPanel');
-  const googlePanel = document.getElementById('googleLoginPanel');
-  const tabEmail    = document.getElementById('tabEmailBtn');
-  const tabGoogle   = document.getElementById('tabGoogleBtn');
-  if (tab === 'email') {
-    emailPanel.style.display  = 'block';
-    googlePanel.style.display = 'none';
-    tabEmail.style.background  = 'var(--accent)';  tabEmail.style.color  = 'white';
-    tabGoogle.style.background = 'transparent';     tabGoogle.style.color = 'var(--text-muted)';
-  } else {
-    emailPanel.style.display  = 'none';
-    googlePanel.style.display = 'block';
-    tabEmail.style.background  = 'transparent';    tabEmail.style.color  = 'var(--text-muted)';
-    tabGoogle.style.background = 'var(--accent)';  tabGoogle.style.color = 'white';
-  }
-}
-
-function toggleEmailMode() {
-  _emailMode = _emailMode === 'signin' ? 'signup' : 'signin';
-  const isSignup = _emailMode === 'signup';
-  document.getElementById('signupNameField').style.display = isSignup ? 'block' : 'none';
-  document.getElementById('forgotWrap').style.display      = isSignup ? 'none'  : 'block';
-  document.getElementById('loginModeLabel').textContent    = isSignup ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟';
-  document.getElementById('loginModeBtn').textContent      = isSignup ? 'تسجيل الدخول' : 'إنشاء حساب';
-  document.getElementById('emailAuthBtn').textContent      = isSignup ? 'إنشاء الحساب' : 'دخول';
-}
-
-function togglePasswordVisibility() {
-  const input = document.getElementById('loginPassword');
-  const btn   = document.getElementById('eyeBtn');
-  if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
-  else                           { input.type = 'password'; btn.textContent = '👁';  }
-}
 
 async function handleEmailAuth() {
   const ls       = document.getElementById('loginStatus');
@@ -1796,7 +1801,7 @@ async function handleEmailAuth() {
     ls.textContent = '⚠️ أدخل البريد الإلكتروني وكلمة المرور';
     ls.style.color = 'var(--unpaid)'; return;
   }
-  if (_emailMode === 'signup' && !name) {
+  if (window._emailMode === 'signup' && !name) {
     ls.textContent = '⚠️ أدخل اسمك الكامل';
     ls.style.color = 'var(--unpaid)'; return;
   }
@@ -1808,7 +1813,7 @@ async function handleEmailAuth() {
 
   try {
     let result;
-    if (_emailMode === 'signup') {
+    if (window._emailMode === 'signup') {
       result = await _fbAuth.createUserWithEmailAndPassword(email, password);
       if (name && result.user) await result.user.updateProfile({ displayName: name });
     } else {
