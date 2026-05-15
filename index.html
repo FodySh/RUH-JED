@@ -3742,7 +3742,7 @@ async function trackFlight(flightNum, date, ticketId) {
         <!-- Dep / Arr -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="font-size:9px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
+            <div style="font-size:15px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
             ${timeBlock(dep?.scheduled, dep?.estimated, dep?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
               ${dep?.terminal ? `<span style="font-size:12px;color:var(--go-color)">🏢 T${dep.terminal}</span>` : ''}
@@ -3752,7 +3752,7 @@ async function trackFlight(flightNum, date, ticketId) {
             </div>
           </div>
           <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="font-size:9px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
+            <div style="font-size:15px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
             ${timeBlock(arr?.scheduled, arr?.estimated, arr?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
               ${arr?.terminal ? `<span style="font-size:12px;color:var(--return-color)">🏢 T${arr.terminal}</span>` : ''}
