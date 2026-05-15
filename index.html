@@ -3785,9 +3785,101 @@ function renderWeatherCard(data, el) {
     </div>`;
 }
 
-const AVIATION_PROXY = 'https://aviation-proxy.shaheenhouse1.workers.dev';
+const AVIATION_KEY = 'c195cd1dd6811c535b188dc12d07f8aa';
 
 async function trackFlight(flightNum, date, ticketId) {
+  const statusEl = document.getElementById(`flight-status-${ticketId}`);
+  if (!statusEl) return;
+
+  statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
+
+  const url = `https://api.aviationstack.com/v1/flights?access_key=${AVIATION_KEY}&flight_iata=${encodeURIComponent(flightNum)}${date ? '&flight_date=' + date : ''}&limit=1`;
+  console.log('🛫 trackFlight URL:', url);
+
+  try {
+    const res  = await fetch(url);
+    const text = await res.text();
+    console.log('📡 Raw response:', text.slice(0, 200));
+
+    let data;
+    try { data = JSON.parse(text); } catch(e) {
+      statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ رد غير صالح من الخادم</div>`;
+      return;
+    }
+
+    if (data.error) {
+      statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ ${data.error.message || JSON.stringify(data.error)}</div>`;
+      return;
+    }
+
+    if (!data.data || !data.data.length) {
+      statusEl.innerHTML = `
+        <div style="font-size:11px;color:var(--text-muted);padding:6px 0">
+          ⚠️ لا توجد بيانات للرحلة <strong>${flightNum}</strong>
+          ${date ? `في ${date}` : ''}
+        </div>`;
+      return;
+    }
+
+    const f  = data.data[0];
+    const st = {
+      scheduled: { label:'في الموعد',    color:'#10b981', icon:'✅' },
+      active:    { label:'في الجو الآن', color:'#3b82f6', icon:'🛫' },
+      landed:    { label:'هبطت',          color:'#6366f1', icon:'🛬' },
+      cancelled: { label:'ملغاة',         color:'#f43f5e', icon:'❌' },
+      incident:  { label:'حادثة',         color:'#f59e0b', icon:'⚠️' },
+      diverted:  { label:'حُوِّلت',       color:'#f59e0b', icon:'🔄' },
+    }[f.flight_status] || { label: f.flight_status, color:'#64748b', icon:'✈' };
+
+    const dep = f.departure, arr = f.arrival;
+    const fmt = iso => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    };
+
+    const depTime  = fmt(dep?.actual || dep?.estimated || dep?.scheduled);
+    const arrTime  = fmt(arr?.actual || arr?.estimated || arr?.scheduled);
+    const depDelay = dep?.delay ? `<span style="color:#f59e0b"> ⏱ ${dep.delay}د</span>` : '';
+    const arrDelay = arr?.delay ? `<span style="color:#f59e0b"> ⏱ ${arr.delay}د</span>` : '';
+    const gate     = dep?.gate     ? ` · بوابة ${dep.gate}` : '';
+    const terminal = dep?.terminal ? ` · T${dep.terminal}` : '';
+
+    statusEl.innerHTML = `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+        padding:10px 12px;margin-top:8px;border-right:3px solid ${st.color};font-size:11px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:900;font-size:13px;font-family:monospace">${f.flight?.iata || flightNum}</span>
+          <span style="background:${st.color}22;color:${st.color};padding:3px 10px;border-radius:20px;font-weight:800">
+            ${st.icon} ${st.label}
+          </span>
+        </div>
+        <div style="color:var(--text-muted);margin-bottom:8px">${f.airline?.name || ''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--surface);border-radius:8px;padding:8px">
+            <div style="color:var(--text-muted);font-size:10px;margin-bottom:4px">🛫 إقلاع</div>
+            <div style="font-weight:900;font-size:14px">${depTime}${depDelay}</div>
+            <div style="font-size:10px;color:var(--text-muted)">${dep?.airport || ''}${terminal}${gate}</div>
+          </div>
+          <div style="background:var(--surface);border-radius:8px;padding:8px">
+            <div style="color:var(--text-muted);font-size:10px;margin-bottom:4px">🛬 وصول</div>
+            <div style="font-weight:900;font-size:14px">${arrTime}${arrDelay}</div>
+            <div style="font-size:10px;color:var(--text-muted)">${arr?.airport || ''}${arr?.terminal ? ` · T${arr.terminal}` : ''}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;color:var(--text-muted);font-size:10px">
+          <span>${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}</span>
+          <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
+            background:none;border:none;color:var(--accent);cursor:pointer;
+            font-size:11px;font-family:'Cairo',sans-serif;">🔄 تحديث</button>
+        </div>
+      </div>`;
+
+  } catch(err) {
+    console.error('trackFlight error:', err);
+    statusEl.innerHTML = `<div style="font-size:11px;color:var(--unpaid);padding:6px 0">❌ ${err.message}</div>`;
+  }
+}
   const statusEl = document.getElementById(`flight-status-${ticketId}`);
   if (!statusEl) return;
 
