@@ -1810,6 +1810,7 @@ function handleAuth() {
     _fbAuth.signOut().then(() => {
       _currentUid = null;
       localStorage.removeItem('ruh_jed_uid');
+      localStorage.removeItem('ruh_jed_auth'); // clear auth marker
       tickets = [];
       updateAuthUI(null);
       showLoginScreen(true);
@@ -1834,11 +1835,7 @@ function handleAuth() {
 }
 
 function initFirebase() {
-  // Handle redirect result first (iOS returns here after Google login)
   _fbAuth.getRedirectResult()
-    .then(result => {
-      // onAuthStateChanged will handle the user session
-    })
     .catch(err => {
       if (err.code !== 'auth/no-current-user') {
         console.warn('Redirect result error:', err.code);
@@ -1847,6 +1844,7 @@ function initFirebase() {
 
   _fbAuth.onAuthStateChanged(user => {
     if (user) {
+      // ── Successful login ──
       const lastUid = localStorage.getItem('ruh_jed_uid');
       if (lastUid && lastUid !== user.uid) {
         localStorage.removeItem(STORE_KEY);
@@ -1854,6 +1852,7 @@ function initFirebase() {
         tickets = [];
       }
       localStorage.setItem('ruh_jed_uid', user.uid);
+      localStorage.setItem('ruh_jed_auth', '1'); // mark as authenticated
       _currentUid = user.uid;
       updateAuthUI(user);
       showLoginScreen(false);
@@ -1863,7 +1862,13 @@ function initFirebase() {
       loadAccountsFromFirestore(user.uid);
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
     } else {
-      if (_currentUid) return; // تجاهل null المؤقت بعد Google popup
+      // ── Signed out or transient null ──
+      // If we have a valid auth marker, ignore this null — it's transient (Google popup quirk)
+      if (localStorage.getItem('ruh_jed_auth') === '1') {
+        console.log('Transient null ignored — user was authenticated');
+        return;
+      }
+      _currentUid = null;
       updateAuthUI(null);
       showLoginScreen(true);
     }
@@ -3639,15 +3644,15 @@ function renderWeatherCard(data, el) {
         <div style="display:flex;align-items:center;gap:5px">
           <span style="font-size:15px">${emoji}</span>
           <span style="font-weight:900;font-size:14px;color:${tempColor}">${temp}°C</span>
-          <span style="color:var(--text-muted);font-size:11px">${desc}</span>
+          <span style="color:var(--text-muted);font-size:9px">${desc}</span>
         </div>
         <span style="color:var(--text-muted);font-size:9px">${l?.name || city}</span>
       </div>
-      <div style="display:flex;gap:8px;font-size:13px;color:var(--go-color)">
-        <span>🌡 يُحسّ <strong style="color:var(--return-color)">${feels}°</strong></span>
-        <span>💧 <strong style="color:var(--return-color)">${humid}%</strong></span>
-        <span>💨 <strong style="color:var(--return-color)">${wind}km</strong></span>
-        ${uv ? `<span>🔆 UV <strong style="color:var(--return-color)">${uv}</strong></span>` : ''}
+      <div style="display:flex;gap:8px;font-size:9px;color:var(--text-muted)">
+        <span>🌡 يُحسّ <strong style="color:var(--text)">${feels}°</strong></span>
+        <span>💧 <strong style="color:var(--text)">${humid}%</strong></span>
+        <span>💨 <strong style="color:var(--text)">${wind}km</strong></span>
+        ${uv ? `<span>🔆 UV <strong style="color:var(--text)">${uv}</strong></span>` : ''}
       </div>
     </div>`;
 }
@@ -3659,7 +3664,7 @@ async function trackFlight(flightNum, date, ticketId) {
   const statusEl = document.getElementById(`flight-status-${ticketId}`);
   if (!statusEl) return;
 
-  statusEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
+  statusEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px 0">⏳ جاري جلب حالة الرحلة...</div>`;
 
   const url = `${AVIATION_PROXY}?flight=${encodeURIComponent(flightNum)}`;
   console.log('🛫 trackFlight:', url);
@@ -3712,15 +3717,25 @@ async function trackFlight(flightNum, date, ticketId) {
       return `${h12}:${String(m).padStart(2,'0')} ${period}`;
     };
 
-    const delayBadge = mins => mins
-      ? `<span style="background:#f59e0b22;color:#d97706;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700">⏱ تأخير ${mins}د</span>`
-      : `<span style="background:#10b98122;color:#10b981;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700">في الموعد</span>`;
+    // احسب التأخير الحقيقي من الفرق بين المجدول والفعلي (بالدقائق)
+    const calcDelay = (scheduled, actual) => {
+      if (!scheduled || !actual) return null;
+      const diff = Math.round((new Date(actual) - new Date(scheduled)) / 60000);
+      return diff > 0 ? diff : null;
+    };
+
+    const depDelay = dep?.delay || calcDelay(dep?.scheduled, dep?.actual || dep?.estimated);
+    const arrDelay = arr?.delay || calcDelay(arr?.scheduled, arr?.actual || arr?.estimated);
+
+    const delayBadge = mins => mins && mins > 0
+      ? `<span style="background:#f59e0b22;color:#d97706;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">⏱ تأخير ${mins}د</span>`
+      : `<span style="background:#10b98122;color:#10b981;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700">✓ في الموعد</span>`;
 
     const timeBlock = (sched, est, actual) => {
       const rows = [];
-      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
-      if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
-      if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:12px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
+      if (sched)  rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">مجدول</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(sched)}</span></div>`);
+      if (est && est !== sched) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span style="font-size:9px;color:var(--text-muted)">متوقع</span><span style="font-weight:800;font-size:11px">${fmtRiyadh(est)}</span></div>`);
+      if (actual) rows.push(`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="font-size:9px;color:var(--paid)">✅ فعلي</span><span style="font-weight:900;font-size:11px;color:var(--paid)">${fmtRiyadh(actual)}</span></div>`);
       return rows.join('');
     };
 
@@ -3742,29 +3757,30 @@ async function trackFlight(flightNum, date, ticketId) {
         <!-- Dep / Arr -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="font-size:15px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
+            <div style="font-size:9px;font-weight:800;color:var(--go-color);margin-bottom:6px;letter-spacing:0.5px">🛫 إقلاع</div>
             ${timeBlock(dep?.scheduled, dep?.estimated, dep?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-              ${dep?.terminal ? `<span style="font-size:12px;color:var(--go-color)">🏢 T${dep.terminal}</span>` : ''}
-              ${dep?.gate     ? `<span style="font-size:12px;color:var(--go-color)">🚪 ${dep.gate}</span>`      : ''}
-              ${dep?.iata     ? `<span style="font-size:12px;color:var(--go-color)">📍 ${dep.iata}</span>`      : ''}
-              <div style="margin-top:3px">${delayBadge(dep?.delay)}</div>
+              ${dep?.terminal ? `<span style="font-size:9px;color:var(--text-muted)">🏢 T${dep.terminal}</span>` : ''}
+              ${dep?.gate     ? `<span style="font-size:9px;color:var(--accent);font-weight:700">🚪 بوابة ${dep.gate}</span>` : ''}
+              ${dep?.iata     ? `<span style="font-size:9px;color:var(--text-muted)">📍 ${dep.iata}</span>`      : ''}
+              <div style="margin-top:3px">${delayBadge(depDelay)}</div>
             </div>
           </div>
           <div style="background:var(--surface);border-radius:8px;padding:8px">
-            <div style="font-size:15px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
+            <div style="font-size:9px;font-weight:800;color:var(--return-color);margin-bottom:6px;letter-spacing:0.5px">🛬 وصول</div>
             ${timeBlock(arr?.scheduled, arr?.estimated, arr?.actual)}
             <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-              ${arr?.terminal ? `<span style="font-size:12px;color:var(--return-color)">🏢 T${arr.terminal}</span>` : ''}
-              ${arr?.baggage  ? `<span style="font-size:12px;color:var(--return-color)">🧳 ${arr.baggage}</span>`   : ''}
-              ${arr?.iata     ? `<span style="font-size:12px;color:var(--return-color)">📍 ${arr.iata}</span>`      : ''}
-              <div style="margin-top:3px">${delayBadge(arr?.delay)}</div>
+              ${arr?.terminal ? `<span style="font-size:9px;color:var(--text-muted)">🏢 T${arr.terminal}</span>` : ''}
+              ${arr?.gate     ? `<span style="font-size:9px;color:var(--accent);font-weight:700">🚪 بوابة ${arr.gate}</span>` : ''}
+              ${arr?.baggage  ? `<span style="font-size:9px;color:var(--text-muted)">🧳 ${arr.baggage}</span>`   : ''}
+              ${arr?.iata     ? `<span style="font-size:9px;color:var(--text-muted)">📍 ${arr.iata}</span>`      : ''}
+              <div style="margin-top:3px">${delayBadge(arrDelay)}</div>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:11px;border-top:1px solid var(--border);padding-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-muted);font-size:9px;border-top:1px solid var(--border);padding-top:6px">
           <span>آخر تحديث: ${new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}</span>
           <button onclick="trackFlight('${flightNum}','${date}',${ticketId})" style="
             background:none;border:none;color:var(--accent);cursor:pointer;
