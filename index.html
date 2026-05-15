@@ -2698,10 +2698,11 @@ function renderUpcoming() {
   }).join('');
   document.getElementById('upcomingList').innerHTML = html;
 
-  // Auto-fetch weather for upcoming flights
+  // Auto-fetch weather for upcoming flights — departure + arrival cities
   upcoming.forEach(t => {
-    const city = t.ticketType === 'go' ? 'Jeddah' : 'Riyadh';
-    fetchWeather(city, t.id);
+    const depCity = t.ticketType === 'go' ? 'Riyadh' : 'Jeddah';
+    const arrCity = t.ticketType === 'go' ? 'Jeddah' : 'Riyadh';
+    fetchWeather(depCity, arrCity, t.id);
   });
 }
 
@@ -3620,33 +3621,75 @@ function showMobileExportPanel(dataUri, filename) {
 const WEATHER_KEY = 'd417a56b80d952490926cdf53eaf096f';
 const WEATHER_CACHE = {}; // cache by city+date
 
-async function fetchWeather(city, ticketId) {
-  const cacheKey = city;
+async function fetchWeather(depCity, arrCity, ticketId) {
   const el = document.getElementById(`weather-${ticketId}`);
   if (!el) return;
 
-  // Return cached result
-  if (WEATHER_CACHE[cacheKey]) {
-    renderWeatherCard(WEATHER_CACHE[cacheKey], el);
-    return;
-  }
-
   el.innerHTML = `<div style="font-size:10px;color:var(--text-muted);padding:4px 0">⏳ جاري جلب الطقس...</div>`;
 
-  try {
+  const fetchCity = async city => {
+    if (WEATHER_CACHE[city]) return WEATHER_CACHE[city];
     const res  = await fetch(`https://api.weatherstack.com/current?access_key=${WEATHER_KEY}&query=${encodeURIComponent(city)}&units=m`);
     const data = await res.json();
+    if (!data.error) WEATHER_CACHE[city] = data;
+    return data;
+  };
 
-    if (data.error) {
-      el.innerHTML = `<div style="font-size:10px;color:var(--text-muted)">⚠️ ${data.error.info || 'تعذّر جلب الطقس'}</div>`;
-      return;
-    }
-
-    WEATHER_CACHE[cacheKey] = data;
-    renderWeatherCard(data, el);
+  try {
+    const [depData, arrData] = await Promise.all([fetchCity(depCity), fetchCity(arrCity)]);
+    el.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+      ${miniWeatherCard(depData, depCity, 'إقلاع', 'var(--go-color)')}
+      ${miniWeatherCard(arrData, arrCity, 'وصول', 'var(--return-color)')}
+    </div>`;
   } catch(err) {
     el.innerHTML = `<div style="font-size:10px;color:var(--text-muted)">⚠️ خطأ في الاتصال</div>`;
   }
+}
+
+function miniWeatherCard(data, city, label, labelColor) {
+  if (!data || data.error || !data.current) {
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:10px;color:var(--text-muted)">⚠️ ${label}</div>`;
+  }
+  const c = data.current;
+  const desc = c.weather_descriptions?.[0] || '';
+  const temp = c.temperature;
+  const feels = c.feelslike;
+  const humid = c.humidity;
+  const wind  = c.wind_speed;
+  const uv    = c.uv_index;
+  const name  = data.location?.name || city;
+
+  const descLower = desc.toLowerCase();
+  let emoji = '🌤';
+  if (descLower.includes('sunny') || descLower.includes('clear'))   emoji = '☀️';
+  else if (descLower.includes('partly'))  emoji = '⛅';
+  else if (descLower.includes('cloud'))   emoji = '☁️';
+  else if (descLower.includes('rain'))    emoji = '🌧';
+  else if (descLower.includes('storm'))   emoji = '⛈';
+  else if (descLower.includes('snow'))    emoji = '❄️';
+  else if (descLower.includes('fog') || descLower.includes('mist')) emoji = '🌫';
+  else if (descLower.includes('sand') || descLower.includes('dust')) emoji = '🌪';
+
+  const tempColor = temp >= 40 ? '#f43f5e' : temp >= 30 ? '#f59e0b' : temp >= 20 ? '#10b981' : '#3b82f6';
+
+  return `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:8px 9px;border-right:3px solid ${labelColor};">
+      <div style="font-size:10px;font-weight:800;color:${labelColor};margin-bottom:5px">
+        ${label === 'إقلاع' ? '🛫' : '🛬'} ${label} — ${name}
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+        <span style="font-size:16px">${emoji}</span>
+        <span style="font-weight:900;font-size:15px;color:${tempColor}">${temp}°C</span>
+        <span style="font-size:10px;color:var(--text-muted)">${desc}</span>
+      </div>
+      <div style="display:flex;gap:6px;font-size:10px;color:var(--text-muted);flex-wrap:wrap">
+        <span>🌡 <strong style="color:var(--text)">${feels}°</strong></span>
+        <span>💧 <strong style="color:var(--text)">${humid}%</strong></span>
+        <span>💨 <strong style="color:var(--text)">${wind}km</strong></span>
+        ${uv ? `<span>🔆 <strong style="color:var(--text)">${uv}</strong></span>` : ''}
+      </div>
+    </div>`;
 }
 
 function renderWeatherCard(data, el) {
