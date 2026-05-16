@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>رحلاتي RUH ↔ JED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #0a0e1a;
+    --navy2:  #0f1f3d;
+    --blue:   #3b82f6;
+    --sky:    #0ea5e9;
+    --amber:  #f59e0b;
+    --cyan:   #06b6d4;
+    --green:  #10b981;
+    --red:    #f43f5e;
+    --muted:  #6b7fa0;
+    --border: #1e2d45;
+    --text:   #e8edf5;
+    --surface:#111827;
+    --s2:     #1a2235;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    direction: rtl;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 40px;
+    background: rgba(10,14,26,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-logo {
+    font-size: 18px; font-weight: 900;
+    background: linear-gradient(90deg, var(--blue), var(--sky));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .nav-links {
+    display: flex; gap: 32px; align-items: center;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  /* login button on far LEFT (in RTL = far right visually) */
+  .nav-login {
+    margin-right: auto;
+    margin-left: 0;
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    color: white; border: none; border-radius: 10px;
+    padding: 10px 22px; font-size: 14px; font-weight: 700;
+    font-family: 'Cairo', sans-serif; cursor: pointer;
+    text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    transition: opacity .2s, transform .15s;
+    white-space: nowrap;
+  }
+  .nav-login:hover { opacity: .9; transform: translateY(-1px); }
+
+  @media (max-width: 640px) {
+    nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 120px 24px 80px;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,130,246,0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(6,182,212,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(245,158,11,0.06) 0%, transparent 60%);
+  }
+  /* animated flight path */
+  .hero-plane {
+    position: absolute; top: 30%; left: -60px;
+    font-size: 28px;
+    animation: flyAcross 12s linear infinite;
+    z-index: 1; opacity: 0.5;
+  }
+  @keyframes flyAcross {
+    0%   { left: -60px; transform: rotate(-5deg); opacity: 0; }
+    5%   { opacity: 0.5; }
+    95%  { opacity: 0.5; }
+    100% { left: calc(100% + 60px); transform: rotate(-5deg); opacity: 0; }
+  }
+  .hero-route {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; font-weight: 700; color: var(--muted);
+    margin-bottom: 24px;
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 40px; padding: 8px 20px;
+    animation: fadeUp .8s ease both;
+  }
+  .route-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--blue); flex-shrink: 0;
+  }
+  .route-line {
+    flex: 1; height: 1px; background: linear-gradient(90deg, var(--blue), var(--cyan));
+    max-width: 80px;
+  }
+  .hero h1 {
+    position: relative; z-index: 1;
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 900; line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+    animation: fadeUp .9s .1s ease both;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--blue), var(--sky), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    position: relative; z-index: 1;
+    font-size: clamp(16px, 2vw, 20px); color: var(--muted);
+    max-width: 560px; line-height: 1.7;
+    margin-bottom: 40px;
+    animation: fadeUp 1s .2s ease both;
+  }
+  .hero-ctas {
+    position: relative; z-index: 1;
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    animation: fadeUp 1s .3s ease both;
+  }
+  .cta-primary {
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    color: white; border: none; border-radius: 12px;
+    padding: 16px 36px; font-size: 16px; font-weight: 800;
+    font-family: 'Cairo', sans-serif; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 32px rgba(59,130,246,0.35);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(59,130,246,0.45); }
+  .cta-secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--text); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 36px;
+    font-size: 16px; font-weight: 700;
+    font-family: 'Cairo', sans-serif; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    transition: border-color .2s, background .2s;
+  }
+  .cta-secondary:hover { border-color: var(--blue); background: rgba(59,130,246,0.08); }
+
+  /* hero stats */
+  .hero-stats {
+    position: relative; z-index: 1;
+    display: flex; gap: 40px; margin-top: 60px; flex-wrap: wrap; justify-content: center;
+    animation: fadeUp 1s .4s ease both;
+  }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 32px; font-weight: 900; color: var(--blue); }
+  .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION SHARED ── */
+  section { padding: 100px 24px; }
+  .section-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 20px; padding: 6px 16px;
+    font-size: 12px; font-weight: 700; color: var(--blue);
+    margin-bottom: 20px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .section-title {
+    font-size: clamp(26px, 4vw, 44px);
+    font-weight: 900; line-height: 1.2;
+    letter-spacing: -0.5px; margin-bottom: 14px;
+  }
+  .section-sub {
+    font-size: 16px; color: var(--muted); line-height: 1.7;
+    max-width: 520px; margin: 0 auto 60px;
+  }
+  .text-center { text-align: center; }
+  .max-w { max-width: 1100px; margin: 0 auto; }
+
+  /* ── FEATURES ── */
+  #features { background: var(--surface); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--s2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px;
+    transition: transform .2s, border-color .2s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; top: 0; right: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--sky));
+    opacity: 0; transition: opacity .2s;
+  }
+  .feature-card:hover { transform: translateY(-4px); border-color: rgba(59,130,246,0.3); }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-icon { font-size: 32px; margin-bottom: 16px; }
+  .feature-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+  .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  /* ── HOW IT WORKS ── */
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0; position: relative;
+  }
+  .step {
+    text-align: center; padding: 32px 24px; position: relative;
+  }
+  .step:not(:last-child)::after {
+    content: '←';
+    position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
+    color: var(--border); font-size: 20px;
+  }
+  .step-num {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; margin: 0 auto 16px;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+  }
+  .step-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+  .step-desc  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── BENEFITS ── */
+  #benefits { background: var(--navy); }
+  .benefits-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 640px) { .benefits-grid { grid-template-columns: 1fr; } }
+  .benefit-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--s2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    transition: border-color .2s;
+  }
+  .benefit-item:hover { border-color: rgba(59,130,246,0.3); }
+  .benefit-icon {
+    width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .benefit-text h4 { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .benefit-text p  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* ── SOCIAL PROOF ── */
+  #proof { background: var(--surface); }
+  .proof-banner {
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(6,182,212,0.06));
+    border: 1px solid rgba(59,130,246,0.2); border-radius: 20px;
+    padding: 48px; text-align: center; margin-bottom: 48px;
+  }
+  .proof-num {
+    font-size: 72px; font-weight: 900;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .proof-label { font-size: 18px; color: var(--muted); margin-top: 8px; }
+  .proof-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .proof-card {
+    background: var(--s2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; text-align: center;
+  }
+  .proof-card-num { font-size: 36px; font-weight: 900; margin-bottom: 4px; }
+  .proof-card-lbl { font-size: 12px; color: var(--muted); }
+
+  /* ── FAQ ── */
+  #faq { background: var(--navy); }
+  .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  .faq-item {
+    background: var(--s2); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .faq-q {
+    padding: 18px 22px; font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    user-select: none;
+    transition: color .2s;
+  }
+  .faq-q:hover { color: var(--blue); }
+  .faq-q .arrow { transition: transform .3s; font-size: 12px; color: var(--muted); }
+  .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+  .faq-a {
+    max-height: 0; overflow: hidden;
+    transition: max-height .35s ease, padding .35s;
+    font-size: 13px; color: var(--muted); line-height: 1.8;
+    padding: 0 22px;
+  }
+  .faq-item.open .faq-a { max-height: 300px; padding: 0 22px 18px; }
+
+  /* ── CTA SECTION ── */
+  #cta { background: var(--surface); }
+  .cta-box {
+    background: linear-gradient(135deg, #0f1f3d, #1a3a6b);
+    border: 1px solid rgba(59,130,246,0.2); border-radius: 24px;
+    padding: 64px 40px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .cta-box::before {
+    content: '';
+    position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-box h2 {
+    font-size: clamp(24px, 4vw, 40px); font-weight: 900;
+    margin-bottom: 14px; position: relative;
+  }
+  .cta-box p { font-size: 16px; color: var(--muted); margin-bottom: 36px; position: relative; }
+  .cta-pair { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+  .cta-google {
+    display: flex; align-items: center; gap: 10px;
+    background: white; color: #1a1a1a;
+    border: none; border-radius: 12px; padding: 14px 28px;
+    font-size: 15px; font-weight: 800; font-family: 'Cairo', sans-serif;
+    cursor: pointer; text-decoration: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: transform .15s;
+  }
+  .cta-google:hover { transform: translateY(-2px); }
+  .cta-explore {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.08); color: var(--text);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 14px 28px; font-size: 15px; font-weight: 700;
+    font-family: 'Cairo', sans-serif; cursor: pointer; text-decoration: none;
+    transition: border-color .2s, background .2s;
+  }
+  .cta-explore:hover { border-color: var(--blue); background: rgba(59,130,246,0.1); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--navy); border-top: 1px solid var(--border);
+    padding: 32px 40px; text-align: center;
+    font-size: 13px; color: var(--muted);
+  }
+  footer a { color: var(--blue); text-decoration: none; }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">✈ رحلاتي RUH ↔ JED</div>
+  <ul class="nav-links">
+    <li><a href="#features">المميزات</a></li>
+    <li><a href="#benefits">الفوائد</a></li>
+    <li><a href="#faq">الأسئلة</a></li>
+  </ul>
+  <!-- login on far left (start of flex row in RTL = visual right, but margin-right:auto pushes it left) -->
+  <a href="https://fodysh.github.io/RUH-JED/" class="nav-login">
+    <img src="https://www.google.com/favicon.ico" width="16" height="16">
+    دخول بـ Google
+  </a>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-plane">✈</div>
+
+  <div class="hero-route">
+    <div class="route-dot"></div>
+    <span>الرياض RUH</span>
+    <div class="route-line"></div>
+    <span>✈</span>
+    <div class="route-line"></div>
+    <span>جدة JED</span>
+    <div class="route-dot"></div>
+  </div>
+
+  <h1>تتبّع رحلاتك<br><span>بذكاء حقيقي</span></h1>
+
+  <p class="hero-sub">
+    تطبيق شخصي لإدارة رحلاتك بين الرياض وجدة —
+    تتبّع التذاكر، المصروفات، حالة الرحلات، والطقس
+    كل شيء في مكان واحد ومزامن على جميع أجهزتك.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="https://fodysh.github.io/RUH-JED/" class="cta-primary">
+      🚀 ابدأ الآن مجاناً
+    </a>
+    <a href="#features" class="cta-secondary">
+      اكتشف المميزات ↓
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">١٠٠٪</div>
+      <div class="stat-lbl">خصوصية — بياناتك ملكك</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">٠ ر</div>
+      <div class="stat-lbl">مجاني تماماً</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">٣</div>
+      <div class="stat-lbl">خطوط جوية مدعومة</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">⚡</div>
+      <div class="stat-lbl">مزامنة فورية</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section id="features">
+  <div class="max-w">
+    <div class="text-center reveal">
+      <div class="section-tag">✨ المميزات</div>
+      <h2 class="section-title">كل ما تحتاجه في مكان واحد</h2>
+      <p class="section-sub">صُمِّم خصيصاً لخط الرياض ↔ جدة مع كل التفاصيل التي تهمّك</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">لوحة تحليلية شاملة</div>
+        <div class="feature-desc">نظرة عامة على إجمالي المصروفات، الأيام في جدة، نسبة السداد، وأكثر الخطوط استخداماً — كلها في صفحة واحدة.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">✈</div>
+        <div class="feature-title">تتبّع الرحلات مباشرة</div>
+        <div class="feature-desc">ادخل رقم الرحلة واعرف حالتها لحظة بلحظة — وقت الإقلاع، البوابة، التأخير، والوصول الفعلي.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🌤</div>
+        <div class="feature-title">طقس مدينة الإقلاع والوصول</div>
+        <div class="feature-desc">يعرض تلقائياً درجة الحرارة والرطوبة والرياح لكل من مدينة الإقلاع والوصول قبل كل رحلة.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💰</div>
+        <div class="feature-title">إدارة مالية دقيقة</div>
+        <div class="feature-desc">تتبّع سعر كل تذكرة، المواصلات، السيارة المستأجرة، وحالة السداد — مع ملخص حسابات كامل.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🔔</div>
+        <div class="feature-title">تذكيرات إيميل تلقائية</div>
+        <div class="feature-desc">يرسل إيميل قبل 1 و3 و5 و7 أيام من كل رحلة مع كل تفاصيلها تلقائياً دون أي تدخل منك.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">استيراد ذكي بالـ AI</div>
+        <div class="feature-desc">ارفع صورة تأكيد الحجز وسيستخرج Claude بيانات الرحلة تلقائياً ويملأ النموذج بضغطة واحدة.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">☁️</div>
+        <div class="feature-title">مزامنة عبر الأجهزة</div>
+        <div class="feature-desc">بياناتك محفوظة في Firebase ومزامنة فوراً بين جوالك وكمبيوترك — دائماً محدّثة.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📅</div>
+        <div class="feature-title">Google Calendar</div>
+        <div class="feature-desc">أضف أي رحلة لتقويم Google بضغطة واحدة مع التاريخ، الوقت، والمطار تلقائياً.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section style="background:var(--navy)">
+  <div class="max-w">
+    <div class="text-center reveal">
+      <div class="section-tag">🗺 كيف يعمل</div>
+      <h2 class="section-title">ثلاث خطوات وانتهيت</h2>
+      <p class="section-sub">لا تعقيد، لا إعداد معقد — ابدأ خلال ثوانٍ</p>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-title">سجّل دخولك</div>
+        <div class="step-desc">بحساب Google فقط — لا كلمات مرور، لا تعقيد</div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-title">أضف تذاكرك</div>
+        <div class="step-desc">يدوياً أو بصورة الحجز — الـ AI يستخرج البيانات تلقائياً</div>
+      </div>
+      <div class="step">
+        <div class="step-num">٣</div>
+        <div class="step-title">تابع كل شيء</div>
+        <div class="step-desc">حالة الرحلة، الطقس، المصروفات، والتذكيرات — كلها تلقائية</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BENEFITS ── -->
+<section id="benefits">
+  <div class="max-w">
+    <div class="text-center reveal">
+      <div class="section-tag">💡 لماذا رحلاتي</div>
+      <h2 class="section-title">مصمّم لمن يسافر كثيراً</h2>
+      <p class="section-sub">إذا كنت تتردد بين الرياض وجدة بانتظام، هذا التطبيق صُنع لك</p>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit-item reveal">
+        <div class="benefit-icon" style="background:rgba(59,130,246,0.1)">📈</div>
+        <div class="benefit-text">
+          <h4>اعرف كم صرفت فعلاً</h4>
+          <p>ليس فقط سعر التذكرة — المواصلات، السيارة المستأجرة، وكل ريال يُحسب بدقة.</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon" style="background:rgba(16,185,129,0.1)">🔐</div>
+        <div class="benefit-text">
+          <h4>بياناتك خاصة تماماً</h4>
+          <p>مربوطة بحسابك فقط — لا أحد يرى بياناتك غيرك، ومحمية بـ Firebase Security Rules.</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon" style="background:rgba(245,158,11,0.1)">⚡</div>
+        <div class="benefit-text">
+          <h4>لا تنسى رحلة مرة ثانية</h4>
+          <p>تذكيرات تلقائية بالإيميل قبل أيام من كل رحلة — مع كل تفاصيل الحجز والبوابة.</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon" style="background:rgba(6,182,212,0.1)">📱</div>
+        <div class="benefit-text">
+          <h4>يعمل على كل الأجهزة</h4>
+          <p>iPhone، Android، ويب — نفس البيانات، نفس التجربة، في أي مكان.</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon" style="background:rgba(244,63,94,0.1)">💳</div>
+        <div class="benefit-text">
+          <h4>تتبّع حسابات الدفع</h4>
+          <p>سجّل من أي حساب دفعت وإلى أي حساب يُسترد — لا تشتبك الأرقام بعد اليوم.</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon" style="background:rgba(168,85,247,0.1)">🏙</div>
+        <div class="benefit-text">
+          <h4>احسب أيامك في جدة</h4>
+          <p>يحسب تلقائياً إجمالي الأيام التي قضيتها في جدة خلال كل رحلاتك.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF ── -->
+<section id="proof">
+  <div class="max-w">
+    <div class="text-center reveal">
+      <div class="section-tag">📊 الأرقام</div>
+      <h2 class="section-title">ما يحدث داخل التطبيق</h2>
+    </div>
+    <div class="proof-banner reveal">
+      <div class="proof-num">∞</div>
+      <div class="proof-label">رحلة يمكنك تتبّعها — بدون حدود</div>
+    </div>
+    <div class="proof-grid">
+      <div class="proof-card reveal">
+        <div class="proof-card-num" style="color:var(--blue)">٤</div>
+        <div class="proof-card-lbl">خطوط جوية مدعومة<br>سعودية · ناس · اديل · الرياض</div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-card-num" style="color:var(--amber)">٧</div>
+        <div class="proof-card-lbl">تبويبات متكاملة<br>نظرة عامة · قادمة · رحلات · مالية</div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-card-num" style="color:var(--green)">٢٤/٧</div>
+        <div class="proof-card-lbl">تتبّع مباشر للرحلات<br>عبر AviationStack</div>
+      </div>
+      <div class="proof-card reveal">
+        <div class="proof-card-num" style="color:var(--cyan)">٠</div>
+        <div class="proof-card-lbl">تكلفة الاشتراك<br>مجاني تماماً الآن</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section id="faq">
+  <div class="max-w">
+    <div class="text-center reveal">
+      <div class="section-tag">❓ الأسئلة الشائعة</div>
+      <h2 class="section-title">أسئلة وأجوبة</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          هل التطبيق مجاني؟
+          <span class="arrow">▼</span>
+        </div>
+        <div class="faq-a">نعم، التطبيق مجاني تماماً بدون أي رسوم أو اشتراك. جميع المميزات متاحة مجاناً.</div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          هل بياناتي آمنة؟
+          <span class="arrow">▼</span>
+        </div>
+        <div class="faq-a">بياناتك محفوظة في Firebase Firestore ومربوطة بحسابك فقط. لا يمكن لأي مستخدم آخر الوصول إليها. نستخدم Firebase Security Rules للحماية.</div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          هل يعمل على الجوال؟
+          <span class="arrow">▼</span>
+        </div>
+        <div class="faq-a">نعم، يعمل على iPhone وAndroid وأي متصفح. يمكنك إضافته للشاشة الرئيسية ليعمل كتطبيق عادي.</div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          كيف تعمل التذكيرات التلقائية؟
+          <span class="arrow">▼</span>
+        </div>
+        <div class="faq-a">بعد تفعيل التذكيرات من تطبيق، يرسل النظام إيميل تلقائي على حسابك في Google قبل 1 و3 و5 و7 أيام من كل رحلة قادمة مع كل تفاصيل الحجز.</div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          هل يدعم خطوطاً غير سعودية وناس واديل؟
+          <span class="arrow">▼</span>
+        </div>
+        <div class="faq-a">التطبيق مصمّم أساساً لخط الرياض ↔ جدة ويدعم السعودية، ناس، اديل، وطيران الرياض. يمكنك إضافة خطوط أخرى يدوياً.</div>
+      </div>
+      <div class="faq-item reveal">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          هل يمكنني تصدير بياناتي؟
+          <span class="arrow">▼</span>
+        </div>
+        <div class="faq-a">نعم، يمكنك تصدير جميع بياناتك كـ JSON أو CSV أو Excel أو PDF في أي وقت من تبويب "كل التذاكر".</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section id="cta">
+  <div class="max-w">
+    <div class="cta-box reveal">
+      <h2>ابدأ تتبّع رحلاتك اليوم</h2>
+      <p>انضم وابدأ الآن — مجاني، بدون إعلانات، بياناتك ملكك</p>
+      <div class="cta-pair">
+        <a href="https://fodysh.github.io/RUH-JED/" class="cta-google">
+          <img src="https://www.google.com/favicon.ico" width="18" height="18">
+          ابدأ بحساب Google
+        </a>
+        <a href="https://fodysh.github.io/RUH-JED/" class="cta-explore">
+          👀 استكشف التطبيق أولاً
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div style="margin-bottom:8px">
+    <strong style="color:var(--text)">✈ رحلاتي RUH ↔ JED</strong>
+  </div>
+  <div>
+    تواصل مع المطوّر:
+    <a href="https://x.com/fahad_shaheen" target="_blank">@fahad_shaheen</a>
+  </div>
+  <div style="margin-top:8px;font-size:11px">مجاني · خاص · بدون إعلانات</div>
+</footer>
+
+<script>
+  // FAQ toggle
+  function toggleFaq(el) {
+    const item = el.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    el.style.transitionDelay = (i % 4) * 80 + 'ms';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
