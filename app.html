@@ -1036,50 +1036,293 @@ function handleAuth() {
   position:fixed;inset:0;z-index:9999;
   background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  font-family:'Cairo',sans-serif;direction:rtl;padding:24px;
+  font-family:'Cairo',sans-serif;direction:rtl;
+  padding:20px;
+  overflow-y:auto;
 ">
-  <div style="font-size:48px;margin-bottom:16px">✈</div>
-  <div style="font-size:22px;font-weight:900;background:linear-gradient(90deg,#3b82f6,#0ea5e9);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px">
+
+<!-- Theme toggle -->
+<button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
+
+<!-- Logo -->
+<div style="text-align:center;margin-bottom:28px">
+  <div style="font-size:40px;margin-bottom:8px">✈</div>
+  <div style="font-size:20px;font-weight:900;background:linear-gradient(90deg,#3b82f6,#0ea5e9);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">
     رحلاتي RUH ↔ JED
   </div>
-  <div style="font-size:13px;color:var(--text-muted);margin-bottom:40px;text-align:center;max-width:260px;line-height:1.7">
-    سجّل دخولك لمزامنة بياناتك عبر جميع الأجهزة
-  </div>
-  <button onclick="handleAuth()" style="
-    display:flex;align-items:center;gap:12px;
-    background:white;color:#1a1a1a;
-    border:none;border-radius:12px;
-    padding:14px 28px;font-size:15px;font-weight:800;
-    font-family:'Cairo',sans-serif;cursor:pointer;
-    box-shadow:0 4px 20px rgba(0,0,0,0.3);
-    transition:transform 0.15s;
-  " onmouseover="this.style.transform='translateY(-2px)'"
-     onmouseout="this.style.transform=''">
-    <img src="https://www.google.com/favicon.ico" style="width:20px;height:20px">
-    تسجيل الدخول بـ Google
-  </button>
-  <div style="font-size:11px;color:var(--text-muted);margin-top:12px;text-align:center;max-width:240px;line-height:1.6">
-    على iPhone: سيتم توجيهك لـ Google ثم العودة تلقائياً ✅
-  </div>
-  <div id="loginStatus" style="margin-top:20px;font-size:12px;color:var(--text-muted)"></div>
+  <div style="font-size:12px;color:var(--text-muted)">سجّل دخولك لمزامنة بياناتك عبر جميع الأجهزة</div>
+</div>
 
-  <div style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap">
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">للتواصل</div>
-    <a href="https://x.com/fahad_shaheen" target="_blank" style="
-      display:inline-flex;align-items:center;gap:7px;
-      background:var(--surface2);border:1px solid var(--border);
-      border-radius:20px;padding:7px 16px;text-decoration:none;
-      color:var(--text);font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;
-      transition:border-color 0.2s;
-    " onmouseover="this.style.borderColor='#fff'" onmouseout="this.style.borderColor='var(--border)'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-      </svg>
-      @fahad_shaheen
-    </a>
+<!-- Auth Card -->
+<div id="authCard" style="
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:28px 24px;
+  width:100%;max-width:380px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3);
+">
+
+  <!-- ═══ SIGN IN VIEW ═══ -->
+  <div id="viewSignIn">
+    <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px">تسجيل الدخول</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px">أدخل بياناتك للمتابعة</div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">البريد الإلكتروني</label>
+      <input type="email" id="siEmail" placeholder="example@domain.com" style="
+        width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+        color:var(--text);padding:11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+        direction:ltr;text-align:left;outline:none;transition:border-color 0.2s;
+      " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter')document.getElementById('siPassword').focus()">
+    </div>
+
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label style="font-size:12px;font-weight:700;color:var(--text-muted)">كلمة المرور</label>
+        <button onclick="switchView('viewForgot')" style="
+          background:none;border:none;color:#3b82f6;font-size:12px;font-weight:700;
+          font-family:'Cairo',sans-serif;cursor:pointer;padding:0;
+        ">نسيت كلمة المرور؟</button>
+      </div>
+      <div style="position:relative">
+        <input type="password" id="siPassword" placeholder="••••••••" style="
+          width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+          color:var(--text);padding:11px 44px 11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+          outline:none;transition:border-color 0.2s;
+        " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')doEmailSignIn()">
+        <button onclick="togglePwd('siPassword',this)" style="
+          position:absolute;left:12px;top:50%;transform:translateY(-50%);
+          background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:0;
+        ">👁</button>
+      </div>
+    </div>
+
+    <div id="siError" style="color:#f43f5e;font-size:11px;min-height:16px;margin-bottom:8px;text-align:center"></div>
+
+    <button onclick="doEmailSignIn()" id="siBtn" style="
+      width:100%;background:linear-gradient(135deg,#3b82f6,#0ea5e9);
+      border:none;border-radius:10px;color:white;
+      font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+      padding:12px;cursor:pointer;margin-bottom:12px;
+      transition:opacity 0.2s;
+    " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+      متابعة
+    </button>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:11px;color:var(--text-muted)">أو</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <button onclick="handleAuth()" style="
+      width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+      background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+      padding:11px;cursor:pointer;transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">
+      <img src="https://www.google.com/favicon.ico" style="width:18px;height:18px">
+      تسجيل الدخول بـ Google
+    </button>
+
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted)">
+      ليس لديك حساب؟
+      <button onclick="switchView('viewSignUp')" style="
+        background:none;border:none;color:#3b82f6;font-size:12px;font-weight:800;
+        font-family:'Cairo',sans-serif;cursor:pointer;padding:0;margin-right:4px;
+      ">إنشاء حساب</button>
+    </div>
+
+    <div id="loginStatus" style="margin-top:12px;font-size:11px;color:var(--text-muted);text-align:center"></div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.6">
+      على iPhone: سيتم توجيهك لـ Google ثم العودة تلقائياً ✅
+    </div>
   </div>
-  <button class="theme-toggle" onclick="toggleTheme()" style="position:absolute;top:20px;left:20px;border:1px solid var(--border)">🌙</button>
+
+  <!-- ═══ SIGN UP VIEW ═══ -->
+  <div id="viewSignUp" style="display:none">
+    <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px">إنشاء حساب</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px">ابدأ بتتبع رحلاتك الآن</div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">
+        الاسم الكامل <span style="color:#f43f5e">*</span>
+      </label>
+      <input type="text" id="suName" placeholder="مثال: فهد الشاهين" style="
+        width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+        color:var(--text);padding:11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+        direction:rtl;outline:none;transition:border-color 0.2s;
+      " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter')document.getElementById('suEmail').focus()">
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">
+        البريد الإلكتروني <span style="color:#f43f5e">*</span>
+      </label>
+      <input type="email" id="suEmail" placeholder="example@domain.com" style="
+        width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+        color:var(--text);padding:11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+        direction:ltr;text-align:left;outline:none;transition:border-color 0.2s;
+      " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter')document.getElementById('suPassword').focus()">
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">
+        كلمة المرور <span style="color:#f43f5e">*</span>
+      </label>
+      <div style="position:relative">
+        <input type="password" id="suPassword" placeholder="••••••••" style="
+          width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+          color:var(--text);padding:11px 44px 11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+          outline:none;transition:border-color 0.2s;
+        " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')document.getElementById('suConfirm').focus()">
+        <button onclick="togglePwd('suPassword',this)" style="
+          position:absolute;left:12px;top:50%;transform:translateY(-50%);
+          background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:0;
+        ">👁</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:4px">8 أحرف على الأقل</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">
+        تأكيد كلمة المرور <span style="color:#f43f5e">*</span>
+      </label>
+      <div style="position:relative">
+        <input type="password" id="suConfirm" placeholder="••••••••" style="
+          width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+          color:var(--text);padding:11px 44px 11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+          outline:none;transition:border-color 0.2s;
+        " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')doEmailSignUp()">
+        <button onclick="togglePwd('suConfirm',this)" style="
+          position:absolute;left:12px;top:50%;transform:translateY(-50%);
+          background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:0;
+        ">👁</button>
+      </div>
+    </div>
+
+    <div id="suError" style="color:#f43f5e;font-size:11px;min-height:16px;margin-bottom:8px;text-align:center"></div>
+
+    <button onclick="doEmailSignUp()" id="suBtn" style="
+      width:100%;background:linear-gradient(135deg,#3b82f6,#0ea5e9);
+      border:none;border-radius:10px;color:white;
+      font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+      padding:12px;cursor:pointer;margin-bottom:12px;
+      transition:opacity 0.2s;
+    " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+      إنشاء الحساب
+    </button>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:11px;color:var(--text-muted)">أو</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <button onclick="handleAuth()" style="
+      width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+      background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+      padding:11px;cursor:pointer;transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border)'">
+      <img src="https://www.google.com/favicon.ico" style="width:18px;height:18px">
+      التسجيل بـ Google
+    </button>
+
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted)">
+      لديك حساب بالفعل؟
+      <button onclick="switchView('viewSignIn')" style="
+        background:none;border:none;color:#3b82f6;font-size:12px;font-weight:800;
+        font-family:'Cairo',sans-serif;cursor:pointer;padding:0;margin-right:4px;
+      ">تسجيل الدخول</button>
+    </div>
+  </div>
+
+  <!-- ═══ FORGOT PASSWORD VIEW ═══ -->
+  <div id="viewForgot" style="display:none">
+    <button onclick="switchView('viewSignIn')" style="
+      background:none;border:none;color:var(--text-muted);cursor:pointer;
+      font-size:12px;font-family:'Cairo',sans-serif;padding:0;margin-bottom:20px;
+      display:flex;align-items:center;gap:4px;
+    ">← العودة لتسجيل الدخول</button>
+
+    <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px">نسيت كلمة المرور؟</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px;line-height:1.7">
+      أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">
+        البريد الإلكتروني
+      </label>
+      <input type="email" id="fpEmail" placeholder="example@domain.com" style="
+        width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+        color:var(--text);padding:11px 14px;font-size:13px;font-family:'Cairo',sans-serif;
+        direction:ltr;text-align:left;outline:none;transition:border-color 0.2s;
+      " onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter')doResetPassword()">
+    </div>
+
+    <div id="fpMsg" style="font-size:11px;min-height:16px;margin-bottom:8px;text-align:center"></div>
+
+    <button onclick="doResetPassword()" id="fpBtn" style="
+      width:100%;background:linear-gradient(135deg,#3b82f6,#0ea5e9);
+      border:none;border-radius:10px;color:white;
+      font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;
+      padding:12px;cursor:pointer;
+      transition:opacity 0.2s;
+    " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+      إرسال رابط الاستعادة
+    </button>
+
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted)">
+      تذكّرت كلمة المرور؟
+      <button onclick="switchView('viewSignIn')" style="
+        background:none;border:none;color:#3b82f6;font-size:12px;font-weight:800;
+        font-family:'Cairo',sans-serif;cursor:pointer;padding:0;margin-right:4px;
+      ">تسجيل الدخول</button>
+    </div>
+  </div>
+
+  <!-- ═══ EMAIL VERIFY VIEW ═══ -->
+  <div id="viewVerify" style="display:none;text-align:center">
+    <div style="font-size:48px;margin-bottom:16px">📧</div>
+    <div style="font-size:20px;font-weight:900;color:var(--text);margin-bottom:8px">تحقق من بريدك</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;line-height:1.8" id="verifyMsg">
+      أرسلنا رابط التحقق إلى بريدك الإلكتروني.<br>افتح البريد واضغط على الرابط.
+    </div>
+    <button onclick="switchView('viewSignIn')" style="
+      background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+      padding:11px 24px;cursor:pointer;
+    ">العودة لتسجيل الدخول</button>
+  </div>
+
+</div>
+
+<!-- Footer link -->
+<div style="margin-top:24px;text-align:center">
+  <a href="https://x.com/fahad_shaheen" target="_blank" style="
+    display:inline-flex;align-items:center;gap:7px;
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:20px;padding:7px 16px;text-decoration:none;
+    color:var(--text);font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;
+  ">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    </svg>
+    @fahad_shaheen
+  </a>
+</div>
+
 </div>
 
 <div id="pullIndicator">↓ اسحب للتحديث</div>
@@ -1853,9 +2096,8 @@ function handleAuth() {
       localStorage.removeItem('ruh_jed_uid');
       localStorage.removeItem('ruh_jed_auth'); // clear auth marker
       tickets = [];
-      window.location.href = '/RUH-JED/index.html'; // ← الـ landing
       updateAuthUI(null);
-      showLoginScreen(false);
+      showLoginScreen(true);
       toast('👋 تم تسجيل الخروج');
     });
   } else {
@@ -1873,6 +2115,130 @@ function handleAuth() {
           if (ls) { ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية'); ls.style.color = 'var(--unpaid)'; }
         });
     }
+  }
+}
+
+// ─── AUTH VIEW SWITCHER ───
+function switchView(viewId) {
+  ['viewSignIn','viewSignUp','viewForgot','viewVerify'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === viewId ? 'block' : 'none';
+  });
+  // Clear errors on switch
+  ['siError','suError','fpMsg'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+}
+
+// ─── TOGGLE PASSWORD VISIBILITY ───
+function togglePwd(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+// ─── EMAIL SIGN IN ───
+async function doEmailSignIn() {
+  const email = document.getElementById('siEmail')?.value.trim();
+  const pass  = document.getElementById('siPassword')?.value;
+  const errEl = document.getElementById('siError');
+  const btn   = document.getElementById('siBtn');
+  if (!email || !pass) { errEl.textContent = '⚠️ أدخل البريد الإلكتروني وكلمة المرور'; return; }
+  errEl.textContent = '';
+  btn.textContent = '⏳ جاري الدخول...';
+  btn.disabled = true;
+  try {
+    await _fbAuth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged will handle the rest
+  } catch(err) {
+    const msgs = {
+      'auth/user-not-found':     '❌ لا يوجد حساب بهذا البريد',
+      'auth/wrong-password':     '❌ كلمة المرور غير صحيحة',
+      'auth/invalid-email':      '❌ البريد الإلكتروني غير صالح',
+      'auth/too-many-requests':  '⚠️ محاولات كثيرة — حاول لاحقاً',
+      'auth/invalid-credential': '❌ البريد أو كلمة المرور غير صحيحة',
+    };
+    errEl.textContent = msgs[err.code] || ('❌ ' + (err.message || 'خطأ في تسجيل الدخول'));
+  } finally {
+    btn.textContent = 'متابعة';
+    btn.disabled = false;
+  }
+}
+
+// ─── EMAIL SIGN UP ───
+async function doEmailSignUp() {
+  const name    = document.getElementById('suName')?.value.trim();
+  const email   = document.getElementById('suEmail')?.value.trim();
+  const pass    = document.getElementById('suPassword')?.value;
+  const confirm = document.getElementById('suConfirm')?.value;
+  const errEl   = document.getElementById('suError');
+  const btn     = document.getElementById('suBtn');
+
+  if (!name)                          { errEl.textContent = '⚠️ أدخل اسمك الكامل'; return; }
+  if (!email)                         { errEl.textContent = '⚠️ أدخل البريد الإلكتروني'; return; }
+  if (!pass || pass.length < 8)       { errEl.textContent = '⚠️ كلمة المرور يجب أن تكون 8 أحرف على الأقل'; return; }
+  if (pass !== confirm)               { errEl.textContent = '⚠️ كلمتا المرور غير متطابقتين'; return; }
+
+  errEl.textContent = '';
+  btn.textContent = '⏳ جاري الإنشاء...';
+  btn.disabled = true;
+  try {
+    const cred = await _fbAuth.createUserWithEmailAndPassword(email, pass);
+    // Update display name
+    await cred.user.updateProfile({ displayName: name });
+    // Send verification email
+    await cred.user.sendEmailVerification();
+    document.getElementById('verifyMsg').innerHTML =
+      `أرسلنا رابط التحقق إلى <strong>${email}</strong><br>افتح البريد واضغط على الرابط للتحقق من حسابك.`;
+    switchView('viewVerify');
+  } catch(err) {
+    const msgs = {
+      'auth/email-already-in-use': '❌ هذا البريد مستخدم بالفعل — جرّب تسجيل الدخول',
+      'auth/invalid-email':        '❌ البريد الإلكتروني غير صالح',
+      'auth/weak-password':        '❌ كلمة المرور ضعيفة جداً',
+    };
+    errEl.textContent = msgs[err.code] || ('❌ ' + (err.message || 'خطأ في إنشاء الحساب'));
+  } finally {
+    btn.textContent = 'إنشاء الحساب';
+    btn.disabled = false;
+  }
+}
+
+// ─── RESET PASSWORD ───
+async function doResetPassword() {
+  const email = document.getElementById('fpEmail')?.value.trim();
+  const msgEl = document.getElementById('fpMsg');
+  const btn   = document.getElementById('fpBtn');
+  if (!email) { msgEl.style.color = '#f43f5e'; msgEl.textContent = '⚠️ أدخل بريدك الإلكتروني'; return; }
+  msgEl.textContent = '';
+  btn.textContent = '⏳ جاري الإرسال...';
+  btn.disabled = true;
+  try {
+    await _fbAuth.sendPasswordResetEmail(email);
+    msgEl.style.color = '#10b981';
+    msgEl.textContent = '✅ تم الإرسال — تحقق من بريدك الإلكتروني';
+    btn.textContent = '✅ تم الإرسال';
+    setTimeout(() => {
+      switchView('viewSignIn');
+      const si = document.getElementById('siEmail');
+      if (si) si.value = email;
+    }, 3000);
+  } catch(err) {
+    const msgs = {
+      'auth/user-not-found': '❌ لا يوجد حساب بهذا البريد',
+      'auth/invalid-email':  '❌ البريد الإلكتروني غير صالح',
+    };
+    msgEl.style.color = '#f43f5e';
+    msgEl.textContent = msgs[err.code] || ('❌ ' + err.message);
+    btn.textContent = 'إرسال رابط الاستعادة';
+    btn.disabled = false;
   }
 }
 
