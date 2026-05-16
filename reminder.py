@@ -10,9 +10,9 @@ from datetime import datetime, timedelta, timezone
 
 # – Config –
 
-PROJECT_ID     = mytrips-9b054
+PROJECT_ID     = 'mytrips-9b054'
 REMINDER_DAYS  = [1, 3, 5, 7]
-AVIATION_PROXY = ‘https://aviation-proxy.shaheenhouse1.workers.dev’
+AVIATION_PROXY = 'https://aviation-proxy.shaheenhouse1.workers.dev'
 WEATHER_KEY    = ‘d417a56b80d952490926cdf53eaf096f’
 
 sa_dict    = json.loads(os.environ[‘FIREBASE_SERVICE_ACCOUNT’])
