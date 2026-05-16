@@ -1853,8 +1853,9 @@ function handleAuth() {
       localStorage.removeItem('ruh_jed_uid');
       localStorage.removeItem('ruh_jed_auth'); // clear auth marker
       tickets = [];
+      window.location.href = '/RUH-JED/index.html'; // ← الـ landing
       updateAuthUI(null);
-      showLoginScreen(true);
+      showLoginScreen(false);
       toast('👋 تم تسجيل الخروج');
     });
   } else {
