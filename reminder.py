@@ -1,3 +1,4 @@
+# reminder.py — updated 2026-05-16
 import os, json, urllib.request, urllib.parse
 import google.auth.transport.requests
 import google.oauth2.service_account
