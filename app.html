@@ -1149,13 +1149,14 @@ function handleAuth() {
   }
 
   .sidebar-header {
-    padding: 20px 20px 14px;
+    padding: 16px 16px 16px 14px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     background: var(--surface2);
-    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
   }
   .sidebar-title {
     font-size: 15px;
@@ -1163,6 +1164,7 @@ function handleAuth() {
     background: linear-gradient(90deg, var(--accent), var(--accent2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    flex: 1;
   }
   .sidebar-close {
     background: var(--bg);
@@ -1556,8 +1558,43 @@ function handleAuth() {
 <!-- ── SIDEBAR ── -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-title">✈ رحلاتي</div>
-    <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    <!-- User profile card -->
+    <div id="sidebarUser" style="display:none;flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="position:relative;flex-shrink:0">
+          <img id="sidebarAvatar" style="
+            width:44px;height:44px;border-radius:50%;object-fit:cover;
+            border:2px solid var(--accent);display:block;
+          " src="" alt="">
+          <!-- Initials fallback when no photo -->
+          <div id="sidebarInitials" style="
+            display:none;width:44px;height:44px;border-radius:50%;
+            background:linear-gradient(135deg,var(--accent),var(--accent2));
+            color:white;font-size:18px;font-weight:900;
+            align-items:center;justify-content:center;
+            border:2px solid var(--accent);
+          "></div>
+          <div style="
+            position:absolute;bottom:0;left:0;
+            width:12px;height:12px;border-radius:50%;
+            background:var(--paid);border:2px solid var(--surface);
+          "></div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div id="sidebarName" style="
+            font-size:14px;font-weight:900;color:var(--text);
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+          "></div>
+          <div id="sidebarEmail" style="
+            font-size:11px;color:var(--text-muted);margin-top:2px;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+          "></div>
+        </div>
+      </div>
+    </div>
+    <!-- Fallback title when no user -->
+    <div id="sidebarTitle" class="sidebar-title">✈ رحلاتي</div>
+    <button class="sidebar-close" onclick="closeSidebar()" style="flex-shrink:0;margin-right:4px">✕</button>
   </div>
   <div class="sidebar-items">
     <button class="sidebar-item" id="sb-finance" onclick="showTabMobile('finance')">
@@ -2390,19 +2427,52 @@ function showLoginScreen(show) {
 }
 
 function updateAuthUI(user) {
+  // ── Desktop header auth button ──
   const btn    = document.getElementById('authBtn');
   const label  = document.getElementById('authLabel');
   const avatar = document.getElementById('authAvatar');
   const img    = document.getElementById('authAvatarImg');
-  if (!btn) return;
+  if (btn) {
+    if (user) {
+      btn.style.display = 'flex';
+      label.textContent = '🚪 خروج';
+      if (user.photoURL && img) { img.src = user.photoURL; avatar.style.display = 'inline-block'; }
+      btn.style.borderColor = 'var(--unpaid)';
+    } else {
+      btn.style.display    = 'none';
+      if (avatar) avatar.style.display = 'none';
+    }
+  }
+
+  // ── Sidebar user card ──
+  const sidebarUser  = document.getElementById('sidebarUser');
+  const sidebarTitle = document.getElementById('sidebarTitle');
+  const sidebarAvt   = document.getElementById('sidebarAvatar');
+  const sidebarName  = document.getElementById('sidebarName');
+  const sidebarEmail = document.getElementById('sidebarEmail');
+
   if (user) {
-    btn.style.display = 'flex';
-    label.textContent = '🚪 خروج';
-    if (user.photoURL) { img.src = user.photoURL; avatar.style.display = 'inline-block'; }
-    btn.style.borderColor = 'var(--unpaid)';
+    if (sidebarUser)  sidebarUser.style.display  = 'block';
+    if (sidebarTitle) sidebarTitle.style.display  = 'none';
+    if (sidebarAvt) {
+      sidebarAvt.src = user.photoURL || '';
+      sidebarAvt.style.display = user.photoURL ? 'block' : 'none';
+      // Fallback initials avatar if no photo
+      if (!user.photoURL) {
+        sidebarAvt.style.display = 'none';
+        const initEl = document.getElementById('sidebarInitials');
+        if (initEl) {
+          const name = user.displayName || user.email || '?';
+          initEl.textContent = name.charAt(0).toUpperCase();
+          initEl.style.display = 'flex';
+        }
+      }
+    }
+    if (sidebarName)  sidebarName.textContent  = user.displayName || 'مستخدم';
+    if (sidebarEmail) sidebarEmail.textContent = user.email || '';
   } else {
-    btn.style.display    = 'none';
-    avatar.style.display = 'none';
+    if (sidebarUser)  sidebarUser.style.display  = 'none';
+    if (sidebarTitle) sidebarTitle.style.display  = 'block';
   }
 }
 
