@@ -2282,18 +2282,21 @@ function load() {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch(e) {}
-  return JSON.parse(JSON.stringify(EXCEL_DATA));
+  // Return empty array on new device — Firestore will populate via subscribeFirestore
+  // Don't return EXCEL_DATA as it blocks real data from syncing
+  return [];
 }
 
 function applyRemoteData(remoteTickets) {
   if (!Array.isArray(remoteTickets)) return;
-  // 🛡 PROTECTION 5: Never replace existing data with empty/smaller remote data
-  // This prevents Firestore sync from wiping local data after accidental empty write
+  // 🛡 PROTECTION 5: Only block if remote is EMPTY and local has data
+  // (prevents accidental wipe, but ALWAYS accept remote data on new/empty device)
   const localCount = tickets?.length || 0;
   if (remoteTickets.length === 0 && localCount > 0) {
     console.warn(`🛡 Blocked replacing ${localCount} local tickets with empty remote data`);
     return;
   }
+  // Always prefer Firestore data — it's the source of truth
   tickets = remoteTickets;
   try { localStorage.setItem(STORE_KEY, JSON.stringify(tickets)); } catch(e) {}
   // Auto-backup on receive
@@ -2307,16 +2310,35 @@ function applyRemoteData(remoteTickets) {
 
 function subscribeFirestore(uid) {
   if (_unsubscribe) _unsubscribe();
+
+  let firstSnapshot = true; // track first snapshot to avoid EXCEL_DATA overwrite
+
   _unsubscribe = userDocRef(uid).onSnapshot(snap => {
     if (snap.exists) {
       const d = snap.data();
-      if (Array.isArray(d.tickets) && d.tickets.length) applyRemoteData(d.tickets);
-    } else {
-      tickets = JSON.parse(JSON.stringify(EXCEL_DATA));
-      save(tickets);
-      renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+      if (Array.isArray(d.tickets) && d.tickets.length) {
+        console.log(`☁️ Firestore: got ${d.tickets.length} tickets`);
+        applyRemoteData(d.tickets);
+      } else if (firstSnapshot) {
+        // Firestore doc exists but tickets array is empty/missing — could be new user
+        // Don't overwrite with EXCEL_DATA, just show empty state
+        console.log('☁️ Firestore: doc exists but no tickets yet');
+        renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+      }
+    } else if (firstSnapshot) {
+      // Doc doesn't exist yet — new user on this device
+      // DON'T load EXCEL_DATA — show empty state so user can add their own tickets
+      console.log('☁️ Firestore: no doc for this user yet — starting fresh');
+      if (!tickets.length) {
+        tickets = [];
+        renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+      }
     }
-  }, err => console.warn('Firestore error:', err));
+    firstSnapshot = false;
+  }, err => {
+    console.warn('Firestore onSnapshot error:', err.code, err.message);
+    // On permission/network error, keep showing whatever is in localStorage
+  });
 }
 
 function showLoginScreen(show) {
