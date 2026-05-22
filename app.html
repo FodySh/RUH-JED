@@ -1638,6 +1638,13 @@ function handleAuth() {
     </button>
   </div>
   <div class="sidebar-footer">
+    <!-- Diagnostic button — mobile only -->
+    <button onclick="closeSidebar();setTimeout(runDiagnostic,200)" style="
+      width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+      background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.25);
+      border-radius:10px;color:#a78bfa;padding:11px;margin-bottom:8px;
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;
+    ">🔍 تشخيص الاتصال</button>
     <button onclick="handleAuth()" style="
       width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
       background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);
@@ -2503,20 +2510,21 @@ function updateAuthUI(user) {
   const sidebarEmail = document.getElementById('sidebarEmail');
 
   if (user) {
-    if (sidebarUser)  sidebarUser.style.display  = 'block';
+    if (sidebarUser)  sidebarUser.style.display  = 'flex';
     if (sidebarTitle) sidebarTitle.style.display  = 'none';
-    if (sidebarAvt) {
-      sidebarAvt.src = user.photoURL || '';
-      sidebarAvt.style.display = user.photoURL ? 'block' : 'none';
-      // Fallback initials avatar if no photo
-      if (!user.photoURL) {
-        sidebarAvt.style.display = 'none';
-        const initEl = document.getElementById('sidebarInitials');
-        if (initEl) {
-          const name = user.displayName || user.email || '?';
-          initEl.textContent = name.charAt(0).toUpperCase();
-          initEl.style.display = 'flex';
-        }
+    const initEl = document.getElementById('sidebarInitials');
+    if (sidebarAvt && user.photoURL) {
+      // Has Google photo
+      sidebarAvt.src = user.photoURL;
+      sidebarAvt.style.display = 'block';
+      if (initEl) initEl.style.display = 'none';
+    } else {
+      // No photo — show initials circle
+      if (sidebarAvt) sidebarAvt.style.display = 'none';
+      if (initEl) {
+        const name = user.displayName || user.email || '?';
+        initEl.textContent = name.charAt(0).toUpperCase();
+        initEl.style.display = 'flex';
       }
     }
     if (sidebarName)  sidebarName.textContent  = user.displayName || 'مستخدم';
