@@ -2241,35 +2241,82 @@ const STORE_KEY = 'ruh_jed_v3';
 function userDocRef(uid) {
   return _fbDb.collection('users').doc(uid).collection('data').doc('tickets');
 }
+function snapshotsRef(uid) {
+  return _fbDb.collection('users').doc(uid).collection('snapshots');
+}
 
-// ── Backup key for auto-snapshots ──
-const BACKUP_KEY = 'ruh_jed_backup';
+// ── Backup key for localStorage snapshots ──
+const BACKUP_KEY      = 'ruh_jed_backup';
+const BACKUP_SNAPS_KEY = 'ruh_jed_snaps';  // array of last 5 local snapshots
+const MAX_CLOUD_SNAPS = 10;                 // keep 10 cloud snapshots max
+const MAX_LOCAL_SNAPS = 5;                  // keep 5 local snapshots
+
+// ─── SAVE LOCAL SNAPSHOT ───
+function saveLocalSnapshot(data) {
+  if (!data.length) return;
+  try {
+    let snaps = [];
+    try { snaps = JSON.parse(localStorage.getItem(BACKUP_SNAPS_KEY)) || []; } catch(e) {}
+    snaps.unshift({ tickets: data, savedAt: Date.now(), count: data.length });
+    if (snaps.length > MAX_LOCAL_SNAPS) snaps = snaps.slice(0, MAX_LOCAL_SNAPS);
+    localStorage.setItem(BACKUP_SNAPS_KEY, JSON.stringify(snaps));
+    // Keep single-key backup for quick restore
+    localStorage.setItem(BACKUP_KEY, JSON.stringify(snaps[0]));
+  } catch(e) {}
+}
+
+// ─── SAVE CLOUD SNAPSHOT (Firestore subcollection) ───
+let _lastCloudSnap = 0;
+const CLOUD_SNAP_THROTTLE = 5 * 60 * 1000; // max 1 cloud snapshot per 5 min
+
+async function saveCloudSnapshot(uid, data) {
+  if (!uid || !data.length) return;
+  const now = Date.now();
+  if (now - _lastCloudSnap < CLOUD_SNAP_THROTTLE) return; // throttle
+  _lastCloudSnap = now;
+  try {
+    const ref  = snapshotsRef(uid);
+    const snap = { tickets: data, savedAt: now, count: data.length };
+    // Add new snapshot
+    await ref.add(snap);
+    // Prune old ones — keep newest MAX_CLOUD_SNAPS
+    const all = await ref.orderBy('savedAt', 'desc').get();
+    const docs = all.docs;
+    if (docs.length > MAX_CLOUD_SNAPS) {
+      const toDelete = docs.slice(MAX_CLOUD_SNAPS);
+      const batch = _fbDb.batch();
+      toDelete.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    console.log(`☁️ Cloud snapshot saved (${data.length} tickets)`);
+  } catch(e) {
+    console.warn('Cloud snapshot failed:', e.message);
+  }
+}
 
 function save(data) {
-  // 🛡 PROTECTION 1: Never write empty or suspiciously small array to Firestore
-  // if current data is larger — this prevents accidental overwrites
+  // 🛡 PROTECTION 1: Reject non-arrays
   if (!Array.isArray(data)) return;
 
-  // Always save to localStorage
+  // Always write to localStorage immediately
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
 
-  // 🛡 PROTECTION 2: Auto-backup before every Firestore write
-  if (data.length > 0) {
-    try {
-      const backup = { tickets: data, savedAt: Date.now(), count: data.length };
-      localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
-    } catch(e) {}
-  }
+  // 🛡 PROTECTION 2: Save local snapshot before every Firestore write
+  if (data.length > 0) saveLocalSnapshot(data);
 
   const storedUid = localStorage.getItem('ruh_jed_uid');
   if (_currentUid && _currentUid === storedUid) {
-    // 🛡 PROTECTION 3: Never overwrite Firestore with fewer tickets than already there
-    // unless it's a deliberate delete (deleteTicket sets _allowShrink)
+    // 🛡 PROTECTION 3: Block empty write unless explicitly allowed
     if (data.length === 0 && !window._allowEmptySave) {
       console.warn('🛡 Blocked empty save to Firestore');
       return;
     }
-    userDocRef(_currentUid).set({ tickets: data, updatedAt: Date.now(), count: data.length })
+    userDocRef(_currentUid)
+      .set({ tickets: data, updatedAt: Date.now(), count: data.length })
+      .then(() => {
+        // 🛡 PROTECTION 4: Save cloud snapshot after successful write
+        if (data.length > 0) saveCloudSnapshot(_currentUid, data);
+      })
       .catch(e => console.warn('Firestore write failed:', e));
   }
 }
@@ -2299,12 +2346,8 @@ function applyRemoteData(remoteTickets) {
   // Always prefer Firestore data — it's the source of truth
   tickets = remoteTickets;
   try { localStorage.setItem(STORE_KEY, JSON.stringify(tickets)); } catch(e) {}
-  // Auto-backup on receive
-  if (tickets.length > 0) {
-    try {
-      localStorage.setItem(BACKUP_KEY, JSON.stringify({ tickets, savedAt: Date.now(), count: tickets.length }));
-    } catch(e) {}
-  }
+  // 🛡 Save local snapshot every time we receive fresh Firestore data
+  if (tickets.length > 0) saveLocalSnapshot(tickets);
   renderAll(); renderOverview(); renderUpcoming(); renderTrips();
 }
 
@@ -5449,24 +5492,132 @@ function clearAll() {
 }
 
 // 🛡 Restore from auto-backup
+// ─── RESTORE PANEL ───
 function restoreFromBackup() {
-  try {
-    const raw = localStorage.getItem(BACKUP_KEY);
-    if (!raw) { toast('⚠️ لا توجد نسخة احتياطية'); return; }
-    const backup = JSON.parse(raw);
-    if (!Array.isArray(backup.tickets) || !backup.tickets.length) {
-      toast('⚠️ النسخة الاحتياطية فارغة'); return;
+  showRestorePanel();
+}
+
+async function showRestorePanel() {
+  // Collect local snapshots
+  let localSnaps = [];
+  try { localSnaps = JSON.parse(localStorage.getItem(BACKUP_SNAPS_KEY)) || []; } catch(e) {}
+
+  // Collect cloud snapshots
+  let cloudSnaps = [];
+  if (_currentUid) {
+    try {
+      const snap = await snapshotsRef(_currentUid).orderBy('savedAt','desc').limit(10).get();
+      cloudSnaps = snap.docs.map(d => ({ ...d.data(), _id: d.id, _source: 'cloud' }));
+    } catch(e) {
+      console.warn('Could not fetch cloud snapshots:', e.message);
     }
-    const date = new Date(backup.savedAt).toLocaleString('ar-SA');
-    if (!confirm(`استرجاع ${backup.count} تذكرة من نسخة بتاريخ ${date}؟`)) return;
-    tickets = backup.tickets;
-    window._allowEmptySave = false;
-    save(tickets);
-    renderAll(); renderOverview(); renderUpcoming(); renderTrips();
-    toast(`✅ تم استرجاع ${backup.count} تذكرة`);
-  } catch(e) {
-    toast('❌ فشل الاسترجاع: ' + e.message);
   }
+
+  const fmtDate = ts => new Date(ts).toLocaleString('ar-SA', {
+    year:'numeric', month:'short', day:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+
+  const snapRow = (snap, idx, source) => {
+    const icon   = source === 'cloud' ? '☁️' : '💾';
+    const srcLbl = source === 'cloud' ? 'Firestore' : 'محلي';
+    const id     = `snap-${source}-${idx}`;
+    return `
+      <div style="
+        background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+        padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;
+      ">
+        <span style="font-size:20px">${icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:800;color:var(--text)">${snap.count} تذكرة</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${fmtDate(snap.savedAt)} · ${srcLbl}</div>
+        </div>
+        <button onclick="applySnapshot(${JSON.stringify(snap.tickets).replace(/"/g,'&quot;')},'${fmtDate(snap.savedAt)}')" style="
+          background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);
+          border-radius:8px;color:var(--paid);font-family:'Cairo',sans-serif;
+          font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer;white-space:nowrap;
+        ">↩ استرجاع</button>
+      </div>`;
+  };
+
+  const noSnaps = !localSnaps.length && !cloudSnaps.length;
+
+  let panel = document.getElementById('restorePanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'restorePanel';
+    panel.style.cssText = `
+      position:fixed;inset:0;z-index:9999;
+      background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);
+      display:flex;align-items:flex-end;justify-content:center;
+      font-family:'Cairo',sans-serif;direction:rtl;
+    `;
+    document.body.appendChild(panel);
+  }
+
+  panel.innerHTML = `
+    <div style="
+      background:var(--surface);width:100%;max-width:520px;
+      border-radius:20px 20px 0 0;padding:24px 20px 32px;
+      border-top:2px solid var(--paid);
+      box-shadow:0 -8px 40px rgba(0,0,0,0.5);
+      max-height:80vh;overflow-y:auto;
+    ">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div>
+          <div style="font-size:16px;font-weight:900">🛡 استرجاع النسخ الاحتياطية</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+            ${cloudSnaps.length} نسخة سحابية · ${localSnaps.length} نسخة محلية
+          </div>
+        </div>
+        <button onclick="document.getElementById('restorePanel').style.display='none'" style="
+          background:var(--surface2);border:1px solid var(--border);border-radius:50%;
+          color:var(--text-muted);width:30px;height:30px;cursor:pointer;font-size:14px;
+          display:flex;align-items:center;justify-content:center;
+        ">✕</button>
+      </div>
+
+      ${noSnaps ? `
+        <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
+          لا توجد نسخ احتياطية بعد.<br>
+          <span style="font-size:11px">تُحفظ النسخة تلقائياً عند كل إضافة أو تعديل.</span>
+        </div>
+      ` : ''}
+
+      ${cloudSnaps.length ? `
+        <div style="font-size:11px;font-weight:800;color:var(--text-muted);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:8px">☁️ نسخ Firestore</div>
+        ${cloudSnaps.map((s,i) => snapRow(s, i, 'cloud')).join('')}
+      ` : ''}
+
+      ${localSnaps.length ? `
+        <div style="font-size:11px;font-weight:800;color:var(--text-muted);letter-spacing:0.6px;text-transform:uppercase;margin:${cloudSnaps.length?'16px':0} 0 8px">💾 نسخ محلية (هذا الجهاز)</div>
+        ${localSnaps.map((s,i) => snapRow(s, i, 'local')).join('')}
+      ` : ''}
+
+      <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--text-muted);margin-top:12px;line-height:1.7">
+        💡 النسخ السحابية محفوظة في Firestore وتظهر على كل أجهزتك.<br>
+        النسخ المحلية مخزنة في هذا الجهاز فقط وتُحذف مع بيانات المتصفح.
+      </div>
+    </div>`;
+
+  panel.style.display = 'flex';
+  panel.onclick = e => { if (e.target === panel) panel.style.display = 'none'; };
+}
+
+function applySnapshot(snapshotTickets, dateLabel) {
+  if (!Array.isArray(snapshotTickets) || !snapshotTickets.length) {
+    toast('⚠️ النسخة فارغة'); return;
+  }
+  if (!confirm(`استرجاع ${snapshotTickets.length} تذكرة من نسخة ${dateLabel}؟
+سيتم استبدال البيانات الحالية.`)) return;
+  document.getElementById('restorePanel').style.display = 'none';
+  tickets = snapshotTickets;
+  window._allowEmptySave = false;
+  // Save local snapshot of current state before overwriting
+  saveLocalSnapshot(tickets);
+  save(tickets);
+  renderAll(); renderOverview(); renderUpcoming(); renderTrips();
+  toast(`✅ تم استرجاع ${tickets.length} تذكرة`);
 }
 
 // ─── RESET TO EXCEL DATA ───
