@@ -1645,6 +1645,12 @@ function handleAuth() {
       border-radius:10px;color:#a78bfa;padding:11px;margin-bottom:8px;
       font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;
     ">🔍 تشخيص الاتصال</button>
+    <button onclick="closeSidebar();setTimeout(forceReloadFromFirestore,200)" style="
+      width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+      background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);
+      border-radius:10px;color:var(--accent);padding:11px;margin-bottom:8px;
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;
+    ">🔄 إعادة تحميل البيانات</button>
     <button onclick="handleAuth()" style="
       width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
       background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);
@@ -5939,13 +5945,45 @@ async function runDiagnostic() {
   render(inf('جاري التشخيص...'));
   const results = [];
 
-  // 1. Auth
-  const user = _fbAuth.currentUser;
+  // 1. Auth — use _currentUid first (already set by onAuthStateChanged)
+  // _fbAuth.currentUser can be null briefly on iOS before session restores
+  let user = _fbAuth.currentUser;
+  const storedUid = localStorage.getItem('ruh_jed_uid');
+  const authMarker = localStorage.getItem('ruh_jed_auth');
+
+  results.push(inf(`ruh_jed_auth marker: ${authMarker || 'غير موجود'}`));
+  results.push(inf(`UID في localStorage: ${storedUid ? storedUid.slice(0,12)+'...' : 'غير موجود'}`));
+  results.push(inf(`_currentUid في الذاكرة: ${_currentUid ? _currentUid.slice(0,12)+'...' : 'null'}`));
+  results.push(inf(`_fbAuth.currentUser: ${user ? 'موجود ✅' : 'null (جاري الانتظار...)'}`));
+  render(results.join(''));
+
+  // If currentUser is null but we have a stored UID, wait for Firebase to restore session
+  if (!user && storedUid) {
+    results.push(inf('⏳ Firebase يُعيد تهيئة الجلسة — انتظر ثانية...'));
+    render(results.join(''));
+    // Wait up to 4 seconds for auth to restore
+    await new Promise(resolve => {
+      let waited = 0;
+      const interval = setInterval(() => {
+        user = _fbAuth.currentUser;
+        waited += 500;
+        if (user || waited >= 4000) { clearInterval(interval); resolve(); }
+      }, 500);
+    });
+  }
+
   if (user) {
-    results.push(ok(`مسجّل دخول — ${user.displayName || user.email}`));
+    results.push(ok(`مسجّل دخول ✅ — ${user.displayName || user.email}`));
     results.push(inf(`UID: <code style="font-size:10px;font-family:monospace">${user.uid}</code>`));
+  } else if (storedUid && authMarker === '1') {
+    // Has stored session but Firebase still null — use stored UID for Firestore checks
+    results.push(ok(`جلسة محفوظة — استخدام UID المحفوظ للفحص`));
+    results.push(inf(`UID: <code style="font-size:10px;font-family:monospace">${storedUid.slice(0,12)}...</code>`));
+    // Create a mock user object for the rest of the diagnostic
+    user = { uid: storedUid, displayName: null, email: null };
   } else {
-    results.push(err('غير مسجّل دخول'));
+    results.push(err('غير مسجّل دخول — لا يوجد UID محفوظ'));
+    results.push(inf('جرّب تسجيل الخروج وإعادة الدخول'));
     render(results.join(''));
     return;
   }
@@ -6030,9 +6068,11 @@ async function runDiagnostic() {
 }
 
 async function forceReloadFromFirestore() {
-  if (!_currentUid) { toast('⚠️ غير مسجّل دخول'); return; }
+  const uid = _currentUid || localStorage.getItem('ruh_jed_uid');
+  if (!uid) { toast('⚠️ لا يوجد UID محفوظ — سجّل الدخول أولاً'); return; }
   try {
-    const snap = await userDocRef(_currentUid).get();
+    toast('⏳ جاري التحميل من Firestore...');
+    const snap = await userDocRef(uid).get();
     if (snap.exists) {
       const d = snap.data();
       if (Array.isArray(d.tickets) && d.tickets.length) {
@@ -6042,13 +6082,17 @@ async function forceReloadFromFirestore() {
         renderAll(); renderOverview(); renderUpcoming(); renderTrips();
         toast(`✅ تم تحميل ${tickets.length} تذكرة من Firestore`);
       } else {
-        toast('⚠️ Firestore فارغ');
+        toast('⚠️ Firestore فارغ — لا توجد تذاكر');
       }
     } else {
-      toast('⚠️ لا يوجد document في Firestore');
+      toast('⚠️ لا يوجد document لهذا الحساب في Firestore');
     }
   } catch(e) {
-    toast('❌ ' + (e.code || e.message));
+    if (e.code === 'permission-denied') {
+      toast('❌ ممنوع — تحقق من Firebase Rules');
+    } else {
+      toast('❌ ' + (e.code || e.message));
+    }
   }
 }
 
