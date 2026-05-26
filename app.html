@@ -2508,12 +2508,27 @@ function handleAuth() {
     if (ls) { ls.textContent = '⏳ جاري تسجيل الدخول...'; ls.style.color = 'var(--text-muted)'; }
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     if (isIOS) {
-      // Set auth marker BEFORE redirect so page load on return hides login screen immediately
-      localStorage.setItem('ruh_jed_auth', '1');
-      _fbAuth.signInWithRedirect(_googleProvider).catch(err => {
-        localStorage.removeItem('ruh_jed_auth'); // clear on failure
-        if (ls) { ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية'); ls.style.color = 'var(--unpaid)'; }
-      });
+      // Try popup first — works on iOS 16.4+ with correct authDomain
+      // Fall back to redirect only if popup is explicitly blocked
+      _fbAuth.signInWithPopup(_googleProvider)
+        .then(() => { if (ls) ls.textContent = ''; })
+        .catch(popupErr => {
+          console.warn('Popup failed on iOS:', popupErr.code);
+          if (popupErr.code === 'auth/popup-blocked' ||
+              popupErr.code === 'auth/popup-closed-by-user' ||
+              popupErr.code === 'auth/cancelled-popup-request') {
+            // User closed popup — don't redirect, just show message
+            if (ls) { ls.textContent = '⚠️ أغلقت نافذة Google — حاول مرة ثانية'; ls.style.color = 'var(--go-color)'; }
+          } else {
+            // Popup blocked by browser — fall back to redirect
+            if (ls) { ls.textContent = '⏳ جاري التوجيه إلى Google...'; ls.style.color = 'var(--text-muted)'; }
+            localStorage.setItem('ruh_jed_auth', 'pending');
+            _fbAuth.signInWithRedirect(_googleProvider).catch(err => {
+              localStorage.removeItem('ruh_jed_auth');
+              if (ls) { ls.textContent = '❌ فشل — ' + (err.message || 'حاول مرة ثانية'); ls.style.color = 'var(--unpaid)'; }
+            });
+          }
+        });
     } else {
       _fbAuth.signInWithPopup(_googleProvider)
         .then(() => { if (ls) ls.textContent = ''; })
@@ -2649,39 +2664,43 @@ async function doResetPassword() {
 }
 
 function initFirebase() {
-  // ── iOS Safari fix: hide login screen immediately if user was previously authenticated ──
-  // On redirect return, Firebase fires onAuthStateChanged(null) BEFORE getRedirectResult
-  // resolves. We must not show the login screen during this window.
-  const wasAuthenticated = localStorage.getItem('ruh_jed_auth') === '1';
-  if (wasAuthenticated) {
-    // Keep login screen hidden while redirect resolves (up to 8s timeout)
-    showLoginScreen(false);
-  }
+  // ── Clean, simple auth flow ──
+  // Let Firebase do its job — onAuthStateChanged is the single source of truth
+  // The only trick: ignore the first null on iOS Safari after redirect
 
-  const ls = document.getElementById('loginStatus');
+  let authResolved = false; // becomes true once we get a real user or confirmed logout
 
   _fbAuth.getRedirectResult()
     .then(result => {
       if (result && result.user) {
-        console.log('✅ getRedirectResult: redirect sign-in completed');
+        console.log('✅ Redirect sign-in completed:', result.user.email);
+        // onAuthStateChanged fires right after — it handles everything
       }
     })
     .catch(err => {
-      if (err.code !== 'auth/no-current-user' && err.code !== 'auth/null-user') {
-        console.warn('Redirect result error:', err.code);
-        // Only show login if not already authenticated
-        if (!_currentUid) {
-          showLoginScreen(true);
-          if (ls) ls.textContent = '❌ ' + (err.message || err.code);
-        }
+      if (err.code !== 'auth/no-current-user') {
+        console.warn('getRedirectResult error:', err.code);
       }
     });
 
+  // Safety timeout: if Firebase doesn't resolve within 10s, show login screen
+  const authTimeout = setTimeout(() => {
+    if (!authResolved) {
+      console.warn('⏱ Auth timeout — showing login screen');
+      localStorage.removeItem('ruh_jed_auth');
+      showLoginScreen(true);
+    }
+  }, 10000);
+
   _fbAuth.onAuthStateChanged(user => {
     if (user) {
+      // ── Signed in ──
+      authResolved = true;
+      clearTimeout(authTimeout);
+
       const lastUid = localStorage.getItem('ruh_jed_uid');
       if (lastUid && lastUid !== user.uid) {
-        console.warn('🛡 UID changed — clearing local cache safely (not Firestore)');
+        // Different user — clear local cache only
         localStorage.removeItem(STORE_KEY);
         localStorage.removeItem(LS_ACCOUNTS);
         tickets = [];
@@ -2696,13 +2715,27 @@ function initFirebase() {
       subscribeFirestore(user.uid);
       loadAccountsFromFirestore(user.uid);
       toast(`✅ مرحباً ${user.displayName?.split(' ')[0] || ''}!`);
+
     } else {
-      // Ignore transient null — fires before redirect resolves on iOS Safari
-      if (localStorage.getItem('ruh_jed_auth') === '1') {
-        console.log('⏳ Transient null — keeping login screen hidden');
+      // ── Signed out or transient null ──
+      // On iOS Safari after redirect: Firebase fires null briefly before restoring session
+      // We detect this: if we have BOTH ruh_jed_auth=1 AND a stored UID,
+      // it's very likely a transient null — wait for the real state
+      const marker   = localStorage.getItem('ruh_jed_auth');
+      const storedUid = localStorage.getItem('ruh_jed_uid');
+
+      if (marker === '1' && storedUid && !authResolved) {
+        // Transient null — Firebase is still restoring the session, ignore it
+        console.log('⏳ Transient null ignored — Firebase is restoring session');
         return;
       }
+
+      // Real sign-out
+      authResolved = true;
+      clearTimeout(authTimeout);
       _currentUid = null;
+      localStorage.removeItem('ruh_jed_auth');
+      localStorage.removeItem('ruh_jed_uid');
       updateAuthUI(null);
       showLoginScreen(true);
     }
@@ -6050,7 +6083,10 @@ initTheme();
 // ── iOS Safari: hide login screen immediately on page load if previously authenticated ──
 // This prevents the login screen flashing before onAuthStateChanged fires
 (function hideLoginIfAuthenticated() {
-  if (localStorage.getItem('ruh_jed_auth') === '1') {
+  const _earlyAuth = localStorage.getItem('ruh_jed_auth');
+  const _earlyUid  = localStorage.getItem('ruh_jed_uid');
+  // Only hide login screen early if BOTH markers exist (completed auth, not just pending redirect)
+  if (_earlyAuth === '1' && _earlyUid) {
     const ls = document.getElementById('loginScreen');
     if (ls) ls.style.display = 'none';
   }
