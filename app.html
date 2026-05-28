@@ -4709,27 +4709,26 @@ async function trackFlight(flightNum, date, ticketId) {
 
     const dep = f.departure, arr = f.arrival;
 
-    // Convert UTC ISO to Riyadh time (Asia/Riyadh = UTC+3, no DST)
+    // AviationStack returns LOCAL Riyadh time but with wrong offset (+00:00 instead of +03:00)
+    // So we extract HH:MM directly from the string — no timezone conversion needed
     const fmtRiyadh = iso => {
       if (!iso) return '—';
+      // Extract time part directly: "2026-05-28T19:55:00+00:00" → "19:55"
+      const match = iso.match(/T(\d{2}):(\d{2})/);
+      if (match) {
+        const h = parseInt(match[1]);
+        const m = match[2];
+        const period = h < 12 ? 'ص' : 'م';
+        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        return `${h12}:${m} ${period}`;
+      }
+      // Fallback if no T format
       try {
         return new Date(iso).toLocaleTimeString('ar-SA', {
           timeZone: 'Asia/Riyadh',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
+          hour: '2-digit', minute: '2-digit', hour12: true
         });
-      } catch(e) {
-        // Fallback for older browsers
-        const d = new Date(iso);
-        const utcMs = d.getTime();
-        const riyadhMs = utcMs + (3 * 60 * 60 * 1000);
-        const r = new Date(riyadhMs);
-        const h = r.getUTCHours(), m = r.getUTCMinutes();
-        const period = h < 12 ? 'ص' : 'م';
-        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-        return `${h12}:${String(m).padStart(2,'0')} ${period}`;
-      }
+      } catch(e) { return '—'; }
     };
 
     // احسب التأخير الحقيقي من الفرق بين المجدول والفعلي (بالدقائق)
