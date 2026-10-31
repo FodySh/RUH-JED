@@ -1233,8 +1233,145 @@ function handleAuth() {
   }
 </style>
 
+<style id="skeleton-screen">
+  /* ── SKELETON SCREEN ─────────────────────────────────────────
+     Visible while the first data load is in flight (body.is-loading).
+     Overview gets a dashboard-shaped skeleton; the other data tabs a card list.
+     Controller: the small script right after <body>. */
+  :root      { --sk-base:#1a2235; --sk-shine:rgba(255,255,255,0.06); --sk-head:rgba(255,255,255,0.10); }
+  body.light { --sk-base:#e8edf5; --sk-shine:rgba(255,255,255,0.85); --sk-head:rgba(255,255,255,0.18); }
+
+  #appSkeleton { display:none; }
+  body.is-loading #appSkeleton { display:block; animation: skIn 240ms ease-out both; }
+  body.is-loading .content > .section.active:not(#sec-add) { display:none; }
+  /* The Add form needs no data — keep it usable while loading */
+  body.is-loading .content:has(> #sec-add.active) #appSkeleton { display:none; }
+  /* Pick the variant from the active tab */
+  #appSkeleton .sk-list { display:none; }
+  .content:has(> .section.active:not(#sec-overview)) #appSkeleton .sk-dash { display:none; }
+  .content:has(> .section.active:not(#sec-overview)) #appSkeleton .sk-list { display:block; }
+  @keyframes skIn { from { opacity:0; } to { opacity:1; } }
+
+  /* Header subtitle ("جاري التحميل...") becomes a placeholder bar */
+  body.is-loading #headerSub {
+    color:transparent !important; -webkit-text-fill-color:transparent;
+    width:190px; max-width:30vw; height:12px; margin:4px 0 2px; /* 30vw: lets the title wrap on phones */
+    border-radius:6px; user-select:none;
+  }
+
+  /* Base block + shimmer (sweeps right → left, in RTL reading direction) */
+  .sk { position:relative; overflow:hidden; display:block; height:10px; border-radius:7px; background:var(--sk-base); }
+  body.is-loading #headerSub { position:relative; overflow:hidden; background:var(--sk-head); }
+  .sk::after, body.is-loading #headerSub::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent 0%, var(--sk-shine) 50%, transparent 100%);
+    transform:translateX(100%);
+    animation: skShimmer 1.5s ease-in-out infinite;
+  }
+  @keyframes skShimmer { 0% { transform:translateX(100%); } 100% { transform:translateX(-100%); } }
+
+  .sk-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .sk-row   { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .sk-title { margin-bottom:14px; }
+  .sk-title .sk { height:11px; }
+
+  /* Overview: next-trip banner */
+  .sk-banner {
+    display:flex; align-items:center; gap:14px; padding:14px 18px; margin-bottom:14px;
+    background:linear-gradient(135deg, rgba(59,130,246,0.1), rgba(14,165,233,0.06));
+    border:1px solid rgba(59,130,246,0.2); border-radius:14px;
+  }
+  .sk-banner .sk-days  { width:44px; height:40px; border-radius:10px; flex-shrink:0; }
+  .sk-banner .sk-info  { flex:1; min-width:0; }
+  .sk-banner .sk-info .sk:first-child { height:13px; width:52%; margin-bottom:9px; }
+  .sk-banner .sk-info .sk:last-child  { width:38%; }
+  .sk-banner .sk-plane { width:36px; height:36px; border-radius:50%; flex-shrink:0; }
+
+  /* Overview: KPI cards (sits inside the real .kpi-strip grid) */
+  .sk-kpi { padding:14px 16px; min-height:100px; }
+  .sk-kpi .sk-ico { width:18px; height:18px; border-radius:5px; margin-bottom:10px; }
+  .sk-kpi .sk-val { width:56%; height:20px; border-radius:7px; margin-bottom:9px; }
+  .sk-kpi .sk-lbl { width:72%; height:9px; margin-bottom:6px; }
+  .sk-kpi .sk-sub { width:46%; height:8px; }
+
+  /* Overview: payment progress */
+  .sk-pay { margin-bottom:14px; }
+  .sk-pay .sk-track { height:10px; border-radius:8px; margin:14px 0 10px; }
+
+  /* Overview: horizontal bars */
+  .sk-hbar { margin-bottom:11px; }
+  .sk-hbar .sk-row { margin-bottom:5px; }
+  .sk-hbar .sk-row .sk { height:8px; }
+  .sk-hbar .sk-fill { height:7px; border-radius:4px; }
+
+  /* Overview: ring + legend */
+  .sk-ringwrap { display:flex; align-items:center; gap:14px; }
+  .sk-ring {
+    width:92px; height:92px; border-radius:50%; flex-shrink:0;
+    -webkit-mask:radial-gradient(circle, transparent 53%, #000 54%);
+            mask:radial-gradient(circle, transparent 53%, #000 54%);
+  }
+  .sk-legend { flex:1; min-width:0; }
+  .sk-legend .sk-row { margin-bottom:12px; }
+  .sk-legend .sk-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .sk-legend .sk-line { flex:1; height:8px; }
+  .sk-legend .sk-num  { width:30px; height:9px; flex-shrink:0; }
+
+  /* Overview: mini tiles + heat map */
+  .sk-tiles { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .sk-tiles .sk { height:38px; border-radius:9px; }
+  .sk-heat { display:flex; flex-wrap:wrap; gap:4px; }
+  .sk-heat .sk { width:32px; height:32px; border-radius:6px; }
+
+  /* List variant (Upcoming, Trips, Tickets, Finance, Accounts) */
+  .sk-item { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+  .sk-item .sk-date { width:50px; height:50px; border-radius:10px; flex-shrink:0; }
+  .sk-item .sk-body { flex:1; min-width:0; }
+  .sk-item .sk-body .sk + .sk { margin-top:8px; }
+  .sk-item .sk-pill { width:62px; height:22px; border-radius:999px; flex-shrink:0; }
+
+  .sk-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sk::after, body.is-loading #headerSub::after { animation:none; display:none; }
+    body.is-loading #appSkeleton { animation:none; }
+  }
+</style>
+
 </head>
 <body>
+<script>
+/* ── SKELETON SCREEN controller ──
+   Runs before any content paints. Shows the skeleton when there is no cached
+   data to render; the main script hides it on the first Firestore snapshot,
+   on a snapshot error, or when the login screen appears. A timeout guarantees
+   it never sticks. */
+(function () {
+  var MAX_WAIT    = 12000; // hard cap while Firebase is reachable
+  var NO_SDK_WAIT = 1500;  // Firebase SDK failed to load (offline / blocked): no data is coming
+  var timer = null;
+
+  function hasCachedTickets() {
+    try {
+      var raw = localStorage.getItem('ruh_jed_v3'); // = STORE_KEY in the main script
+      var arr = raw && JSON.parse(raw);
+      return Array.isArray(arr) && arr.length > 0;
+    } catch (e) { return false; }
+  }
+
+  window.setAppLoading = function (on) {
+    clearTimeout(timer);
+    document.body.classList.toggle('is-loading', !!on);
+    if (on) {
+      timer = setTimeout(function () { window.setAppLoading(false); },
+                         typeof firebase === 'undefined' ? NO_SDK_WAIT : MAX_WAIT);
+    }
+  };
+
+  // Cached data renders instantly, so only show the skeleton when there is none
+  if (!hasCachedTickets()) window.setAppLoading(true);
+})();
+</script>
 
 <!-- ── LOGIN SCREEN ── -->
 
@@ -1279,7 +1416,6 @@ function handleAuth() {
     <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px">تسجيل الدخول</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px">أدخل بياناتك للمتابعة</div>
 
-```
 <div style="margin-bottom:16px">
   <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">البريد الإلكتروني</label>
   <input type="email" id="siEmail" placeholder="example@domain.com" style="
@@ -1352,7 +1488,6 @@ function handleAuth() {
 <div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.6">
   على iPhone: سيتم توجيهك لـ Google ثم العودة تلقائياً ✅
 </div>
-```
 
   </div>
 
@@ -1362,7 +1497,6 @@ function handleAuth() {
     <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px">إنشاء حساب</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px">ابدأ بتتبع رحلاتك الآن</div>
 
-```
 <div style="margin-bottom:14px">
   <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px">
     الاسم الكامل <span style="color:#f43f5e">*</span>
@@ -1459,7 +1593,6 @@ function handleAuth() {
     font-family:'Cairo',sans-serif;cursor:pointer;padding:0;margin-right:4px;
   ">تسجيل الدخول</button>
 </div>
-```
 
   </div>
 
@@ -1472,7 +1605,6 @@ function handleAuth() {
       display:flex;align-items:center;gap:4px;
     ">← العودة لتسجيل الدخول</button>
 
-```
 <div style="font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px">نسيت كلمة المرور؟</div>
 <div style="font-size:12px;color:var(--text-muted);margin-bottom:24px;line-height:1.7">
   أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور
@@ -1509,7 +1641,6 @@ function handleAuth() {
     font-family:'Cairo',sans-serif;cursor:pointer;padding:0;margin-right:4px;
   ">تسجيل الدخول</button>
 </div>
-```
 
   </div>
 
@@ -1687,13 +1818,94 @@ function handleAuth() {
 
 <div class="content">
 
+  <!-- SKELETON SCREEN (shown while body.is-loading) -->
+  <div id="appSkeleton">
+    <span class="sk-sr" role="status">جاري تحميل رحلاتك…</span>
+    <div aria-hidden="true">
+
+      <!-- Overview variant -->
+      <div class="sk-dash">
+        <div class="sk-banner">
+          <span class="sk sk-days"></span>
+          <div class="sk-info"><span class="sk"></span><span class="sk"></span></div>
+          <span class="sk sk-plane"></span>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="sk-card sk-kpi"><span class="sk sk-ico"></span><span class="sk sk-val"></span><span class="sk sk-lbl"></span><span class="sk sk-sub"></span></div>
+          <div class="sk-card sk-kpi"><span class="sk sk-ico"></span><span class="sk sk-val"></span><span class="sk sk-lbl"></span><span class="sk sk-sub"></span></div>
+          <div class="sk-card sk-kpi"><span class="sk sk-ico"></span><span class="sk sk-val"></span><span class="sk sk-lbl"></span><span class="sk sk-sub"></span></div>
+          <div class="sk-card sk-kpi"><span class="sk sk-ico"></span><span class="sk sk-val"></span><span class="sk sk-lbl"></span><span class="sk sk-sub"></span></div>
+          <div class="sk-card sk-kpi"><span class="sk sk-ico"></span><span class="sk sk-val"></span><span class="sk sk-lbl"></span><span class="sk sk-sub"></span></div>
+        </div>
+
+        <div class="sk-card sk-pay">
+          <div class="sk-row"><span class="sk" style="width:30%;height:11px"></span><span class="sk" style="width:44px;height:18px"></span></div>
+          <span class="sk sk-track"></span>
+          <div class="sk-row"><span class="sk" style="width:34%;height:8px"></span><span class="sk" style="width:30%;height:8px"></span></div>
+        </div>
+
+        <div class="dash-row col2">
+          <div class="sk-card">
+            <div class="sk-row sk-title"><span class="sk" style="width:38%"></span><span class="sk" style="width:26px"></span></div>
+            <div class="sk-hbar"><div class="sk-row"><span class="sk" style="width:28px"></span><span class="sk" style="width:38px"></span></div><span class="sk sk-fill" style="width:62%"></span></div>
+            <div class="sk-hbar"><div class="sk-row"><span class="sk" style="width:28px"></span><span class="sk" style="width:38px"></span></div><span class="sk sk-fill" style="width:88%"></span></div>
+            <div class="sk-hbar"><div class="sk-row"><span class="sk" style="width:28px"></span><span class="sk" style="width:38px"></span></div><span class="sk sk-fill" style="width:46%"></span></div>
+            <div class="sk-hbar"><div class="sk-row"><span class="sk" style="width:28px"></span><span class="sk" style="width:38px"></span></div><span class="sk sk-fill" style="width:100%"></span></div>
+            <div class="sk-hbar"><div class="sk-row"><span class="sk" style="width:28px"></span><span class="sk" style="width:38px"></span></div><span class="sk sk-fill" style="width:72%"></span></div>
+            <div class="sk-hbar" style="margin-bottom:0"><div class="sk-row"><span class="sk" style="width:28px"></span><span class="sk" style="width:38px"></span></div><span class="sk sk-fill" style="width:54%"></span></div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-row sk-title"><span class="sk" style="width:42%"></span></div>
+            <div class="sk-ringwrap">
+              <span class="sk sk-ring"></span>
+              <div class="sk-legend">
+                <div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-line"></span><span class="sk sk-num"></span></div>
+                <div class="sk-row"><span class="sk sk-dot"></span><span class="sk sk-line"></span><span class="sk sk-num"></span></div>
+                <div class="sk-row" style="margin-bottom:0"><span class="sk sk-dot"></span><span class="sk sk-line"></span><span class="sk sk-num"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-row col2">
+          <div class="sk-card">
+            <div class="sk-row sk-title"><span class="sk" style="width:34%"></span></div>
+            <div class="sk-tiles"><span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span></div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-row sk-title"><span class="sk" style="width:40%"></span></div>
+            <div class="sk-tiles"><span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span></div>
+          </div>
+        </div>
+
+        <div class="sk-card">
+          <div class="sk-row sk-title"><span class="sk" style="width:26%"></span></div>
+          <div class="sk-heat">
+            <span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span>
+            <span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span>
+            <span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- List variant (Upcoming / Trips / Tickets / Finance / Accounts) -->
+      <div class="sk-list">
+        <div class="sk-card sk-item"><span class="sk sk-date"></span><div class="sk-body"><span class="sk" style="width:46%;height:12px"></span><span class="sk" style="width:68%;height:9px"></span><span class="sk" style="width:34%;height:9px"></span></div><span class="sk sk-pill"></span></div>
+        <div class="sk-card sk-item"><span class="sk sk-date"></span><div class="sk-body"><span class="sk" style="width:40%;height:12px"></span><span class="sk" style="width:62%;height:9px"></span><span class="sk" style="width:30%;height:9px"></span></div><span class="sk sk-pill"></span></div>
+        <div class="sk-card sk-item"><span class="sk sk-date"></span><div class="sk-body"><span class="sk" style="width:50%;height:12px"></span><span class="sk" style="width:58%;height:9px"></span><span class="sk" style="width:38%;height:9px"></span></div><span class="sk sk-pill"></span></div>
+        <div class="sk-card sk-item"><span class="sk sk-date"></span><div class="sk-body"><span class="sk" style="width:44%;height:12px"></span><span class="sk" style="width:66%;height:9px"></span><span class="sk" style="width:28%;height:9px"></span></div><span class="sk sk-pill"></span></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- OVERVIEW -->
 
   <div class="section active" id="sec-overview">
     <!-- Next trip banner -->
     <div id="nextTripBanner"></div>
 
-```
 <!-- KPI strip -->
 <div class="kpi-strip" id="kpiStrip"></div>
 
@@ -1732,7 +1944,6 @@ function handleAuth() {
     ✉️ إرسال تقرير شهري
   </button>
 </div>
-```
 
   </div>
 
@@ -1823,7 +2034,6 @@ function handleAuth() {
 
   <div class="section" id="sec-add">
 
-```
 <!-- AI IMPORT MODAL -->
 <div id="aiImportModal" style="
   display:none;position:fixed;inset:0;z-index:8000;
@@ -2051,7 +2261,6 @@ function handleAuth() {
   </div>
   <button class="btn-submit" onclick="addTicket()" style="margin-top:16px">حفظ التذكرة</button>
 </div>
-```
 
   </div>
 
@@ -2060,7 +2269,6 @@ function handleAuth() {
   <div class="section" id="sec-finance">
     <div class="form-card" style="margin-bottom:16px">
 
-```
   <!-- Header KPIs -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px" id="financeKPIs"></div>
 
@@ -2108,7 +2316,6 @@ function handleAuth() {
   </div>
 
 </div>
-```
 
   </div>
 
@@ -2121,7 +2328,6 @@ function handleAuth() {
         حساباتك الخاصة — محفوظة في حسابك ولا تظهر لأي مستخدم آخر
       </div>
 
-```
   <!-- Notification reminders -->
   <div style="
     background:var(--surface2);border:1px solid var(--border);
@@ -2159,7 +2365,6 @@ function handleAuth() {
   <!-- Accounts list -->
   <div id="accountsList"></div>
 </div>
-```
 
   </div>
 
@@ -2172,7 +2377,6 @@ function handleAuth() {
     <input type="hidden" id="eId">
     <div class="form-grid">
 
-```
   <!-- رقم الرحلة (عرض فقط) + راتب شهر -->
   <div class="trip-num-display">
     <span class="tn-label">رقم الرحلة</span>
@@ -2318,7 +2522,6 @@ function handleAuth() {
   <button class="btn-save" onclick="saveEdit()">💾 حفظ التعديلات</button>
   <button class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
 </div>
-```
 
   </div>
 </div>
@@ -2338,6 +2541,9 @@ const STORE_KEY = 'ruh_jed_v3';
 
 
 // ─── AUTH ───
+
+// Skeleton controller lives in the script right after <body>; no-op fallback if it's missing
+if (typeof window.setAppLoading !== 'function') window.setAppLoading = function () {};
 
 function userDocRef(uid) {
   return _fbDb.collection('users').doc(uid).collection('data').doc('tickets');
@@ -2478,16 +2684,19 @@ function subscribeFirestore(uid) {
         renderAll(); renderOverview(); renderUpcoming(); renderTrips();
       }
     }
+    if (firstSnapshot) setAppLoading(false); // first data in — drop the skeleton
     firstSnapshot = false;
   }, err => {
     console.warn('Firestore onSnapshot error:', err.code, err.message);
     // On permission/network error, keep showing whatever is in localStorage
+    setAppLoading(false);
   });
 }
 
 function showLoginScreen(show) {
   const ls = document.getElementById('loginScreen');
   if (ls) ls.style.display = show ? 'flex' : 'none';
+  if (show) setAppLoading(false);
 }
 
 function updateAuthUI(user) {
@@ -2761,6 +2970,7 @@ function initFirebase() {
       updateAuthUI(user);
       showLoginScreen(false);
       tickets = load();
+      if (!tickets.length) setAppLoading(true); // nothing cached (new device / new user) → skeleton until Firestore answers
       renderAll(); renderOverview(); renderUpcoming(); renderTrips();
       subscribeFirestore(user.uid);
       loadAccountsFromFirestore(user.uid);
